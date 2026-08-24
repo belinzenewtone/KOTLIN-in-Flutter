@@ -269,8 +269,6 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
   void _showAvatarSheet(BuildContext context, ColorScheme scheme) {
     showModalBottomSheet<void>(
       context: context,
-      // useRootNavigator + useSafeArea ensures the sheet renders above the
-      // floating pill nav bar which is drawn at the root navigator level.
       useRootNavigator: true,
       useSafeArea: true,
       shape: const RoundedRectangleBorder(
@@ -287,6 +285,15 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
             ),
           ),
           const SizedBox(height: 16),
+          if (_avatarPath != null && File(_avatarPath!).existsSync())
+            ListTile(
+              leading: Icon(Icons.image_outlined, color: scheme.primary),
+              title: const Text('View photo'),
+              onTap: () {
+                Navigator.of(sheetCtx).pop();
+                _showPhotoViewer(context, scheme);
+              },
+            ),
           ListTile(
             leading: Icon(Icons.photo_library_outlined, color: scheme.primary),
             title: const Text('Choose from gallery'),
@@ -304,10 +311,56 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                 _removeAvatar();
               },
             ),
-          // Bottom padding: safe area already accounted for by useSafeArea, but
-          // add a comfortable gap above the home indicator / gesture bar.
           const SizedBox(height: 16),
         ],
+      ),
+    );
+  }
+
+  void _showPhotoViewer(BuildContext context, ColorScheme scheme) {
+    Navigator.of(context, rootNavigator: true).push(
+      PageRouteBuilder<void>(
+        opaque: false,
+        barrierColor: Colors.black87,
+        barrierDismissible: true,
+        pageBuilder: (ctx, animation, _) => FadeTransition(
+          opacity: animation,
+          child: GestureDetector(
+            onTap: () => Navigator.of(ctx).pop(),
+            child: Scaffold(
+              backgroundColor: Colors.transparent,
+              body: SafeArea(
+                child: Stack(
+                  children: [
+                    Center(
+                      child: Hero(
+                        tag: 'profile_avatar',
+                        child: InteractiveViewer(
+                          child: Image.file(
+                            File(_avatarPath!),
+                            fit: BoxFit.contain,
+                          ),
+                        ),
+                      ),
+                    ),
+                    Positioned(
+                      top: 8,
+                      right: 8,
+                      child: IconButton(
+                        onPressed: () => Navigator.of(ctx).pop(),
+                        icon: const Icon(Icons.close, color: Colors.white),
+                        style: IconButton.styleFrom(
+                          backgroundColor: Colors.black38,
+                          shape: const CircleBorder(),
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          ),
+        ),
       ),
     );
   }

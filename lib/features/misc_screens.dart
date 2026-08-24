@@ -1230,7 +1230,7 @@ class _ExportScreenState extends ConsumerState<ExportScreen> {
       db.customSelect('SELECT COUNT(*) AS n FROM tasks WHERE user_id=? AND deleted_at IS NULL AND created_at>=? AND created_at<=?', variables: [Variable.withString(userId), Variable.withInt(from), Variable.withInt(to)], readsFrom: {db.tasks}).getSingle(),
       db.customSelect('SELECT COUNT(*) AS n FROM events WHERE user_id=? AND deleted_at IS NULL AND date>=? AND date<=?', variables: [Variable.withString(userId), Variable.withInt(from), Variable.withInt(to)], readsFrom: {db.events}).getSingle(),
       db.customSelect('SELECT COUNT(*) AS n FROM budgets WHERE user_id=? AND deleted_at IS NULL', variables: [Variable.withString(userId)], readsFrom: {db.budgets}).getSingle(),
-      db.customSelect('SELECT COUNT(*) AS n FROM income_streams WHERE user_id=? AND deleted_at IS NULL', variables: [Variable.withString(userId)], readsFrom: {db.incomes}).getSingle(),
+      db.customSelect('SELECT COUNT(*) AS n FROM incomes WHERE user_id=? AND deleted_at IS NULL', variables: [Variable.withString(userId)], readsFrom: {db.incomes}).getSingle(),
       db.customSelect('SELECT COUNT(*) AS n FROM recurring_rules WHERE user_id=? AND deleted_at IS NULL', variables: [Variable.withString(userId)], readsFrom: {db.recurringRules}).getSingle(),
       db.customSelect('SELECT COUNT(*) AS n FROM paybill_registry WHERE user_id=? AND deleted_at IS NULL', variables: [Variable.withString(userId)], readsFrom: {db.paybillRegistry}).getSingle(),
     ]);

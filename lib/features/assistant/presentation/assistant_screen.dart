@@ -117,7 +117,7 @@ Future<_LiveContext> _loadLiveContext(LifeOsDatabase db, String userId) async {
   List<({String name, double limit, double spent})> budgets = [];
   try {
     final rows = await db.customSelect(
-      'SELECT name, monthly_limit FROM budgets WHERE user_id = ? AND deleted_at IS NULL LIMIT 8',
+      'SELECT name, monthly_limit FROM budgets WHERE user_id=? AND deleted_at IS NULL LIMIT 8',
       variables: [Variable(userId)],
     ).get();
     budgets = rows.map((r) {
@@ -391,13 +391,23 @@ class _AssistantScreenState extends ConsumerState<AssistantScreen> {
   @override
   Widget build(BuildContext context) {
     // resizeToAvoidBottomInset is false on MainShell's Scaffold so the keyboard
-    // overlaps from below without shrinking the body. Manually compute gap.
+    // overlaps from below without shrinking the body. We track the IME inset
+    // directly — Flutter 3.x streams viewInsetsOf changes per animation frame
+    // during keyboard open/close, so a plain SizedBox gives a perfectly smooth
+    // native-feeling slide without any competing AnimatedContainer curve.
     //
     // Closed: gap = safeBottom + navBar(58) + offset(4) + hairline(8)
-    // Open  : gap = IME height + 8
+    // Open  : gap = IME height + hairline(8)
     final imeBottom = MediaQuery.viewInsetsOf(context).bottom;
     final safeBottom = MediaQuery.paddingOf(context).bottom;
-    if (imeBottom > 0 && _prevImeBottom == 0) _autoScroll();
+    // Scroll to latest message when the keyboard first appears.
+    if (imeBottom > 0 && _prevImeBottom == 0) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (_listController.hasClients) {
+          _listController.jumpTo(_listController.position.maxScrollExtent);
+        }
+      });
+    }
     _prevImeBottom = imeBottom;
 
     final inputBottomGap = imeBottom > 0
@@ -503,12 +513,9 @@ class _AssistantScreenState extends ConsumerState<AssistantScreen> {
             onSend: () => _send(_input.text),
             isProcessing: _processing,
           ),
-          // AnimatedContainer slides smoothly with the keyboard.
-          AnimatedContainer(
-            duration: const Duration(milliseconds: 200),
-            curve: Curves.easeOut,
-            height: inputBottomGap,
-          ),
+          // SizedBox height tracks MediaQuery.viewInsetsOf per animation frame
+          // (Flutter 3.x), giving a native-smooth keyboard slide with no lag.
+          SizedBox(height: inputBottomGap),
         ],
       ),
     );

@@ -203,8 +203,22 @@ class _TasksScreenState extends ConsumerState<TasksScreen> {
             PageScaffold(
               title: 'Tasks',
               onBack: () => context.pop(),
+              // Add button mirrors the Calendar screen pattern — top-right action,
+              // no floating button below (matches Kotlin TasksScreen action bar).
+              actions: [
+                IconButton(
+                  onPressed: _repo == null
+                      ? null
+                      : () => setState(() {
+                            _editingTask = null;
+                            _showAddScreen = true;
+                          }),
+                  icon: Icon(Icons.add_outlined, size: 24, color: scheme.primary),
+                  tooltip: 'Add task',
+                ),
+              ],
               contentPadding: const EdgeInsets.only(
-                  bottom: AppSpacing.bottomSafeWithFloatingNav + 72),
+                  bottom: AppSpacing.bottomSafeWithFloatingNav),
               topBanner: _successMessage == null
                   ? null
                   : TopBanner(
@@ -224,22 +238,6 @@ class _TasksScreenState extends ConsumerState<TasksScreen> {
                         return _buildBody(context, tasks);
                       },
                     ),
-            ),
-            // FAB (TasksScreen.kt parity — bottom-end, above floating bar).
-            Positioned(
-              right: AppSpacing.screenHorizontal,
-              bottom: AppSpacing.bottomSafeWithFloatingNav + 8,
-              child: FloatingActionButton(
-                onPressed: () => setState(() {
-                  _editingTask = null;
-                  _showAddScreen = true;
-                }),
-                backgroundColor: scheme.primary,
-                foregroundColor: scheme.onSurface,
-                shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(6)),
-                child: const Icon(Icons.add),
-              ),
             ),
             // Add/edit wizard (TASK tab only).
             if (_showAddScreen)
