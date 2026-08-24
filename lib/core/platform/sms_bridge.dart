@@ -68,7 +68,15 @@ class SmsPlatformBridge {
 }
 
 /// Runs the full historical import: inbox → parser pool → batched writes.
-Future<BatchIngestionResult?> runHistoricalSmsImport(dynamic ref) async {
+///
+/// [source] controls which institutions are processed:
+///   'all'   → M-Pesa + Banks + Airtel (default)
+///   'mpesa' → M-Pesa only (sender contains MPESA)
+///   'banks' → Everything except M-Pesa and Airtel
+Future<BatchIngestionResult?> runHistoricalSmsImport(
+  dynamic ref, {
+  String source = 'all',
+}) async {
   final dbReady = await ref.read(lifeOsDatabaseProvider.future).timeout(
         const Duration(seconds: 20),
         onTimeout: () => throw StateError('db timeout'),
@@ -82,7 +90,24 @@ Future<BatchIngestionResult?> runHistoricalSmsImport(dynamic ref) async {
 
   final messages = await SmsPlatformBridge.readInbox();
   final queued = await SmsPlatformBridge.drainRealtimeQueue();
-  final all = [...messages, ...queued];
+  var all = [...messages, ...queued];
+  if (all.isEmpty) return const BatchIngestionResult(imported: 0, duplicates: 0, parseFailed: 0, ignored: 0);
+
+  // Apply source filter: check sender string for institution category.
+  if (source == 'mpesa') {
+    all = all
+        .where((m) => m.sender.toUpperCase().contains('MPESA') ||
+            m.sender.toUpperCase() == 'M-PESA')
+        .toList();
+  } else if (source == 'banks') {
+    all = all
+        .where((m) {
+          final s = m.sender.toUpperCase();
+          return !s.contains('MPESA') && s != 'M-PESA' &&
+              !s.contains('AIRTEL') && !s.contains('TKASH');
+        })
+        .toList();
+  }
   if (all.isEmpty) return const BatchIngestionResult(imported: 0, duplicates: 0, parseFailed: 0, ignored: 0);
 
   final holder = LifeOsDbHolder(database: dbReady, userId: userId);

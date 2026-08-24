@@ -1232,7 +1232,7 @@ class _ExportScreenState extends ConsumerState<ExportScreen> {
       db.customSelect('SELECT COUNT(*) AS n FROM budgets WHERE user_id=? AND deleted_at IS NULL', variables: [Variable.withString(userId)], readsFrom: {db.budgets}).getSingle(),
       db.customSelect('SELECT COUNT(*) AS n FROM incomes WHERE user_id=? AND deleted_at IS NULL', variables: [Variable.withString(userId)], readsFrom: {db.incomes}).getSingle(),
       db.customSelect('SELECT COUNT(*) AS n FROM recurring_rules WHERE user_id=? AND deleted_at IS NULL', variables: [Variable.withString(userId)], readsFrom: {db.recurringRules}).getSingle(),
-      db.customSelect('SELECT COUNT(*) AS n FROM paybill_registry WHERE user_id=? AND deleted_at IS NULL', variables: [Variable.withString(userId)], readsFrom: {db.paybillRegistry}).getSingle(),
+      db.customSelect('SELECT COUNT(*) AS n FROM paybill_registry WHERE user_id=?', variables: [Variable.withString(userId)], readsFrom: {db.paybillRegistry}).getSingle(),
     ]);
     int n(dynamic row) => (row.data['n'] as num?)?.toInt() ?? 0;
     return {
@@ -1564,6 +1564,18 @@ class _ExportScreenState extends ConsumerState<ExportScreen> {
       child: FutureBuilder<Map<String, int>>(
         future: _previewFuture,
         builder: (context, snap) {
+          if (snap.hasError) {
+            return Row(children: [
+              Icon(Icons.error_outline, size: 16, color: scheme.error),
+              const SizedBox(width: 8),
+              Expanded(child: Text('Could not load preview. ${snap.error}',
+                  style: Theme.of(context).textTheme.bodySmall?.copyWith(color: scheme.error))),
+              TextButton(
+                onPressed: () => setState(() => _previewFuture = _previewCount()),
+                child: const Text('Retry'),
+              ),
+            ]);
+          }
           final counts = snap.data ?? {};
           final total = counts.values.fold<int>(0, (a, b) => a + b);
           final loading = snap.connectionState == ConnectionState.waiting;
@@ -3128,57 +3140,91 @@ class _QuarantineState extends ConsumerState<QuarantinePage> {
 
 // ── Paybill Registry ─────────────────────────────────────────────────────────
 
-class PaybillRegistryPage extends ConsumerWidget {
+class PaybillRegistryPage extends ConsumerStatefulWidget {
   const PaybillRegistryPage({super.key});
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  ConsumerState<PaybillRegistryPage> createState() => _PaybillRegistryState();
+}
+
+class _PaybillRegistryState extends ConsumerState<PaybillRegistryPage> {
+  late Future<List<Map<String, Object?>>> _future;
+
+  @override
+  void initState() {
+    super.initState();
+    _future = _load();
+  }
+
+  @override
+  Widget build(BuildContext context) {
     final scheme = Theme.of(context).colorScheme;
     return PageScaffold(
       title: 'Paybill Registry',
-      subtitle: 'Billers seen across your imports',
+      subtitle: 'Billers discovered across your imports',
       onBack: () => context.pop(),
       child: FutureBuilder<List<Map<String, Object?>>>(
-        future: _load(ref),
+        future: _future,
         builder: (context, snap) {
           if (snap.connectionState == ConnectionState.waiting) {
             return const Center(child: CircularProgressIndicator());
           }
           final rows = snap.data ?? [];
-          if (rows.isEmpty) return const EmptyState(icon: Icons.receipt_outlined, title: 'No billers yet', description: 'Paybill payments discovered during import appear here.');
+          if (rows.isEmpty) {
+            return const EmptyState(
+              icon: Icons.receipt_long_outlined,
+              title: 'No billers yet',
+              description: 'Paybill & Till payments discovered during M-Pesa import appear here.',
+            );
+          }
+          final topUsage = (rows.first['usage_count'] as int?) ?? 1;
           return Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
-              Padding(
-                padding: const EdgeInsets.only(bottom: 8),
-                child: Text('${rows.length} billers · sorted by usage', style: Theme.of(context).textTheme.labelSmall?.copyWith(color: scheme.onSurfaceVariant)),
+              // ── Summary row ────────────────────────────────────────────────
+              AppCard(
+                contentPadding: const EdgeInsets.all(14),
+                child: Row(
+                  children: [
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Text('${rows.length}',
+                              style: Theme.of(context).textTheme.displaySmall?.copyWith(
+                                  fontWeight: FontWeight.w800,
+                                  color: scheme.primary)),
+                          Text('total billers',
+                              style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                                  color: scheme.onSurfaceVariant)),
+                        ],
+                      ),
+                    ),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Text('${(rows.first['usage_count'] as int?) ?? 0}',
+                              style: Theme.of(context).textTheme.displaySmall?.copyWith(
+                                  fontWeight: FontWeight.w800,
+                                  color: const Color(0xFF10B981))),
+                          Text('top usage',
+                              style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                                  color: scheme.onSurfaceVariant)),
+                        ],
+                      ),
+                    ),
+                  ],
+                ),
               ),
-              for (final row in rows)
+              const SizedBox(height: 12),
+              // ── Biller cards ───────────────────────────────────────────────
+              for (final (i, row) in rows.indexed)
                 Padding(
                   padding: const EdgeInsets.only(bottom: 8),
-                  child: AppCard(
-                    contentPadding: const EdgeInsets.all(14),
-                    child: Row(
-                      children: [
-                        Expanded(
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            mainAxisSize: MainAxisSize.min,
-                            children: [
-                              Text(row['display_name'] as String? ?? row['paybill_number'] as String? ?? '', style: Theme.of(context).textTheme.bodyMedium?.copyWith(fontWeight: FontWeight.w600)),
-                              Text(row['paybill_number'] as String? ?? '', style: Theme.of(context).textTheme.bodySmall?.copyWith(fontFamily: 'monospace', color: scheme.onSurfaceVariant)),
-                              Text('Last: ${formatCurrency((row['last_amount_kes'] as num?)?.toDouble() ?? 0)} · ${DateFormat('MMM dd').format(DateTime.fromMillisecondsSinceEpoch((row['last_seen_at'] as int?) ?? 0))}', style: Theme.of(context).textTheme.labelSmall?.copyWith(color: scheme.onSurfaceVariant)),
-                            ],
-                          ),
-                        ),
-                        Container(
-                          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-                          decoration: BoxDecoration(color: scheme.secondaryContainer, borderRadius: BorderRadius.circular(6)),
-                          child: Text('${row['usage_count']}×', style: Theme.of(context).textTheme.labelSmall?.copyWith(fontWeight: FontWeight.w700, color: scheme.onSecondaryContainer)),
-                        ),
-                      ],
-                    ),
-                  ),
+                  child: _BillerCard(row: row, rank: i + 1, topUsage: topUsage),
                 ),
             ],
           );
@@ -3187,15 +3233,193 @@ class PaybillRegistryPage extends ConsumerWidget {
     );
   }
 
-  Future<List<Map<String, Object?>>> _load(WidgetRef ref) async {
+  Future<List<Map<String, Object?>>> _load() async {
     final db = await ref.read(lifeOsDatabaseProvider.future);
     final userId = await ref.read(userIdProvider.future);
-    final rows = await db.customSelect('SELECT * FROM paybill_registry WHERE user_id=? ORDER BY usage_count DESC', variables: [Variable.withString(userId)], readsFrom: {db.paybillRegistry}).get();
+    final rows = await db.customSelect(
+      'SELECT * FROM paybill_registry WHERE user_id=? ORDER BY usage_count DESC',
+      variables: [Variable.withString(userId)],
+      readsFrom: {db.paybillRegistry},
+    ).get();
     return rows.map((r) => r.data).toList();
   }
 }
 
+class _BillerCard extends StatelessWidget {
+  const _BillerCard({required this.row, required this.rank, required this.topUsage});
+  final Map<String, Object?> row;
+  final int rank;
+  final int topUsage;
+
+  @override
+  Widget build(BuildContext context) {
+    final scheme = Theme.of(context).colorScheme;
+    final name = row['display_name'] as String? ?? row['paybill_number'] as String? ?? '';
+    final number = row['paybill_number'] as String? ?? '';
+    final usage = (row['usage_count'] as int?) ?? 0;
+    final lastAmt = (row['last_amount_kes'] as num?)?.toDouble() ?? 0;
+    final lastAt = (row['last_seen_at'] as int?) ?? 0;
+    final initial = name.isNotEmpty ? name[0].toUpperCase() : '#';
+    final avatarColor = _merchantColor(name);
+    // Rank-based accent: gold, silver, bronze for top 3.
+    final rankColor = rank == 1
+        ? const Color(0xFFF59E0B)
+        : rank == 2
+            ? const Color(0xFF94A3B8)
+            : rank == 3
+                ? const Color(0xFFCD7C2F)
+                : null;
+
+    return AppCard(
+      contentPadding: const EdgeInsets.all(14),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Row(
+            children: [
+              // Rank badge + avatar
+              Stack(
+                clipBehavior: Clip.none,
+                children: [
+                  Container(
+                    width: 42, height: 42,
+                    decoration: BoxDecoration(
+                      shape: BoxShape.circle,
+                      color: avatarColor.withValues(alpha: 0.15),
+                    ),
+                    alignment: Alignment.center,
+                    child: Text(initial,
+                        style: TextStyle(
+                            color: avatarColor,
+                            fontWeight: FontWeight.w800,
+                            fontSize: 17)),
+                  ),
+                  if (rankColor != null)
+                    Positioned(
+                      bottom: -2, right: -2,
+                      child: Container(
+                        width: 16, height: 16,
+                        decoration: BoxDecoration(
+                          shape: BoxShape.circle,
+                          color: rankColor,
+                          border: Border.all(color: scheme.surface, width: 1.5),
+                        ),
+                        alignment: Alignment.center,
+                        child: Text('$rank',
+                            style: const TextStyle(
+                                color: Colors.white,
+                                fontSize: 9,
+                                fontWeight: FontWeight.w800)),
+                      ),
+                    ),
+                ],
+              ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Text(name,
+                        style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                            fontWeight: FontWeight.w700),
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis),
+                    const SizedBox(height: 2),
+                    Text(number,
+                        style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                            color: scheme.onSurfaceVariant,
+                            fontFamily: 'monospace')),
+                  ],
+                ),
+              ),
+              // Usage count badge
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+                decoration: BoxDecoration(
+                  color: avatarColor.withValues(alpha: 0.12),
+                  borderRadius: BorderRadius.circular(20),
+                ),
+                child: Text('$usage×',
+                    style: TextStyle(
+                        color: avatarColor,
+                        fontWeight: FontWeight.w800,
+                        fontSize: 13)),
+              ),
+            ],
+          ),
+          const SizedBox(height: 10),
+          // Usage bar
+          ClipRRect(
+            borderRadius: BorderRadius.circular(3),
+            child: LinearProgressIndicator(
+              value: topUsage > 0 ? usage / topUsage : 0,
+              minHeight: 4,
+              backgroundColor: scheme.surfaceContainerHighest,
+              valueColor: AlwaysStoppedAnimation(avatarColor.withValues(alpha: 0.7)),
+            ),
+          ),
+          const SizedBox(height: 8),
+          Row(
+            children: [
+              Icon(Icons.access_time_outlined, size: 12, color: scheme.onSurfaceVariant),
+              const SizedBox(width: 4),
+              Text(
+                'Last: ${formatCurrency(lastAmt)}',
+                style: Theme.of(context).textTheme.labelSmall?.copyWith(
+                    color: scheme.onSurfaceVariant),
+              ),
+              const SizedBox(width: 12),
+              Icon(Icons.calendar_today_outlined, size: 12, color: scheme.onSurfaceVariant),
+              const SizedBox(width: 4),
+              Text(
+                lastAt > 0 ? DateFormat('MMM dd, yyyy').format(
+                    DateTime.fromMillisecondsSinceEpoch(lastAt)) : '—',
+                style: Theme.of(context).textTheme.labelSmall?.copyWith(
+                    color: scheme.onSurfaceVariant),
+              ),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+}
+
 // ── Categorize ───────────────────────────────────────────────────────────────
+
+/// (icon, accent color) per category — used by category chips and the avatar.
+const _kCatMeta = <String, (IconData, Color)>{
+  'Food':         (Icons.restaurant_outlined,       Color(0xFFF97316)),
+  'Transport':    (Icons.directions_car_outlined,   Color(0xFF3B82F6)),
+  'Utilities':    (Icons.bolt_outlined,             Color(0xFFF59E0B)),
+  'Entertainment':(Icons.movie_outlined,            Color(0xFFA78BFA)),
+  'Shopping':     (Icons.shopping_bag_outlined,     Color(0xFFEC4899)),
+  'Health':       (Icons.health_and_safety_outlined,Color(0xFF10B981)),
+  'Education':    (Icons.school_outlined,           Color(0xFF6366F1)),
+  'Housing':      (Icons.home_outlined,             Color(0xFF8B5CF6)),
+  'Airtime':      (Icons.phone_android_outlined,    Color(0xFF14B8A6)),
+  'Savings':      (Icons.savings_outlined,          Color(0xFF22C55E)),
+  'PersonalCare': (Icons.spa_outlined,              Color(0xFFF472B6)),
+  'Subscriptions':(Icons.subscriptions_outlined,   Color(0xFF0EA5E9)),
+  'Fuliza':       (Icons.account_balance_outlined,  Color(0xFFF43F5E)),
+  'Transfer':     (Icons.swap_horiz_outlined,       Color(0xFF8B5CF6)),
+  'Withdrawal':   (Icons.atm_outlined,              Color(0xFFEF4444)),
+  'Miscellaneous':(Icons.category_outlined,         Color(0xFF94A3B8)),
+};
+
+/// Deterministic pastel color derived from merchant name (for avatar background).
+Color _merchantColor(String name) {
+  const palette = [
+    Color(0xFF6366F1), Color(0xFF3B82F6), Color(0xFF14B8A6),
+    Color(0xFF10B981), Color(0xFFF59E0B), Color(0xFFF97316),
+    Color(0xFFEC4899), Color(0xFFA78BFA), Color(0xFF22C55E),
+    Color(0xFF0EA5E9), Color(0xFFF43F5E), Color(0xFF8B5CF6),
+  ];
+  final hash = name.codeUnits.fold(0, (h, c) => h * 31 + c);
+  return palette[hash.abs() % palette.length];
+}
 
 class CategorizePage extends ConsumerStatefulWidget {
   const CategorizePage({super.key});
@@ -3205,17 +3429,17 @@ class CategorizePage extends ConsumerStatefulWidget {
 }
 
 class _CategorizeState extends ConsumerState<CategorizePage> {
-  static const _cats = ['Food', 'Transport', 'Utilities', 'Entertainment', 'Shopping', 'Health', 'Education', 'Housing', 'Airtime', 'Savings', 'PersonalCare', 'Subscriptions', 'Fuliza', 'Transfer', 'Withdrawal', 'Miscellaneous'];
   final Set<String> _hidden = {};
   String? _successMsg;
+  int _totalInitial = 0;
 
   // Broad match for any uncategorised row regardless of casing / spelling.
   static const _uncatFilter =
       "(category IS NULL OR category='' OR LOWER(category) IN ('uncategorized','other','others','unknown','other category'))";
 
   // Cached future — never recreated by setState so the list doesn't flash a
-  // spinner when _successMsg clears (1.5 s delay). Only reset on explicit retry
-  // or after a categorization is applied.
+  // spinner when _successMsg clears. Only reset on explicit retry or after a
+  // categorization is applied.
   late Future<List<_MerchantGroup>> _loadFuture;
 
   @override
@@ -3231,15 +3455,12 @@ class _CategorizeState extends ConsumerState<CategorizePage> {
       "UPDATE transactions SET category=?, updated_at=? WHERE user_id=? AND merchant=? AND deleted_at IS NULL AND $_uncatFilter",
       [category, DateTime.now().millisecondsSinceEpoch, userId, merchant],
     );
-    // Refresh the list and show the success banner.
     setState(() {
       _hidden.add(merchant);
       _successMsg = 'Categorized "$merchant" as $category';
       _loadFuture = _load();
     });
-    // Clear the banner after 1.5 s. Calling setState here does NOT recreate
-    // _loadFuture, so the list won't flash a spinner.
-    Future.delayed(const Duration(milliseconds: 1500),
+    Future.delayed(const Duration(milliseconds: 2000),
         () { if (mounted) setState(() => _successMsg = null); });
   }
 
@@ -3248,7 +3469,7 @@ class _CategorizeState extends ConsumerState<CategorizePage> {
     final scheme = Theme.of(context).colorScheme;
     return PageScaffold(
       title: 'Categorize',
-      subtitle: 'Assign a category to uncategorized transactions',
+      subtitle: 'Tap a category to apply it to all matching transactions',
       onBack: () => context.pop(),
       child: FutureBuilder<List<_MerchantGroup>>(
         future: _loadFuture,
@@ -3258,68 +3479,104 @@ class _CategorizeState extends ConsumerState<CategorizePage> {
           }
           if (snap.hasError) {
             return Center(
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  Icon(Icons.error_outline, size: 36, color: Theme.of(context).colorScheme.error),
-                  const SizedBox(height: 8),
-                  const Text('Could not load transactions.'),
-                  const SizedBox(height: 8),
-                  TextButton(
-                    onPressed: () => setState(() => _loadFuture = _load()),
-                    child: const Text('Retry'),
-                  ),
-                ],
-              ),
+              child: Column(mainAxisSize: MainAxisSize.min, children: [
+                Icon(Icons.error_outline, size: 36, color: scheme.error),
+                const SizedBox(height: 8),
+                const Text('Could not load transactions.'),
+                const SizedBox(height: 8),
+                TextButton(
+                  onPressed: () => setState(() => _loadFuture = _load()),
+                  child: const Text('Retry'),
+                ),
+              ]),
             );
           }
-          final groups = (snap.data ?? []).where((g) => !_hidden.contains(g.merchant)).toList();
-          if (groups.isEmpty) {
-            return const EmptyState(icon: Icons.done_all_outlined, title: 'All sorted!', description: 'No uncategorized transactions found.');
+          final all = snap.data ?? [];
+          if (_totalInitial == 0 && all.isNotEmpty) {
+            // Store initial count on first load for the progress indicator.
+            WidgetsBinding.instance.addPostFrameCallback((_) {
+              if (mounted) setState(() => _totalInitial = all.length);
+            });
           }
+          final groups = all.where((g) => !_hidden.contains(g.merchant)).toList();
+          if (groups.isEmpty) {
+            return const EmptyState(
+              icon: Icons.done_all_outlined,
+              title: 'All sorted!',
+              description: 'Every transaction has a category. Great work!',
+            );
+          }
+          final done = _hidden.length;
+          final total = _totalInitial > 0 ? _totalInitial : groups.length + done;
           return Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
-              if (_successMsg != null)
-                Padding(
-                  padding: const EdgeInsets.only(bottom: 8),
-                  child: Container(
-                    padding: const EdgeInsets.all(12),
-                    decoration: BoxDecoration(color: const Color(0xFF34D399).withValues(alpha: 0.15), borderRadius: BorderRadius.circular(6)),
-                    child: Text(_successMsg!, style: TextStyle(color: const Color(0xFF34D399), fontWeight: FontWeight.w600)),
-                  ),
+              // ── Progress header ──────────────────────────────────────────
+              AppCard(
+                contentPadding: const EdgeInsets.all(14),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        Text('${groups.length} merchant${groups.length == 1 ? '' : 's'} to review',
+                            style: Theme.of(context).textTheme.titleSmall),
+                        if (done > 0)
+                          Container(
+                            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 3),
+                            decoration: BoxDecoration(
+                              color: const Color(0xFF34D399).withValues(alpha: 0.15),
+                              borderRadius: BorderRadius.circular(20),
+                            ),
+                            child: Text('$done done',
+                                style: Theme.of(context).textTheme.labelSmall?.copyWith(
+                                    color: const Color(0xFF34D399),
+                                    fontWeight: FontWeight.w700)),
+                          ),
+                      ],
+                    ),
+                    const SizedBox(height: 8),
+                    ClipRRect(
+                      borderRadius: BorderRadius.circular(4),
+                      child: LinearProgressIndicator(
+                        value: total > 0 ? done / total : 0,
+                        minHeight: 6,
+                        backgroundColor: scheme.surfaceContainerHighest,
+                        valueColor: const AlwaysStoppedAnimation(Color(0xFF34D399)),
+                      ),
+                    ),
+                  ],
                 ),
+              ),
+              if (_successMsg != null) ...[
+                const SizedBox(height: 8),
+                Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+                  decoration: BoxDecoration(
+                    color: const Color(0xFF34D399).withValues(alpha: 0.12),
+                    borderRadius: BorderRadius.circular(8),
+                    border: Border.all(color: const Color(0xFF34D399).withValues(alpha: 0.3)),
+                  ),
+                  child: Row(children: [
+                    const Icon(Icons.check_circle_outline, size: 16, color: Color(0xFF34D399)),
+                    const SizedBox(width: 8),
+                    Expanded(
+                      child: Text(_successMsg!,
+                          style: const TextStyle(color: Color(0xFF34D399), fontWeight: FontWeight.w600, fontSize: 13)),
+                    ),
+                  ]),
+                ),
+              ],
+              const SizedBox(height: 12),
+              // ── Merchant cards ───────────────────────────────────────────
               for (final g in groups)
                 Padding(
                   padding: const EdgeInsets.only(bottom: 12),
-                  child: AppCard(
-                    contentPadding: const EdgeInsets.all(14),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        Row(
-                          children: [
-                            Expanded(child: Text(g.merchant, style: Theme.of(context).textTheme.titleSmall)),
-                            Container(
-                              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
-                              decoration: BoxDecoration(color: scheme.primaryContainer, borderRadius: BorderRadius.circular(6)),
-                              child: Text('${g.count}', style: Theme.of(context).textTheme.labelSmall?.copyWith(fontWeight: FontWeight.w700, color: scheme.onPrimaryContainer)),
-                            ),
-                          ],
-                        ),
-                        Text(formatCurrency(g.total), style: Theme.of(context).textTheme.bodyMedium?.copyWith(color: scheme.onSurfaceVariant)),
-                        const SizedBox(height: 8),
-                        DropdownButton<String>(
-                          isExpanded: true,
-                          hint: const Text('Select category'),
-                          underline: const SizedBox.shrink(),
-                          borderRadius: BorderRadius.circular(6),
-                          items: [for (final c in _cats) DropdownMenuItem(value: c, child: Text(c))],
-                          onChanged: (v) { if (v != null) _applyCategory(g.merchant, v); },
-                        ),
-                      ],
-                    ),
+                  child: _MerchantCard(
+                    group: g,
+                    onCategorize: (cat) => _applyCategory(g.merchant, cat),
                   ),
                 ),
             ],
@@ -3357,6 +3614,151 @@ class _MerchantGroup {
   final String merchant;
   final int count;
   final double total;
+}
+
+/// A rich card for one merchant with colorful category chips.
+class _MerchantCard extends StatelessWidget {
+  const _MerchantCard({required this.group, required this.onCategorize});
+  final _MerchantGroup group;
+  final void Function(String) onCategorize;
+
+  @override
+  Widget build(BuildContext context) {
+    final scheme = Theme.of(context).colorScheme;
+    final avatarColor = _merchantColor(group.merchant);
+    final initial = group.merchant.isNotEmpty ? group.merchant[0].toUpperCase() : '?';
+
+    return AppCard(
+      contentPadding: const EdgeInsets.all(14),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          // ── Merchant header row ──────────────────────────────────────
+          Row(
+            children: [
+              // Avatar
+              Container(
+                width: 40, height: 40,
+                decoration: BoxDecoration(
+                  shape: BoxShape.circle,
+                  color: avatarColor.withValues(alpha: 0.15),
+                ),
+                alignment: Alignment.center,
+                child: Text(initial,
+                    style: TextStyle(
+                        color: avatarColor,
+                        fontWeight: FontWeight.w700,
+                        fontSize: 16)),
+              ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Text(group.merchant,
+                        style: Theme.of(context)
+                            .textTheme
+                            .titleSmall
+                            ?.copyWith(fontWeight: FontWeight.w700),
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis),
+                    const SizedBox(height: 2),
+                    Text(
+                      '${group.count} txn${group.count == 1 ? '' : 's'} · ${formatCurrency(group.total)}',
+                      style: Theme.of(context)
+                          .textTheme
+                          .bodySmall
+                          ?.copyWith(color: scheme.onSurfaceVariant),
+                    ),
+                  ],
+                ),
+              ),
+              // Total amount badge
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                decoration: BoxDecoration(
+                  color: avatarColor.withValues(alpha: 0.12),
+                  borderRadius: BorderRadius.circular(20),
+                ),
+                child: Text(
+                  formatCurrency(group.total),
+                  style: TextStyle(
+                      color: avatarColor,
+                      fontWeight: FontWeight.w700,
+                      fontSize: 12),
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 12),
+          // ── Section label ────────────────────────────────────────────
+          Text('Choose category',
+              style: Theme.of(context)
+                  .textTheme
+                  .labelSmall
+                  ?.copyWith(color: scheme.onSurfaceVariant)),
+          const SizedBox(height: 8),
+          // ── Category chips in a wrap ─────────────────────────────────
+          Wrap(
+            spacing: 6,
+            runSpacing: 6,
+            children: [
+              for (final entry in _kCatMeta.entries)
+                _CategoryChip(
+                  label: entry.key,
+                  icon: entry.value.$1,
+                  color: entry.value.$2,
+                  onTap: () => onCategorize(entry.key),
+                ),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _CategoryChip extends StatelessWidget {
+  const _CategoryChip({
+    required this.label,
+    required this.icon,
+    required this.color,
+    required this.onTap,
+  });
+  final String label;
+  final IconData icon;
+  final Color color;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    return InkWell(
+      onTap: onTap,
+      borderRadius: BorderRadius.circular(20),
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+        decoration: BoxDecoration(
+          color: color.withValues(alpha: 0.12),
+          borderRadius: BorderRadius.circular(20),
+          border: Border.all(color: color.withValues(alpha: 0.3)),
+        ),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Icon(icon, size: 13, color: color),
+            const SizedBox(width: 4),
+            Text(label,
+                style: TextStyle(
+                    color: color,
+                    fontSize: 12,
+                    fontWeight: FontWeight.w600)),
+          ],
+        ),
+      ),
+    );
+  }
 }
 
 // ── Fee Analytics ─────────────────────────────────────────────────────────────
@@ -3652,35 +4054,150 @@ class ChangelogPage extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final scheme = Theme.of(context).colorScheme;
     return PageScaffold(
       title: "What's New",
+      subtitle: 'BELTECH LifeOS release notes',
       onBack: () => context.pop(),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          for (final release in _kReleases) _ReleaseCard(release: release),
+        ],
+      ),
+    );
+  }
+}
+
+typedef _ReleaseNote = ({String version, String date, Color accent, List<(IconData, String, String)> features});
+
+const _kReleases = <_ReleaseNote>[
+  (
+    version: 'v1.1.0',
+    date: 'August 2026',
+    accent: Color(0xFF6366F1),
+    features: [
+      (Icons.psychology_outlined,          'Smarter AI',        'Real DB data: spending, budgets, tasks & events in every reply'),
+      (Icons.filter_list_outlined,         'Import Filtering',  'M-Pesa Only / Banks Only / All source filter now wires through import'),
+      (Icons.bar_chart_outlined,           'Export Preview',    'Per-domain breakdown: transactions, tasks, events, budgets & more'),
+      (Icons.category_outlined,            'Categorize',        'Colorful chip picker replaces the dropdown — progress bar shows progress'),
+      (Icons.add_outlined,                 'Task Add Button',   'Moved to top-right header, matching Calendar parity'),
+      (Icons.image_outlined,               'View Photo',        'Profile avatar sheet now has a full-screen pinch-to-zoom viewer'),
+      (Icons.keyboard_outlined,            'Keyboard Smooth',   'AI input bar tracks keyboard animation frame-by-frame — no lag'),
+    ],
+  ),
+  (
+    version: 'v1.0.0',
+    date: 'July 2026',
+    accent: Color(0xFF14B8A6),
+    features: [
+      (Icons.flutter_dash,                  'Flutter Edition',   'Full BELTECH experience rebuilt in Flutter — 1:1 Kotlin parity'),
+      (Icons.sms_outlined,                  'SMS Import',        'M-Pesa pipeline: 100k messages in ~8 s via 4-isolate pool'),
+      (Icons.account_balance_wallet_outlined,'Finance Hub',       'Budgets, income, recurring, bills, goals & Fuliza tracking'),
+      (Icons.calendar_month_outlined,        'Calendar',          'Tasks, events, birthdays and countdowns with reminders'),
+      (Icons.smart_toy_outlined,            'Offline AI',        'Deterministic intent engine — no internet required'),
+      (Icons.fingerprint_outlined,          'Biometric Lock',    'Screen lock with local_auth integration'),
+      (Icons.palette_outlined,              'Themes',            'Dark / Light / System with animated 400 ms color lerp'),
+    ],
+  ),
+];
+
+class _ReleaseCard extends StatelessWidget {
+  const _ReleaseCard({required this.release});
+  final _ReleaseNote release;
+
+  @override
+  Widget build(BuildContext context) {
+    final scheme = Theme.of(context).colorScheme;
+    final accent = release.accent;
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 16),
       child: AppCard(
+        contentPadding: EdgeInsets.zero,
         child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
+          crossAxisAlignment: CrossAxisAlignment.stretch,
           mainAxisSize: MainAxisSize.min,
           children: [
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                Text('v1.0.0 — Flutter edition', style: Theme.of(context).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w700)),
-                Text(DateFormat('MMM yyyy').format(DateTime.now()), style: Theme.of(context).textTheme.bodySmall?.copyWith(color: Theme.of(context).colorScheme.onSurfaceVariant)),
-              ],
-            ),
-            const Divider(height: 16),
-            for (final bullet in [
-              'Full BELTECH experience rebuilt in Flutter',
-              'M-Pesa SMS import pipeline: 100k msgs in ~8s',
-              'Budget, income, recurring, bills & goals tracking',
-              'Calendar: tasks, events, birthdays, countdowns',
-              'Offline AI assistant with financial intents',
-              'Biometric screen lock',
-              'Dark / Light / System theme switching',
-            ])
-              Padding(
-                padding: const EdgeInsets.only(bottom: 4),
-                child: Text('• $bullet', style: Theme.of(context).textTheme.bodyMedium),
+            // ── Header ──────────────────────────────────────────────────────
+            Container(
+              padding: const EdgeInsets.fromLTRB(16, 14, 16, 14),
+              decoration: BoxDecoration(
+                color: accent.withValues(alpha: 0.10),
+                borderRadius: const BorderRadius.vertical(top: Radius.circular(6)),
               ),
+              child: Row(
+                children: [
+                  Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                    decoration: BoxDecoration(
+                      color: accent,
+                      borderRadius: BorderRadius.circular(20),
+                    ),
+                    child: Text(release.version,
+                        style: const TextStyle(
+                            color: Colors.white,
+                            fontWeight: FontWeight.w700,
+                            fontSize: 13)),
+                  ),
+                  const SizedBox(width: 10),
+                  Expanded(
+                    child: Text(release.date,
+                        style: Theme.of(context)
+                            .textTheme
+                            .bodySmall
+                            ?.copyWith(color: scheme.onSurfaceVariant)),
+                  ),
+                ],
+              ),
+            ),
+            // ── Feature rows ─────────────────────────────────────────────────
+            Padding(
+              padding: const EdgeInsets.fromLTRB(16, 12, 16, 12),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  for (final (icon, title, desc) in release.features)
+                    Padding(
+                      padding: const EdgeInsets.only(bottom: 12),
+                      child: Row(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Container(
+                            width: 32, height: 32,
+                            decoration: BoxDecoration(
+                              color: accent.withValues(alpha: 0.12),
+                              borderRadius: BorderRadius.circular(8),
+                            ),
+                            alignment: Alignment.center,
+                            child: Icon(icon, size: 16, color: accent),
+                          ),
+                          const SizedBox(width: 12),
+                          Expanded(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                Text(title,
+                                    style: Theme.of(context)
+                                        .textTheme
+                                        .bodyMedium
+                                        ?.copyWith(fontWeight: FontWeight.w600)),
+                                const SizedBox(height: 2),
+                                Text(desc,
+                                    style: Theme.of(context)
+                                        .textTheme
+                                        .bodySmall
+                                        ?.copyWith(color: scheme.onSurfaceVariant)),
+                              ],
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                ],
+              ),
+            ),
           ],
         ),
       ),

@@ -305,8 +305,8 @@ class _FinanceScreenState extends ConsumerState<FinanceScreen> {
   }
 
   /// Step 3: run the full historical import for the chosen window.
-  Future<BatchIngestionResult?> _importSms(int days) async {
-    return runHistoricalSmsImport(ref);
+  Future<BatchIngestionResult?> _importSms(int days, {String source = 'all'}) async {
+    return runHistoricalSmsImport(ref, source: source);
   }
 
   // ── CSV import (CsvImportModal.kt parity) ─────────────────────────────────
@@ -610,15 +610,15 @@ class _FinanceScreenState extends ConsumerState<FinanceScreen> {
         ),
         builder: (_) => _SmsSheetHost(
           key: _smsSheetStateKey,
-          onDetect: (days) async {
+          onDetect: (days, source) async {
             final counts = await _detectSms(days);
             _smsSheetStateKey.currentState?.completeDetection(counts);
             return counts;
           },
-          onImportDays: (days) async {
+          onImportDays: (days, source) async {
             Navigator.of(context, rootNavigator: true).pop();
             setState(() => _showSmsImportSheet = false);
-            final result = await _importSms(days);
+            final result = await _importSms(days, source: source);
             if (!mounted) return;
             ScaffoldMessenger.of(context).showSnackBar(SnackBar(
               content: Text(result == null
@@ -706,8 +706,8 @@ class _SmsSheetHost extends StatefulWidget {
     required this.onDismiss,
   });
 
-  final Future<Map<String, int>?> Function(int days) onDetect;
-  final Future<void> Function(int days) onImportDays;
+  final Future<Map<String, int>?> Function(int days, String source) onDetect;
+  final Future<void> Function(int days, String source) onImportDays;
   final VoidCallback onDismiss;
 
   @override
@@ -772,11 +772,22 @@ class _SmsSheetHostState extends State<_SmsSheetHost> {
 
   void completeDetection(Map<String, int>? detected) {
     if (!mounted) return;
-    final sorted = detected?.entries.toList()
+    // Filter the raw detection results to match the chosen source.
+    Map<String, int>? filtered = detected;
+    if (detected != null && _source != 'all') {
+      filtered = {
+        for (final e in detected.entries)
+          if (_source == 'mpesa'
+              ? e.key == 'mpesa'
+              : e.key != 'mpesa' && e.key != 'airtel')
+            e.key: e.value,
+      };
+    }
+    final sorted = filtered?.entries.toList()
       ?..sort((a, b) => b.value.compareTo(a.value));
     setState(() {
       _detecting = false;
-      _detected = detected;
+      _detected = filtered;
       _detectedSorted = sorted;
     });
   }
@@ -787,7 +798,7 @@ class _SmsSheetHostState extends State<_SmsSheetHost> {
       _detecting = true;
       _detected = null;
     });
-    final counts = await widget.onDetect(days);
+    final counts = await widget.onDetect(days, _source);
     completeDetection(counts);
   }
 
@@ -926,7 +937,7 @@ class _SmsSheetHostState extends State<_SmsSheetHost> {
                 FilledButton(
                   onPressed: () {
                     final days = _pendingDays;
-                    if (days != null) widget.onImportDays(days);
+                    if (days != null) widget.onImportDays(days, _source);
                   },
                   style: FilledButton.styleFrom(
                     shape: RoundedRectangleBorder(
