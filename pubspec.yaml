@@ -1,0 +1,95 @@
+name: lifeos
+description: "BELTECH — Personal Management App (Flutter port of LifeOS CMP)"
+publish_to: 'none'
+
+version: 1.0.0+1
+
+environment:
+  sdk: ^3.12.2
+
+dependencies:
+  flutter:
+    sdk: flutter
+
+  cupertino_icons: ^1.0.8
+
+  # State management + DI (replaces PreCompose ViewModel + Koin)
+  flutter_riverpod: ^3.0.3
+  riverpod_annotation: ^3.0.3
+
+  # Navigation (replaces PreCompose Navigator)
+  go_router: ^16.2.4
+
+  # Database (replaces SQLDelight) — Drift over sqlite3, WAL mode
+  drift: ^2.30.1
+  sqlite3_flutter_libs: ^0.5.39
+  path_provider: ^2.1.5
+  path: ^1.9.1
+
+  # Crypto — SHA-256 source/semantic hashes
+  crypto: ^3.0.7
+
+  # Prefs (replaces Multiplatform Settings / DataStore)
+  shared_preferences: ^2.5.3
+
+  # Date/number formatting
+  intl: ^0.20.2
+  timeago: ^3.7.1
+
+  # Security — biometric screen lock
+  local_auth: ^2.3.0
+
+  # Background work (replaces WorkManager)
+  workmanager: ^0.10.9
+
+  # Notifications (replaces core/notifications actuals)
+  flutter_local_notifications: ^19.5.0
+  timezone: ^0.10.1
+
+  # Permissions (replaces moko-permissions)
+  permission_handler: ^12.0.1
+
+  # Charts (replaces Vico)
+  fl_chart: ^1.1.1
+
+  # Files / share / export
+  share_plus: ^12.0.1
+  file_picker: ^10.3.7
+  csv: ^6.0.0
+
+  # Network for assistant LLM proxy (replaces Ktor client)
+  http: ^1.6.0
+
+  # Utilities
+  collection: ^1.19.1
+  equatable: ^2.0.7
+  uuid: ^4.5.1
+  device_info_plus: ^12.1.0
+  package_info_plus: ^9.0.1
+  url_launcher: ^6.3.2
+  rxdart: ^0.28.0
+
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+
+  flutter_lints: ^6.0.0
+  drift_dev: ^2.30.0
+  build_runner: ^2.10.4
+  riverpod_generator: ^3.0.3
+  riverpod_lint: ^3.0.3
+  flutter_launcher_icons: ^0.14.3
+
+flutter_launcher_icons:
+  android: true
+  ios: false
+  image_path: 'assets/logo/logo_personalos.png'
+  min_sdk_android: 21
+  adaptive_icon_background: '#1A1A2E'
+  adaptive_icon_foreground: 'assets/logo/logo_personalos.png'
+
+flutter:
+  uses-material-design: true
+
+  assets:
+    - assets/logo/
