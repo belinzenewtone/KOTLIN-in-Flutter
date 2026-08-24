@@ -1139,6 +1139,16 @@ class _ReviewData {
 }
 // ── Export Center (ExportScreen.kt port) ────────────────────────────────────
 
+/// 2-column grid layout for the preview card.  Each inner list is one row.
+/// The last row may have only one item — the Expanded wraps it to half-width
+/// which is acceptable given the label.
+const _kPreviewDomains = [
+  [('transactions', 'Transactions'), ('tasks', 'Tasks')],
+  [('events', 'Events'), ('budgets', 'Budgets')],
+  [('incomes', 'Income Streams'), ('recurringRules', 'Recurring Rules')],
+  [('merchantRules', 'Merchant Rules')],
+];
+
 class ExportScreen extends ConsumerStatefulWidget {
   const ExportScreen({super.key, this.openPdfSheet = false});
 
@@ -1162,7 +1172,7 @@ class _ExportScreenState extends ConsumerState<ExportScreen> {
   Map<String, Object?>? _result;
   List<Map<String, Object?>> _history = [];
   // Stable future — only refreshed when domain/preset changes, not every build.
-  Future<int>? _previewFuture;
+  Future<Map<String, int>>? _previewFuture;
 
   static const _domains = {
     'all': 'all',
@@ -1210,27 +1220,30 @@ class _ExportScreenState extends ConsumerState<ExportScreen> {
     }
   }
 
-  Future<int> _previewCount() async {
+  // Returns {transactions, tasks, events, budgets, incomes, recurringRules, merchantRules}
+  Future<Map<String, int>> _previewCount() async {
     final db = await ref.read(lifeOsDatabaseProvider.future);
     final userId = await ref.read(userIdProvider.future);
-    final (from, _) = _dateCutoff();
-    String table;
-    switch (_domain) {
-      case 'transactions':
-        table = 'transactions';
-      case 'tasks':
-        table = 'tasks';
-      case 'events':
-        table = 'events';
-      default:
-        table = 'transactions';
-    }
-    final row = await db.customSelect(
-      'SELECT COUNT(*) AS n FROM $table WHERE user_id=? AND deleted_at IS NULL AND date>=?',
-      variables: [Variable.withString(userId), Variable.withInt(from)],
-      readsFrom: {db.transactions, db.tasks, db.events},
-    ).getSingle();
-    return (row.data['n'] as num?)?.toInt() ?? 0;
+    final (from, to) = _dateCutoff();
+    final results = await Future.wait([
+      db.customSelect('SELECT COUNT(*) AS n FROM transactions WHERE user_id=? AND deleted_at IS NULL AND date>=? AND date<=?', variables: [Variable.withString(userId), Variable.withInt(from), Variable.withInt(to)], readsFrom: {db.transactions}).getSingle(),
+      db.customSelect('SELECT COUNT(*) AS n FROM tasks WHERE user_id=? AND deleted_at IS NULL AND created_at>=? AND created_at<=?', variables: [Variable.withString(userId), Variable.withInt(from), Variable.withInt(to)], readsFrom: {db.tasks}).getSingle(),
+      db.customSelect('SELECT COUNT(*) AS n FROM events WHERE user_id=? AND deleted_at IS NULL AND date>=? AND date<=?', variables: [Variable.withString(userId), Variable.withInt(from), Variable.withInt(to)], readsFrom: {db.events}).getSingle(),
+      db.customSelect('SELECT COUNT(*) AS n FROM budgets WHERE user_id=? AND deleted_at IS NULL', variables: [Variable.withString(userId)], readsFrom: {db.budgets}).getSingle(),
+      db.customSelect('SELECT COUNT(*) AS n FROM income_streams WHERE user_id=? AND deleted_at IS NULL', variables: [Variable.withString(userId)], readsFrom: {db.incomes}).getSingle(),
+      db.customSelect('SELECT COUNT(*) AS n FROM recurring_rules WHERE user_id=? AND deleted_at IS NULL', variables: [Variable.withString(userId)], readsFrom: {db.recurringRules}).getSingle(),
+      db.customSelect('SELECT COUNT(*) AS n FROM paybill_registry WHERE user_id=? AND deleted_at IS NULL', variables: [Variable.withString(userId)], readsFrom: {db.paybillRegistry}).getSingle(),
+    ]);
+    int n(dynamic row) => (row.data['n'] as num?)?.toInt() ?? 0;
+    return {
+      'transactions': n(results[0]),
+      'tasks': n(results[1]),
+      'events': n(results[2]),
+      'budgets': n(results[3]),
+      'incomes': n(results[4]),
+      'recurringRules': n(results[5]),
+      'merchantRules': n(results[6]),
+    };
   }
 
   (int, int) _dateCutoff() {
@@ -1548,37 +1561,71 @@ class _ExportScreenState extends ConsumerState<ExportScreen> {
     final scheme = Theme.of(context).colorScheme;
     return AppCard(
       contentPadding: const EdgeInsets.all(16),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Text('Preview', style: Theme.of(context).textTheme.titleMedium),
-          const SizedBox(height: 8),
-          FutureBuilder<int>(
-            future: _previewFuture,
-            builder: (context, snap) {
-              if (snap.connectionState == ConnectionState.waiting) {
-                return Text('Preparing preview...',
-                    style: Theme.of(context)
-                        .textTheme
-                        .bodySmall
-                        ?.copyWith(color: scheme.onSurfaceVariant));
-              }
-              return Text(
-                'Total items: ${snap.data ?? 0}',
-                style: Theme.of(context).textTheme.bodySmall,
-              );
-            },
-          ),
-          const SizedBox(height: 8),
-          Text(
-            'Pick a format and date window to estimate the export size.',
-            style: Theme.of(context)
-                .textTheme
-                .bodySmall
-                ?.copyWith(color: scheme.onSurfaceVariant),
-          ),
-        ],
+      child: FutureBuilder<Map<String, int>>(
+        future: _previewFuture,
+        builder: (context, snap) {
+          final counts = snap.data ?? {};
+          final total = counts.values.fold<int>(0, (a, b) => a + b);
+          final loading = snap.connectionState == ConnectionState.waiting;
+          return Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Text('Preview',
+                      style: Theme.of(context).textTheme.titleMedium),
+                  if (loading)
+                    const SizedBox(
+                        width: 14,
+                        height: 14,
+                        child: CircularProgressIndicator(strokeWidth: 2))
+                  else
+                    Text('Total items: $total',
+                        style: Theme.of(context)
+                            .textTheme
+                            .bodySmall
+                            ?.copyWith(color: scheme.onSurfaceVariant)),
+                ],
+              ),
+              const SizedBox(height: 12),
+              // 2-column grid of domain counts — matches Kotlin ExportScreen.
+              for (final row in _kPreviewDomains)
+                Padding(
+                  padding: const EdgeInsets.only(bottom: 8),
+                  child: Row(
+                    children: [
+                      for (final (key, label) in row) ...[
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                loading ? '—' : '${counts[key] ?? 0}',
+                                style: Theme.of(context)
+                                    .textTheme
+                                    .titleMedium
+                                    ?.copyWith(
+                                        color: scheme.primary,
+                                        fontWeight: FontWeight.bold),
+                              ),
+                              Text(label,
+                                  style: Theme.of(context)
+                                      .textTheme
+                                      .bodySmall
+                                      ?.copyWith(
+                                          color: scheme.onSurfaceVariant)),
+                            ],
+                          ),
+                        ),
+                      ],
+                    ],
+                  ),
+                ),
+            ],
+          );
+        },
       ),
     );
   }

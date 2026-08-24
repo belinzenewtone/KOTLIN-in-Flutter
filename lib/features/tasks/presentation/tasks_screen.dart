@@ -36,6 +36,10 @@ class TasksScreen extends ConsumerStatefulWidget {
 
 class _TasksScreenState extends ConsumerState<TasksScreen> {
   CalendarRepository? _repo;
+  // Cached stream — created once when the repo is ready, never recreated on
+  // setState so the StreamBuilder never resubscribes mid-session (which caused
+  // a flash-to-empty and the apparent "freeze" when navigating to this screen).
+  Stream<List<TaskData>>? _tasksStream;
   String _query = '';
   TaskData? _editingTask;
   TaskData? _deleteTarget;
@@ -59,7 +63,11 @@ class _TasksScreenState extends ConsumerState<TasksScreen> {
       final db = await ref.read(lifeOsDatabaseProvider.future);
       final userId = await ref.read(userIdProvider.future);
       if (!mounted) return;
-      setState(() => _repo = CalendarRepository(db, userId));
+      final repo = CalendarRepository(db, userId);
+      setState(() {
+        _repo = repo;
+        _tasksStream = repo.watchTasks();
+      });
       await _handleDeepLink();
     }();
   }
@@ -204,13 +212,15 @@ class _TasksScreenState extends ConsumerState<TasksScreen> {
                       tone: TopBannerTone.success,
                       onDismiss: () => setState(() => _successMessage = null),
                     ),
-              child: _repo == null
+              child: _tasksStream == null
                   ? const Center(child: CircularProgressIndicator())
                   : StreamBuilder<List<TaskData>>(
-                      stream: _repo!.watchTasks(),
+                      stream: _tasksStream,
                       builder: (context, snap) {
+                        if (snap.connectionState == ConnectionState.waiting) {
+                          return const Center(child: CircularProgressIndicator());
+                        }
                         final tasks = snap.data ?? [];
-                        unawaited(_loadLoggedMinutes(tasks));
                         return _buildBody(context, tasks);
                       },
                     ),

@@ -719,6 +719,10 @@ class _SmsSheetHostState extends State<_SmsSheetHost> {
   Map<String, int>? _detected;
   int? _pendingDays;
 
+  // Source filter (1:1 with Kotlin SmsImportBottomSheet source selector).
+  // 'all' = M-Pesa + Banks, 'mpesa' = M-Pesa Only, 'banks' = Banks Only.
+  String _source = 'all';
+
   @override
   Widget build(BuildContext context) {
     final scheme = Theme.of(context).colorScheme;
@@ -789,6 +793,11 @@ class _SmsSheetHostState extends State<_SmsSheetHost> {
 
   Widget _buildFilterStep(BuildContext context) {
     final scheme = Theme.of(context).colorScheme;
+    const sources = [
+      ('all', 'M-Pesa + Banks'),
+      ('mpesa', 'M-Pesa Only'),
+      ('banks', 'Banks Only'),
+    ];
     return Column(
       mainAxisSize: MainAxisSize.min,
       crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -801,6 +810,26 @@ class _SmsSheetHostState extends State<_SmsSheetHost> {
         Padding(
           padding: const EdgeInsets.symmetric(horizontal: 20),
           child: Text('Choose what to import',
+              style: Theme.of(context)
+                  .textTheme
+                  .bodySmall
+                  ?.copyWith(color: scheme.onSurfaceVariant)),
+        ),
+        const SizedBox(height: 4),
+        // Source filter radio group (1:1 Kotlin SmsImportBottomSheet parity).
+        for (final (value, label) in sources)
+          RadioListTile<String>(
+            value: value,
+            groupValue: _source,
+            dense: true,
+            title: Text(label, style: Theme.of(context).textTheme.bodyMedium),
+            activeColor: scheme.primary,
+            onChanged: (v) => setState(() => _source = v ?? _source),
+          ),
+        const SizedBox(height: 4),
+        Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 20),
+          child: Text('Select time period to scan',
               style: Theme.of(context)
                   .textTheme
                   .bodySmall

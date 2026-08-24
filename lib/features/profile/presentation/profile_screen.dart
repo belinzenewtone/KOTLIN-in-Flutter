@@ -269,41 +269,45 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
   void _showAvatarSheet(BuildContext context, ColorScheme scheme) {
     showModalBottomSheet<void>(
       context: context,
+      // useRootNavigator + useSafeArea ensures the sheet renders above the
+      // floating pill nav bar which is drawn at the root navigator level.
+      useRootNavigator: true,
+      useSafeArea: true,
       shape: const RoundedRectangleBorder(
           borderRadius: BorderRadius.vertical(top: Radius.circular(16))),
-      builder: (_) => SafeArea(
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            const SizedBox(height: 8),
-            Container(
-              width: 36, height: 4,
-              decoration: BoxDecoration(
-                color: scheme.outlineVariant,
-                borderRadius: BorderRadius.circular(2),
-              ),
+      builder: (sheetCtx) => Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          const SizedBox(height: 8),
+          Container(
+            width: 36, height: 4,
+            decoration: BoxDecoration(
+              color: scheme.outlineVariant,
+              borderRadius: BorderRadius.circular(2),
             ),
-            const SizedBox(height: 16),
+          ),
+          const SizedBox(height: 16),
+          ListTile(
+            leading: Icon(Icons.photo_library_outlined, color: scheme.primary),
+            title: const Text('Choose from gallery'),
+            onTap: () {
+              Navigator.of(sheetCtx).pop();
+              _pickAvatar();
+            },
+          ),
+          if (_avatarPath != null)
             ListTile(
-              leading: Icon(Icons.photo_library_outlined, color: scheme.primary),
-              title: const Text('Choose from gallery'),
+              leading: Icon(Icons.delete_outline, color: scheme.error),
+              title: Text('Remove photo', style: TextStyle(color: scheme.error)),
               onTap: () {
-                Navigator.pop(context);
-                _pickAvatar();
+                Navigator.of(sheetCtx).pop();
+                _removeAvatar();
               },
             ),
-            if (_avatarPath != null)
-              ListTile(
-                leading: Icon(Icons.delete_outline, color: scheme.error),
-                title: Text('Remove photo', style: TextStyle(color: scheme.error)),
-                onTap: () {
-                  Navigator.pop(context);
-                  _removeAvatar();
-                },
-              ),
-            const SizedBox(height: 8),
-          ],
-        ),
+          // Bottom padding: safe area already accounted for by useSafeArea, but
+          // add a comfortable gap above the home indicator / gesture bar.
+          const SizedBox(height: 16),
+        ],
       ),
     );
   }
