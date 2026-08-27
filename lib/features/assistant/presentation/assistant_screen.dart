@@ -20,6 +20,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'package:drift/drift.dart' show Variable;
 
 import '../../../core/database/database.dart';
+import '../../../core/designsystem/dialogs.dart';
 import '../../../core/designsystem/page_scaffold.dart';
 import '../../../core/designsystem/tokens.dart';
 import '../../../core/utils/date_utils.dart';
@@ -423,14 +424,8 @@ class _AssistantScreenState extends ConsumerState<AssistantScreen> {
         setState(() => _showClearConfirm = false);
         showDialog<void>(
           context: context,
-          builder: (dialogCtx) => AlertDialog(
-            backgroundColor: Theme.of(dialogCtx).colorScheme.surface,
-            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(6)),
-            title: Text('Clear chat history?',
-                style: Theme.of(dialogCtx)
-                    .textTheme
-                    .titleLarge
-                    ?.copyWith(fontWeight: FontWeight.w700)),
+          builder: (dialogCtx) => LifeOsAlertDialog(
+            title: const Text('Clear chat history?'),
             content: const Text(
                 'This will remove your current assistant conversation and start a fresh one.'),
             actions: [
@@ -439,7 +434,7 @@ class _AssistantScreenState extends ConsumerState<AssistantScreen> {
                   child: const Text('Cancel')),
               FilledButton(
                 style: FilledButton.styleFrom(
-                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(6)),
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
                 ),
                 onPressed: () {
                   Navigator.of(dialogCtx).pop();
@@ -554,9 +549,25 @@ class ChatBubble extends StatelessWidget {
         constraints:
             BoxConstraints(maxWidth: MediaQuery.sizeOf(context).width * 0.82),
         decoration: BoxDecoration(
-          borderRadius: BorderRadius.circular(6),
+          borderRadius: isUser
+              ? const BorderRadius.only(
+                  topLeft: Radius.circular(12),
+                  topRight: Radius.circular(4),
+                  bottomLeft: Radius.circular(12),
+                  bottomRight: Radius.circular(12),
+                )
+              : const BorderRadius.only(
+                  topLeft: Radius.circular(4),
+                  topRight: Radius.circular(12),
+                  bottomLeft: Radius.circular(12),
+                  bottomRight: Radius.circular(12),
+                ),
           color: isUser ? scheme.primaryContainer : scheme.surfaceContainerLowest,
-          border: Border.all(color: scheme.outlineVariant.withValues(alpha: 0.5)),
+          border: Border.all(
+            color: isUser
+                ? scheme.primary.withValues(alpha: 0.30)
+                : scheme.outlineVariant.withValues(alpha: 0.45),
+          ),
         ),
         padding: const EdgeInsets.all(14),
         child: Text(message.content, style: Theme.of(context).textTheme.bodyMedium),
@@ -651,8 +662,13 @@ class _TypingIndicatorState extends State<_TypingIndicator>
     return Container(
       decoration: BoxDecoration(
         color: scheme.surfaceContainerLowest,
-        borderRadius: BorderRadius.circular(6),
-        border: Border.all(color: scheme.outlineVariant.withValues(alpha: 0.5)),
+        borderRadius: const BorderRadius.only(
+          topLeft: Radius.circular(4),
+          topRight: Radius.circular(12),
+          bottomLeft: Radius.circular(12),
+          bottomRight: Radius.circular(12),
+        ),
+        border: Border.all(color: scheme.outlineVariant.withValues(alpha: 0.45)),
       ),
       padding: const EdgeInsets.all(14),
       child: AnimatedBuilder(

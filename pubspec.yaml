@@ -60,6 +60,9 @@ dependencies:
   # Network for assistant LLM proxy (replaces Ktor client)
   http: ^1.6.0
 
+  # Fonts — Plus Jakarta Sans (display), Inter (body), JetBrains Mono (amounts)
+  google_fonts: ^6.2.1
+
   # Utilities
   collection: ^1.19.1
   equatable: ^2.0.7

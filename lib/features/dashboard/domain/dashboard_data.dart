@@ -62,15 +62,22 @@ class DashboardData {
   final List<DailySpending> weeklySpendingData;
   final List<DashboardInsight> insights;
 
-  /// buildGreeting() parity: hour-based salutation + first name (≤12 chars).
+  /// buildGreeting() parity: hour-based salutation + display name.
+  /// Username is capped at 8 chars (matches the Profile Settings limit);
+  /// profile first name is shown as-is when no username is set.
   static String buildGreeting(String profileName, String username) {
     final hour = DateTime.now().hour;
     final timeGreeting =
         hour < 12 ? 'Good Morning' : hour < 17 ? 'Good Afternoon' : 'Good Evening';
-    final displayName =
-        username.trim().isNotEmpty ? username.trim() : profileName.trim();
-    var firstName = displayName.split(' ').firstOrNull ?? '';
-    if (firstName.length > 12) firstName = firstName.substring(0, 12);
+    String firstName;
+    if (username.trim().isNotEmpty) {
+      // Username: honour the 8-char limit set everywhere else in the app.
+      final u = username.trim();
+      firstName = u.length > 8 ? u.substring(0, 8) : u;
+    } else {
+      // No username — use the first word of the profile name (no hard cap).
+      firstName = profileName.trim().split(' ').firstOrNull ?? '';
+    }
     if (firstName.isNotEmpty) return '$timeGreeting, $firstName';
     return timeGreeting;
   }

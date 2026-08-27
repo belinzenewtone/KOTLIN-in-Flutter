@@ -75,6 +75,14 @@ class FinanceRepository {
       );
 
   /// Spending summary for the hero card + breakdown section.
+  ///
+  /// All 8 DB queries run in parallel via Future.wait() — reduces the load
+  /// time from (sum of query times) to (slowest single query).
+  ///
+  /// The uncategorized count uses the same broad filter and "no date limit"
+  /// logic as CategorizePage, and counts distinct merchant groups rather than
+  /// individual rows — so the banner number matches what you see when you open
+  /// the Categorize page.
   Future<FinanceSpendingSummary> summary() async {
     final now = DateTime.now();
     final todayStart =
@@ -84,8 +92,13 @@ class FinanceRepository {
     final weekStart = monday.millisecondsSinceEpoch;
     final monthStart = DateTime(now.year, now.month, 1).millisecondsSinceEpoch;
 
-    Future<double> sum(int? fromMs) async {
-      if (fromMs == null) return 0;
+    // Broad uncategorized filter — mirrors _CategorizeState._uncatFilter in
+    // misc_screens.dart so the banner count stays in sync.
+    const uncatFilter =
+        "(category IS NULL OR category='' OR LOWER(category) IN "
+        "('uncategorized','other','others','unknown','other category'))";
+
+    Future<double> sumQuery(int fromMs) async {
       final row = await _db.customSelect(
         'SELECT COALESCE(SUM(amount),0.0) AS s FROM transactions '
         'WHERE user_id = ? AND deleted_at IS NULL AND date >= ? '
@@ -96,48 +109,59 @@ class FinanceRepository {
       return (row.data['s'] as num).toDouble();
     }
 
-    final todayTotal = await sum(todayStart);
-    final weekTotal = await sum(weekStart);
-    final monthTotal = await sum(monthStart);
+    // Run all 8 independent queries concurrently.
+    final results = await Future.wait([
+      /* 0 */ sumQuery(todayStart),
+      /* 1 */ sumQuery(weekStart),
+      /* 2 */ sumQuery(monthStart),
+      /* 3 */ _db.customSelect(
+        'SELECT category, SUM(amount) AS total FROM transactions '
+        'WHERE user_id = ? AND deleted_at IS NULL AND date >= ? '
+        'AND UPPER(transaction_type) IN $_spendTypes '
+        'GROUP BY category ORDER BY total DESC',
+        variables: [Variable.withString(_userId), Variable.withInt(monthStart)],
+        readsFrom: {_db.transactions},
+      ).get(),
+      /* 4 */ _db.customSelect(
+        'SELECT merchant, SUM(amount) AS total FROM transactions '
+        'WHERE user_id = ? AND deleted_at IS NULL AND date >= ? '
+        'AND UPPER(transaction_type) IN $_spendTypes '
+        'GROUP BY merchant ORDER BY total DESC LIMIT 5',
+        variables: [Variable.withString(_userId), Variable.withInt(monthStart)],
+        readsFrom: {_db.transactions},
+      ).get(),
+      /* 5 — count distinct merchant groups (matches CategorizePage) */
+      _db.customSelect(
+        'SELECT COUNT(*) AS c FROM ('
+        '  SELECT COALESCE(merchant,\'Unknown\') FROM transactions'
+        '  WHERE user_id = ? AND deleted_at IS NULL AND $uncatFilter'
+        '  GROUP BY merchant'
+        ')',
+        variables: [Variable.withString(_userId)],
+        readsFrom: {_db.transactions},
+      ).getSingle(),
+      /* 6 */ _db.customSelect(
+        'SELECT COALESCE(SUM(fee),0.0) AS s FROM transactions '
+        'WHERE user_id = ? AND deleted_at IS NULL AND date >= ?',
+        variables: [Variable.withString(_userId), Variable.withInt(monthStart)],
+        readsFrom: {_db.transactions},
+      ).getSingle(),
+      /* 7 */ _db.customSelect(
+        'SELECT COALESCE(SUM(limit_amount),0.0) AS s FROM budgets '
+        'WHERE user_id = ? AND deleted_at IS NULL',
+        variables: [Variable.withString(_userId)],
+        readsFrom: {_db.budgets},
+      ).getSingle(),
+    ]);
 
-    final breakdownRows = await _db.customSelect(
-      'SELECT category, SUM(amount) AS total FROM transactions '
-      'WHERE user_id = ? AND deleted_at IS NULL AND date >= ? '
-      'AND UPPER(transaction_type) IN $_spendTypes '
-      'GROUP BY category ORDER BY total DESC',
-      variables: [Variable.withString(_userId), Variable.withInt(monthStart)],
-      readsFrom: {_db.transactions},
-    ).get();
-
-    final merchantsRows = await _db.customSelect(
-      'SELECT merchant, SUM(amount) AS total FROM transactions '
-      'WHERE user_id = ? AND deleted_at IS NULL AND date >= ? '
-      'AND UPPER(transaction_type) IN $_spendTypes '
-      'GROUP BY merchant ORDER BY total DESC LIMIT 5',
-      variables: [Variable.withString(_userId), Variable.withInt(monthStart)],
-      readsFrom: {_db.transactions},
-    ).get();
-
-    final uncategorizedRow = await _db.customSelect(
-      "SELECT COUNT(*) AS c FROM transactions WHERE user_id = ? "
-      "AND deleted_at IS NULL AND date >= ? AND UPPER(category) IN ('OTHER','UNCATEGORIZED','UNKNOWN','')",
-      variables: [Variable.withString(_userId), Variable.withInt(monthStart)],
-      readsFrom: {_db.transactions},
-    ).getSingle();
-
-    final feeRow = await _db.customSelect(
-      'SELECT COALESCE(SUM(fee),0.0) AS s FROM transactions '
-      'WHERE user_id = ? AND deleted_at IS NULL AND date >= ?',
-      variables: [Variable.withString(_userId), Variable.withInt(monthStart)],
-      readsFrom: {_db.transactions},
-    ).getSingle();
-
-    final budgetRow = await _db.customSelect(
-      'SELECT COALESCE(SUM(limit_amount),0.0) AS s FROM budgets '
-      'WHERE user_id = ? AND deleted_at IS NULL',
-      variables: [Variable.withString(_userId)],
-      readsFrom: {_db.budgets},
-    ).getSingle();
+    final todayTotal    = results[0] as double;
+    final weekTotal     = results[1] as double;
+    final monthTotal    = results[2] as double;
+    final breakdownRows = results[3] as List<QueryRow>;
+    final merchantsRows = results[4] as List<QueryRow>;
+    final uncatRow      = results[5] as QueryRow;
+    final feeRow        = results[6] as QueryRow;
+    final budgetRow     = results[7] as QueryRow;
 
     return FinanceSpendingSummary(
       todayTotal: todayTotal,
@@ -160,7 +184,7 @@ class FinanceRepository {
             (r.data['total'] as num).toDouble()
           )
       ],
-      uncategorizedCount: uncategorizedRow.data['c'] as int,
+      uncategorizedCount: uncatRow.data['c'] as int,
       monthFeesTotal: (feeRow.data['s'] as num).toDouble(),
       totalMonthBudget: (budgetRow.data['s'] as num).toDouble(),
     );

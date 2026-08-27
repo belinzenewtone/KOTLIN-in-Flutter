@@ -69,16 +69,22 @@ final class AppDateUtils {
   static int get yearEndMillis =>
       DateTime(DateTime.now().year + 1, 1, 1).millisecondsSinceEpoch - 1;
 
+  // DateFormat instances are expensive to construct (they parse the pattern
+  // string on every new instance). Cache them by pattern so each pattern is
+  // only parsed once for the life of the app.
+  static final _fmtCache = <String, DateFormat>{};
+  static DateFormat _fmt(String pattern) =>
+      _fmtCache.putIfAbsent(pattern, () => DateFormat(pattern, 'en_US'));
+
   /// Pattern formatting supporting the app's used patterns:
   /// "MMM dd, yyyy" · "h:mm a" · "EEEE, MMM dd" · "MMM dd" · "d/M/yyyy".
   static String formatDate(int epochMillis, [String pattern = 'MMM dd, yyyy']) {
     final dt = _local(epochMillis);
     // Translate Java patterns to intl where identical; custom map otherwise.
     const passthrough = {'MMM dd, yyyy', 'h:mm a', 'MMM dd', 'd/M/yyyy', 'MMMM yyyy'};
-    final p = passthrough.contains(pattern) ? pattern : null;
-    if (p != null) {
+    if (passthrough.contains(pattern)) {
       try {
-        return DateFormat(p, 'en_US').format(dt);
+        return _fmt(pattern).format(dt);
       } catch (_) {/* fall through */}
     }
     // Hand-rolled fallbacks for composite patterns.
@@ -88,7 +94,7 @@ final class AppDateUtils {
         const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
         return '${weekdays[dt.weekday - 1]}, ${months[dt.month - 1]} ${dt.day.toString().padLeft(2, '0')}';
       default:
-        return DateFormat('MMM dd, yyyy').format(dt);
+        return _fmt('MMM dd, yyyy').format(dt);
     }
   }
 
@@ -96,6 +102,10 @@ final class AppDateUtils {
 
   /// "KSh 12,345" — grouped integer part only (Kotlin formatNumber parity).
   static String formatCurrency(double amount) => 'KSh ${_formatNumber(amount)}';
+
+  /// Grouped integer digits only — no "KSh" prefix.  Used by MetricCard to
+  /// render the currency label and amount on separate lines.
+  static String formatAmount(double amount) => _formatNumber(amount);
 
   static String _formatNumber(double value) {
     final long = value.truncate();

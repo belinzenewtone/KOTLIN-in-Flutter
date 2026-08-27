@@ -138,9 +138,11 @@ class LifeOsSwitch extends StatelessWidget {
   Widget build(BuildContext context) {
     // Static Primary keeps the same vivid blue in dark mode.
     const activeColor = kPrimary;
+    // 35% instead of 20% — makes the inactive track clearly legible in dark mode
+    // while still reading as "off" vs the vivid primary active track.
     final inactive =
-        Theme.of(context).extension<LifeOsColors>()?.onSurfaceVariant.withValues(alpha: 0.20) ??
-            kTextOnSurfaceVariant.withValues(alpha: 0.20);
+        Theme.of(context).extension<LifeOsColors>()?.onSurface.withValues(alpha: 0.30) ??
+            kTextOnSurfaceVariant.withValues(alpha: 0.30);
     return Switch(
       value: value,
       onChanged: enabled
@@ -207,11 +209,11 @@ class BudgetProgressIndicator extends StatelessWidget {
 
     final Color barColor;
     if (ratio >= 1.0) {
-      barColor = scheme.error;
+      barColor = LifeOsColors.expense;   // rose — over budget
     } else if (ratio >= 0.8) {
-      barColor = LifeOsColors.warning;
+      barColor = LifeOsColors.warning;   // amber — near limit
     } else {
-      barColor = LifeOsColors.success;
+      barColor = LifeOsColors.income;    // green — healthy
     }
 
     String? statusLabel;

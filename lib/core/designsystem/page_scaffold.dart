@@ -214,7 +214,7 @@ class HeroSurface extends StatelessWidget {
     final c = colors ?? LifeOsColors.light;
     final shape = BorderRadius.vertical(
       top: Radius.zero,
-      bottom: Radius.circular(6),
+      bottom: Radius.circular(16),
     );
 
     return DecoratedBox(
@@ -227,7 +227,8 @@ class HeroSurface extends StatelessWidget {
         ),
       ),
       child: Padding(
-        padding: const EdgeInsets.only(left: 20, right: 20, top: 6, bottom: 14),
+        // Revamped padding: top 4 / bottom 10 (was 6/14) — slimmer header.
+        padding: const EdgeInsets.only(left: 20, right: 20, top: 4, bottom: 10),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
@@ -251,17 +252,23 @@ class HeroSurface extends StatelessWidget {
                             height: 16 / 12,
                             fontWeight: FontWeight.w500,
                             color: Theme.of(context).colorScheme.primary,
+                            decoration: TextDecoration.none,
+                            decorationColor: Colors.transparent,
                           ),
                         ),
-                      const SizedBox(height: 4),
+                      // Gap tightened 4 → 2dp when eyebrow present; 4 → 2dp title→subtitle.
+                      if (eyebrow != null) const SizedBox(height: 2),
+                      if (eyebrow == null) const SizedBox(height: 2),
                       Text(
                         title,
                         maxLines: 2,
                         overflow: TextOverflow.ellipsis,
-                        style: Theme.of(context).textTheme.headlineMedium?.copyWith(color: c.onBackground),
+                        // headlineSmall (20sp/w700) — was headlineMedium (24sp).
+                        // Saves ~4sp of height while keeping the heading hierarchy clear.
+                        style: Theme.of(context).textTheme.headlineSmall?.copyWith(color: c.onBackground),
                       ),
                       if (subtitle != null) ...[
-                        const SizedBox(height: 4),
+                        const SizedBox(height: 2),
                         Text(
                           subtitle!,
                           maxLines: 2,

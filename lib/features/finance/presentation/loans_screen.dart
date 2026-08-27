@@ -9,6 +9,7 @@ import 'package:drift/drift.dart' show Variable;
 import '../../../core/database/database.dart';
 import '../../../core/designsystem/app_card.dart';
 import '../../../core/designsystem/banners.dart';
+import '../../../core/designsystem/dialogs.dart';
 import '../../../core/designsystem/metric_card.dart' show formatCurrency;
 import '../../../core/designsystem/page_scaffold.dart';
 import '../../../core/utils/date_utils.dart';
@@ -82,9 +83,8 @@ class _LoansScreenState extends ConsumerState<LoansScreen> {
     await showDialog<void>(
       context: context,
       builder: (dialogCtx) {
-        return AlertDialog(
-          backgroundColor:
-              Theme.of(dialogCtx).colorScheme.surfaceContainerHighest,
+        return LifeOsAlertDialog(
+          scrollable: true,
           title: const Text('Log Repayment'),
           content: Form(
             key: formKey,

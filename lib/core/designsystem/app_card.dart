@@ -24,7 +24,8 @@ class AppCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final scheme = Theme.of(context).colorScheme;
-    final shape = BorderRadius.circular(6);
+    // 12dp card radius (revamp v2 — kRadius12 in theme.dart).
+    final shape = BorderRadius.circular(12);
 
     final Color baseColor;
     if (glass) {

@@ -20,6 +20,7 @@ import '../core/notifications/notification_service.dart';
 
 import '../core/database/database.dart';
 import '../core/designsystem/app_card.dart';
+import '../core/designsystem/dialogs.dart';
 import '../core/platform/sms_bridge.dart';
 import 'sms/ingestion/ingestion_pipeline.dart';
 import 'sms/ingestion/ingestion_types.dart';
@@ -359,7 +360,7 @@ class _SearchScreenState extends ConsumerState<SearchScreen> {
     return AppCard(
       contentPadding: const EdgeInsets.all(12),
       child: InkWell(
-        borderRadius: BorderRadius.circular(6),
+        borderRadius: BorderRadius.circular(12),
         onTap: onTap,
         child: Row(
           children: [
@@ -1539,7 +1540,7 @@ class _ExportScreenState extends ConsumerState<ExportScreen> {
             child: FilledButton(
               style: FilledButton.styleFrom(
                   shape:
-                      RoundedRectangleBorder(borderRadius: BorderRadius.circular(6))),
+                      RoundedRectangleBorder(borderRadius: BorderRadius.circular(16))),
               onPressed: _exporting ? null : _export,
               child: _exporting
                   ? const SizedBox(
@@ -1670,7 +1671,7 @@ class _ExportScreenState extends ConsumerState<ExportScreen> {
           const SizedBox(height: 8),
           OutlinedButton.icon(
             style: OutlinedButton.styleFrom(
-                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(6))),
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16))),
             icon: const Icon(Icons.share_outlined, size: 18),
             label: const Text('Share latest export'),
             onPressed: () {
@@ -1908,7 +1909,7 @@ class _StatementExportSheetState extends ConsumerState<_StatementExportSheet> {
     return Material(
       color: scheme.surface,
       shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(6)),
+        borderRadius: BorderRadius.vertical(top: Radius.circular(16)),
       ),
       child: Padding(
         padding: const EdgeInsets.fromLTRB(24, 20, 24, 32),
@@ -2157,7 +2158,7 @@ class _ScreenLockSettingsState extends ConsumerState<ScreenLockSettingsPage> {
                       child: Text('PIN saved ✓', style: TextStyle(color: const Color(0xFF34D399), fontWeight: FontWeight.w600)),
                     ),
                   FilledButton(
-                    style: FilledButton.styleFrom(shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(6))),
+                    style: FilledButton.styleFrom(shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16))),
                     onPressed: () async {
                       if (_newPin.text.length < 4) { setState(() => _pinError = 'PIN must be 4–6 digits'); return; }
                       if (_newPin.text != _confirmPin.text) { setState(() => _pinError = 'PINs do not match'); return; }
@@ -2434,12 +2435,21 @@ class _SmsImportHealthPageState extends ConsumerState<SmsImportHealthPage> {
                       width: 40,
                       height: 40,
                       decoration: BoxDecoration(
-                        color: scheme.surfaceContainerHighest,
+                        color: d.hasPermission
+                            ? scheme.primaryContainer
+                            : scheme.errorContainer.withValues(alpha: 0.35),
                         borderRadius: BorderRadius.circular(10),
                       ),
                       alignment: Alignment.center,
-                      child: Icon(Icons.cell_tower_outlined,
-                          size: 20, color: scheme.onSurfaceVariant),
+                      child: Icon(
+                        d.hasPermission
+                            ? Icons.cell_tower_outlined
+                            : Icons.signal_cellular_off_outlined,
+                        size: 20,
+                        color: d.hasPermission
+                            ? scheme.primary
+                            : scheme.error,
+                      ),
                     ),
                     const SizedBox(width: 12),
                     Expanded(
@@ -2449,10 +2459,29 @@ class _SmsImportHealthPageState extends ConsumerState<SmsImportHealthPage> {
                           Text('Realtime receiver', style: tt.titleSmall),
                           const SizedBox(height: 2),
                           Text(
-                            'Grant the SMS permission to capture messages in real time',
+                            d.hasPermission
+                                ? 'Incoming M-Pesa SMS are captured automatically and processed on next app open'
+                                : 'Grant SMS permission to start capturing messages in real time',
                             style: tt.bodySmall?.copyWith(
                                 color: scheme.onSurfaceVariant),
                           ),
+                          if (!d.hasPermission) ...[
+                            const SizedBox(height: 6),
+                            GestureDetector(
+                              onTap: () async {
+                                await SmsPlatformBridge.requestSmsPermissions();
+                                if (context.mounted) {
+                                  setState(() => _healthFuture = _load(ref));
+                                }
+                              },
+                              child: Text(
+                                'Grant permission →',
+                                style: tt.labelSmall?.copyWith(
+                                    color: scheme.primary,
+                                    fontWeight: FontWeight.w600),
+                              ),
+                            ),
+                          ],
                         ],
                       ),
                     ),
@@ -2461,13 +2490,20 @@ class _SmsImportHealthPageState extends ConsumerState<SmsImportHealthPage> {
                       padding: const EdgeInsets.symmetric(
                           horizontal: 8, vertical: 4),
                       decoration: BoxDecoration(
-                        color: scheme.errorContainer,
+                        color: d.hasPermission
+                            ? scheme.primaryContainer
+                            : scheme.errorContainer,
                         borderRadius: BorderRadius.circular(20),
                       ),
-                      child: Text('Inactive',
-                          style: tt.labelSmall?.copyWith(
-                              color: scheme.onErrorContainer,
-                              fontWeight: FontWeight.w600)),
+                      child: Text(
+                        d.hasPermission ? 'Active' : 'Inactive',
+                        style: tt.labelSmall?.copyWith(
+                          color: d.hasPermission
+                              ? scheme.onPrimaryContainer
+                              : scheme.onErrorContainer,
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
                     ),
                   ],
                 ),
@@ -2859,7 +2895,10 @@ class _SmsImportHealthPageState extends ConsumerState<SmsImportHealthPage> {
       variables: [Variable.withString(userId)], readsFrom: {db.importAudit},
     ).get();
 
+    final hasPermission = await SmsPlatformBridge.hasSmsPermissions();
+
     return _HealthData(
+      hasPermission: hasPermission,
       imported: count(imp),
       skipped: count(skip),
       pending: count(pend),
@@ -2875,6 +2914,7 @@ class _SmsImportHealthPageState extends ConsumerState<SmsImportHealthPage> {
 
 class _HealthData {
   const _HealthData({
+    this.hasPermission = false,
     this.imported = 0,
     this.skipped = 0,
     this.pending = 0,
@@ -2885,6 +2925,7 @@ class _HealthData {
     this.lastMpesaCode,
     this.recentLog = const [],
   });
+  final bool hasPermission;
   final int imported, skipped, pending, errors, notMpesaCount;
   final int? lastInboxScanAt;
   final int? lastSuccessfulImportAt;
@@ -2915,13 +2956,13 @@ class _ReviewQueueState extends ConsumerState<ReviewQueuePage> {
       context: context,
       useRootNavigator: true,
       isScrollControlled: true,
-      shape: const RoundedRectangleBorder(borderRadius: BorderRadius.vertical(top: Radius.circular(6))),
+      shape: const RoundedRectangleBorder(borderRadius: BorderRadius.vertical(top: Radius.circular(20))),
       builder: (ctx) => Padding(
         padding: const EdgeInsets.only(bottom: 32),
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            const SizedBox(height: 16),
+            const SheetHandle(),
             Text('Assign Category', style: Theme.of(ctx).textTheme.titleSmall),
             const SizedBox(height: 8),
             for (final (cat, emoji) in _categories)
@@ -2991,7 +3032,7 @@ class _ReviewQueueState extends ConsumerState<ReviewQueuePage> {
                         ),
                         const SizedBox(height: 8),
                         OutlinedButton(
-                          style: OutlinedButton.styleFrom(shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(6))),
+                          style: OutlinedButton.styleFrom(shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16))),
                           onPressed: () => _pickCategory(context, row['id'] as int),
                           child: const Text('Assign category'),
                         ),
@@ -3075,7 +3116,7 @@ class _QuarantineState extends ConsumerState<QuarantinePage> {
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
               OutlinedButton(
-                style: OutlinedButton.styleFrom(foregroundColor: scheme.error, side: BorderSide(color: scheme.error), shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(6))),
+                style: OutlinedButton.styleFrom(foregroundColor: scheme.error, side: BorderSide(color: scheme.error), shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16))),
                 onPressed: () => _dismissAll(rows),
                 child: const Text('Dismiss All'),
               ),
@@ -3115,7 +3156,7 @@ class _QuarantineState extends ConsumerState<QuarantinePage> {
                         Text(DateFormat('dd MMM yyyy HH:mm').format(DateTime.fromMillisecondsSinceEpoch((row['quarantined_at'] as int?) ?? 0)), style: Theme.of(context).textTheme.labelSmall?.copyWith(color: scheme.onSurfaceVariant)),
                         const SizedBox(height: 8),
                         OutlinedButton(
-                          style: OutlinedButton.styleFrom(foregroundColor: scheme.error, side: BorderSide(color: scheme.error), shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(6))),
+                          style: OutlinedButton.styleFrom(foregroundColor: scheme.error, side: BorderSide(color: scheme.error), shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16))),
                           onPressed: () => _dismiss(row['id'] as int),
                           child: const Text('Dismiss'),
                         ),
@@ -3616,17 +3657,27 @@ class _MerchantGroup {
   final double total;
 }
 
-/// A rich card for one merchant with colorful category chips.
-class _MerchantCard extends StatelessWidget {
+/// A card for one merchant that collapses category chips behind a tappable
+/// header. Chips are hidden until the user taps to expand — keeps the list
+/// scannable when there are many merchants.
+class _MerchantCard extends StatefulWidget {
   const _MerchantCard({required this.group, required this.onCategorize});
   final _MerchantGroup group;
   final void Function(String) onCategorize;
 
   @override
+  State<_MerchantCard> createState() => _MerchantCardState();
+}
+
+class _MerchantCardState extends State<_MerchantCard> {
+  bool _expanded = false;
+
+  @override
   Widget build(BuildContext context) {
     final scheme = Theme.of(context).colorScheme;
-    final avatarColor = _merchantColor(group.merchant);
-    final initial = group.merchant.isNotEmpty ? group.merchant[0].toUpperCase() : '?';
+    final avatarColor = _merchantColor(widget.group.merchant);
+    final initial =
+        widget.group.merchant.isNotEmpty ? widget.group.merchant[0].toUpperCase() : '?';
 
     return AppCard(
       contentPadding: const EdgeInsets.all(14),
@@ -3634,85 +3685,97 @@ class _MerchantCard extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.start,
         mainAxisSize: MainAxisSize.min,
         children: [
-          // ── Merchant header row ──────────────────────────────────────
-          Row(
-            children: [
-              // Avatar
-              Container(
-                width: 40, height: 40,
-                decoration: BoxDecoration(
-                  shape: BoxShape.circle,
-                  color: avatarColor.withValues(alpha: 0.15),
+          // ── Tappable merchant header row ─────────────────────────────
+          InkWell(
+            onTap: () => setState(() => _expanded = !_expanded),
+            borderRadius: BorderRadius.circular(6),
+            child: Row(
+              children: [
+                // Avatar
+                Container(
+                  width: 40,
+                  height: 40,
+                  decoration: BoxDecoration(
+                    shape: BoxShape.circle,
+                    color: avatarColor.withValues(alpha: 0.15),
+                  ),
+                  alignment: Alignment.center,
+                  child: Text(initial,
+                      style: TextStyle(
+                          color: avatarColor,
+                          fontWeight: FontWeight.w700,
+                          fontSize: 16)),
                 ),
-                alignment: Alignment.center,
-                child: Text(initial,
-                    style: TextStyle(
-                        color: avatarColor,
-                        fontWeight: FontWeight.w700,
-                        fontSize: 16)),
-              ),
-              const SizedBox(width: 12),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    Text(group.merchant,
+                const SizedBox(width: 12),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Text(widget.group.merchant,
+                          style: Theme.of(context)
+                              .textTheme
+                              .titleSmall
+                              ?.copyWith(fontWeight: FontWeight.w700),
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis),
+                      const SizedBox(height: 2),
+                      Text(
+                        '${widget.group.count} txn${widget.group.count == 1 ? '' : 's'} · ${formatCurrency(widget.group.total)}',
                         style: Theme.of(context)
                             .textTheme
-                            .titleSmall
-                            ?.copyWith(fontWeight: FontWeight.w700),
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis),
-                    const SizedBox(height: 2),
-                    Text(
-                      '${group.count} txn${group.count == 1 ? '' : 's'} · ${formatCurrency(group.total)}',
-                      style: Theme.of(context)
-                          .textTheme
-                          .bodySmall
-                          ?.copyWith(color: scheme.onSurfaceVariant),
-                    ),
+                            .bodySmall
+                            ?.copyWith(color: scheme.onSurfaceVariant),
+                      ),
+                    ],
+                  ),
+                ),
+                // Expand/collapse chevron
+                AnimatedRotation(
+                  turns: _expanded ? 0.5 : 0.0,
+                  duration: const Duration(milliseconds: 200),
+                  child: Icon(
+                    Icons.keyboard_arrow_down_rounded,
+                    size: 20,
+                    color: scheme.onSurfaceVariant,
+                  ),
+                ),
+              ],
+            ),
+          ),
+          // ── Collapsible category chips ───────────────────────────────
+          AnimatedCrossFade(
+            duration: const Duration(milliseconds: 200),
+            crossFadeState: _expanded
+                ? CrossFadeState.showSecond
+                : CrossFadeState.showFirst,
+            firstChild: const SizedBox.shrink(),
+            secondChild: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                const SizedBox(height: 12),
+                Text('Choose category',
+                    style: Theme.of(context)
+                        .textTheme
+                        .labelSmall
+                        ?.copyWith(color: scheme.onSurfaceVariant)),
+                const SizedBox(height: 8),
+                Wrap(
+                  spacing: 6,
+                  runSpacing: 6,
+                  children: [
+                    for (final entry in _kCatMeta.entries)
+                      _CategoryChip(
+                        label: entry.key,
+                        icon: entry.value.$1,
+                        color: entry.value.$2,
+                        onTap: () => widget.onCategorize(entry.key),
+                      ),
                   ],
                 ),
-              ),
-              // Total amount badge
-              Container(
-                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-                decoration: BoxDecoration(
-                  color: avatarColor.withValues(alpha: 0.12),
-                  borderRadius: BorderRadius.circular(20),
-                ),
-                child: Text(
-                  formatCurrency(group.total),
-                  style: TextStyle(
-                      color: avatarColor,
-                      fontWeight: FontWeight.w700,
-                      fontSize: 12),
-                ),
-              ),
-            ],
-          ),
-          const SizedBox(height: 12),
-          // ── Section label ────────────────────────────────────────────
-          Text('Choose category',
-              style: Theme.of(context)
-                  .textTheme
-                  .labelSmall
-                  ?.copyWith(color: scheme.onSurfaceVariant)),
-          const SizedBox(height: 8),
-          // ── Category chips in a wrap ─────────────────────────────────
-          Wrap(
-            spacing: 6,
-            runSpacing: 6,
-            children: [
-              for (final entry in _kCatMeta.entries)
-                _CategoryChip(
-                  label: entry.key,
-                  icon: entry.value.$1,
-                  color: entry.value.$2,
-                  onTap: () => onCategorize(entry.key),
-                ),
-            ],
+              ],
+            ),
           ),
         ],
       ),
@@ -3904,8 +3967,8 @@ class _LearningState extends ConsumerState<LearningPage> {
     String? topicErr, durErr;
     await showDialog<void>(
       context: context,
-      builder: (ctx) => StatefulBuilder(builder: (ctx, setD) => AlertDialog(
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(6)),
+      builder: (ctx) => StatefulBuilder(builder: (ctx, setD) => LifeOsAlertDialog(
+        scrollable: true,
         title: const Text('Log Session'),
         content: Column(
           mainAxisSize: MainAxisSize.min,
@@ -4018,7 +4081,7 @@ class _LearningState extends ConsumerState<LearningPage> {
                   backgroundColor: scheme.primary,
                   foregroundColor: scheme.onPrimary,
                   elevation: 4,
-                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(6)),
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
                   onPressed: _showLogDialog,
                   icon: const Icon(Icons.add),
                   label: const Text('Log Session'),
@@ -4123,7 +4186,7 @@ class _ReleaseCard extends StatelessWidget {
               padding: const EdgeInsets.fromLTRB(16, 14, 16, 14),
               decoration: BoxDecoration(
                 color: accent.withValues(alpha: 0.10),
-                borderRadius: const BorderRadius.vertical(top: Radius.circular(6)),
+                borderRadius: const BorderRadius.vertical(top: Radius.circular(16)),
               ),
               child: Row(
                 children: [

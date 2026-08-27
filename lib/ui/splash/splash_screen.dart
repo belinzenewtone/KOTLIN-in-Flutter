@@ -49,53 +49,53 @@ class _PersonalOsSplashScreenState extends State<PersonalOsSplashScreen>
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            SizedBox(
-              width: 220,
-              height: 220,
-              child: Stack(
-                alignment: Alignment.center,
-                children: [
-                  // Pulsing radial glow — alpha 0.35, blurred.
-                  Transform.scale(
-                    scale: _pulse.value,
-                    child: Container(
-                      width: 220,
-                      height: 220,
-                      decoration: BoxDecoration(
-                        shape: BoxShape.circle,
-                        gradient: RadialGradient(
-                          colors: [
-                            scheme.primary.withValues(alpha: 0.35),
-                            scheme.primary.withValues(alpha: 0),
-                          ],
-                        ),
+            // Stack sizes to its largest child (the logo at 74% screen width).
+            // The glow circle (220dp) is centered within the Stack — no SizedBox
+            // wrapper so the logo never gets clamped to 220dp. Kotlin parity:
+            // fillMaxWidth(0.74f) with the glow behind in a Box/Stack.
+            Stack(
+              alignment: Alignment.center,
+              children: [
+                // Pulsing radial glow — fixed 220dp circle, centered.
+                Transform.scale(
+                  scale: _pulse.value,
+                  child: Container(
+                    width: 220,
+                    height: 220,
+                    decoration: BoxDecoration(
+                      shape: BoxShape.circle,
+                      gradient: RadialGradient(
+                        colors: [
+                          scheme.primary.withValues(alpha: 0.35),
+                          scheme.primary.withValues(alpha: 0),
+                        ],
                       ),
                     ),
                   ),
-                  // Logo fades + scales in — width = 74% of screen (Kotlin
-                  // fillMaxWidth(0.74f)).
-                  AnimatedOpacity(
-                    opacity: _animateIn ? 1 : 0,
-                    duration: const Duration(milliseconds: 900),
-                    curve: Curves.easeOut,
-                    child: AnimatedScale(
-                      scale: _animateIn ? 1.0 : 0.88,
-                      duration: const Duration(milliseconds: 700),
-                      curve: Curves.easeOutBack,
-                      child: Image.asset(
-                        'assets/logo/logo_personalos.png',
-                        width: MediaQuery.sizeOf(context).width * 0.74,
-                        fit: BoxFit.contain,
-                        errorBuilder: (_, __, ___) => Icon(
-                          Icons.fingerprint,
-                          size: 96,
-                          color: scheme.primary,
-                        ),
+                ),
+                // Logo fades + scales in — 74% of screen width (Kotlin
+                // fillMaxWidth(0.74f) parity). Stack's own width = logo width.
+                AnimatedOpacity(
+                  opacity: _animateIn ? 1 : 0,
+                  duration: const Duration(milliseconds: 900),
+                  curve: Curves.easeOut,
+                  child: AnimatedScale(
+                    scale: _animateIn ? 1.0 : 0.88,
+                    duration: const Duration(milliseconds: 700),
+                    curve: Curves.easeOutBack,
+                    child: Image.asset(
+                      'assets/logo/logo_personalos.png',
+                      width: MediaQuery.sizeOf(context).width * 0.74,
+                      fit: BoxFit.contain,
+                      errorBuilder: (_, __, ___) => Icon(
+                        Icons.fingerprint,
+                        size: 96,
+                        color: scheme.primary,
                       ),
                     ),
                   ),
-                ],
-              ),
+                ),
+              ],
             ),
             const SizedBox(height: 22),
             SizedBox(

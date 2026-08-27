@@ -13,6 +13,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../core/designsystem/app_card.dart';
 import '../../../core/designsystem/banners.dart';
+import '../../../core/designsystem/dialogs.dart';
 import '../../../core/designsystem/controls.dart';
 import '../../../core/designsystem/page_scaffold.dart';
 import '../../../core/designsystem/task_row.dart';
@@ -228,8 +229,7 @@ class _CalendarScreenState extends ConsumerState<CalendarScreen> {
   Future<void> _confirmDeleteEvent(CalendarEventData ev) async {
     final confirmed = await showDialog<bool>(
       context: context,
-      builder: (ctx) => AlertDialog(
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(6)),
+      builder: (ctx) => LifeOsAlertDialog(
         title: const Text('Delete event?'),
         content: Text('Remove "${ev.title}"? This cannot be undone.'),
         actions: [
@@ -242,7 +242,7 @@ class _CalendarScreenState extends ConsumerState<CalendarScreen> {
                 backgroundColor: Theme.of(context).colorScheme.error,
                 foregroundColor: Theme.of(context).colorScheme.onError,
                 shape:
-                    RoundedRectangleBorder(borderRadius: BorderRadius.circular(6)),
+                    RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
               ),
               child: const Text('Delete')),
         ],
@@ -259,8 +259,10 @@ class _CalendarScreenState extends ConsumerState<CalendarScreen> {
       title: 'Calendar',
       subtitle: AppDateUtils.formatDate(AppDateUtils.nowMillis, 'MMMM yyyy'),
       scrollable: false,
-      contentPadding:
-          const EdgeInsets.only(bottom: AppSpacing.bottomSafeWithFloatingNav),
+      // Zero outer padding — each tab's CustomScrollView handles horizontal
+      // padding and bottom nav clearance via its own SliverPadding/SizedBox,
+      // matching the Finance screen pattern exactly (Finance uses EdgeInsets.zero).
+      contentPadding: EdgeInsets.zero,
       actions: [
         IconButton(
           onPressed: _repo == null ? null : () => _openAdd(),
@@ -382,30 +384,42 @@ class _CalendarScreenState extends ConsumerState<CalendarScreen> {
                         .contains(_dayQuery.toLowerCase()))
                 .toList();
 
-        return Column(
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: [
-            _monthCard(context, events),
-            const SizedBox(height: AppSpacing.md),
-            Text(
-              AppDateUtils.formatDate(
-                  _selectedDay.millisecondsSinceEpoch, 'EEEE, MMM dd'),
-              style: Theme.of(context).textTheme.titleMedium,
+        // CustomScrollView so the month card and the day agenda scroll as one
+        // unit — no inner/outer scroll split (CalendarTabContent.kt parity).
+        return CustomScrollView(
+          physics: const BouncingScrollPhysics(
+              parent: AlwaysScrollableScrollPhysics()),
+          slivers: [
+            SliverToBoxAdapter(child: _monthCard(context, events)),
+            SliverToBoxAdapter(
+              child: Padding(
+                padding: const EdgeInsets.only(
+                    top: AppSpacing.md, bottom: AppSpacing.sm),
+                child: Text(
+                  AppDateUtils.formatDate(
+                      _selectedDay.millisecondsSinceEpoch, 'EEEE, MMM dd'),
+                  style: Theme.of(context).textTheme.titleMedium,
+                ),
+              ),
             ),
-            const SizedBox(height: AppSpacing.sm),
-            SearchField(
-              value: _dayQuery,
-              onValueChange: (v) => setState(() => _dayQuery = v),
-              placeholder: 'Search across all categories',
+            SliverToBoxAdapter(
+              child: SearchField(
+                value: _dayQuery,
+                onValueChange: (v) => setState(() => _dayQuery = v),
+                placeholder: 'Search across all categories',
+              ),
             ),
-            const SizedBox(height: AppSpacing.md),
-            if (filtered.isEmpty)
-              const EmptyState(
-                  title: 'Nothing for the day',
-                  description:
-                      'Tap + to add an event, birthday, countdown and more.')
-            else
-              _dayView(filtered),
+            const SliverToBoxAdapter(child: SizedBox(height: AppSpacing.md)),
+            SliverToBoxAdapter(
+              child: filtered.isEmpty
+                  ? const EmptyState(
+                      title: 'Nothing for the day',
+                      description:
+                          'Tap + to add an event, birthday, countdown and more.')
+                  : _dayView(filtered),
+            ),
+            const SliverToBoxAdapter(
+                child: SizedBox(height: AppSpacing.bottomSafeWithFloatingNav)),
           ],
         );
       },
@@ -678,34 +692,40 @@ class _CalendarScreenState extends ConsumerState<CalendarScreen> {
         final pendingCount = tasks.where((t) => !t.isCompleted).length;
         final doneCount = tasks.where((t) => t.isCompleted).length;
 
-        return Column(
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: [
-            Text(
-              '$pendingCount Pending · 0 Doing · $doneCount Done',
-              style: Theme.of(context)
-                  .textTheme
-                  .bodyMedium
-                  ?.copyWith(color: Theme.of(context).colorScheme.onSurfaceVariant),
+        return CustomScrollView(
+          physics: const BouncingScrollPhysics(
+              parent: AlwaysScrollableScrollPhysics()),
+          slivers: [
+            SliverToBoxAdapter(
+              child: Text(
+                '$pendingCount Pending · 0 Doing · $doneCount Done',
+                style: Theme.of(context)
+                    .textTheme
+                    .bodyMedium
+                    ?.copyWith(color: Theme.of(context).colorScheme.onSurfaceVariant),
+              ),
             ),
-            const SizedBox(height: AppSpacing.md),
-            SearchField(
-              value: _dayQuery,
-              onValueChange: (v) => setState(() => _dayQuery = v),
-              placeholder: 'Search tasks...',
+            const SliverToBoxAdapter(child: SizedBox(height: AppSpacing.md)),
+            SliverToBoxAdapter(
+              child: SearchField(
+                value: _dayQuery,
+                onValueChange: (v) => setState(() => _dayQuery = v),
+                placeholder: 'Search tasks...',
+              ),
             ),
-            const SizedBox(height: AppSpacing.md),
-            Expanded(
-              child: tasks.isEmpty
-                  ? const EmptyState(
-                      icon: Icons.check_circle_outline,
-                      title: 'No tasks here',
-                      description: 'Use + below to create your first task.')
-                  : ListView.builder(
-                      physics: const BouncingScrollPhysics(),
-                      itemCount: tasks.length,
-                      itemBuilder: (context, i) => Padding(
-                        padding: const EdgeInsets.only(bottom: 8),
+            const SliverToBoxAdapter(child: SizedBox(height: AppSpacing.md)),
+            if (tasks.isEmpty)
+              const SliverToBoxAdapter(
+                child: EmptyState(
+                    icon: Icons.check_circle_outline,
+                    title: 'No tasks here',
+                    description: 'Use + below to create your first task.'),
+              )
+            else
+              SliverList(
+                delegate: SliverChildBuilderDelegate(
+                  (context, i) => Padding(
+                    padding: const EdgeInsets.only(bottom: 8),
                         child: TaskRow(
                           title: tasks[i].title,
                           subtitle: tasks[i].subtitle(),
@@ -732,10 +752,7 @@ class _CalendarScreenState extends ConsumerState<CalendarScreen> {
                                 onPressed: () async {
                                   final confirmed = await showDialog<bool>(
                                     context: context,
-                                    builder: (ctx) => AlertDialog(
-                                      shape: RoundedRectangleBorder(
-                                          borderRadius:
-                                              BorderRadius.circular(6)),
+                                    builder: (ctx) => LifeOsAlertDialog(
                                       title: const Text('Delete task?'),
                                       content: Text(
                                           '"${tasks[i].title}" will be removed.'),
@@ -752,9 +769,6 @@ class _CalendarScreenState extends ConsumerState<CalendarScreen> {
                                             foregroundColor: Theme.of(context)
                                                 .colorScheme
                                                 .onError,
-                                            shape: RoundedRectangleBorder(
-                                                borderRadius:
-                                                    BorderRadius.circular(6)),
                                           ),
                                           onPressed: () =>
                                               Navigator.pop(ctx, true),
@@ -781,10 +795,13 @@ class _CalendarScreenState extends ConsumerState<CalendarScreen> {
                           ),
                         ),
                       ),
-                    ),
-            ),
-          ],
-        );
+                  childCount: tasks.length,
+                ),
+              ),
+              const SliverToBoxAdapter(
+                  child: SizedBox(height: AppSpacing.bottomSafeWithFloatingNav)),
+            ],
+          );
       },
     );
   }
@@ -809,44 +826,53 @@ class _CalendarScreenState extends ConsumerState<CalendarScreen> {
                         .contains(_dayQuery.toLowerCase()))
                 .toList();
 
-        return Column(
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: [
-            Text(
-              '${filtered.length} event${filtered.length == 1 ? '' : 's'}',
-              style: Theme.of(context)
-                  .textTheme
-                  .bodyMedium
-                  ?.copyWith(color: Theme.of(context).colorScheme.onSurfaceVariant),
+        return CustomScrollView(
+          physics: const BouncingScrollPhysics(
+              parent: AlwaysScrollableScrollPhysics()),
+          slivers: [
+            SliverToBoxAdapter(
+              child: Text(
+                '${filtered.length} event${filtered.length == 1 ? '' : 's'}',
+                style: Theme.of(context)
+                    .textTheme
+                    .bodyMedium
+                    ?.copyWith(color: Theme.of(context).colorScheme.onSurfaceVariant),
+              ),
             ),
-            const SizedBox(height: AppSpacing.md),
-            SearchField(
-              value: _dayQuery,
-              onValueChange: (v) => setState(() => _dayQuery = v),
-              placeholder: 'Search events...',
+            const SliverToBoxAdapter(child: SizedBox(height: AppSpacing.md)),
+            SliverToBoxAdapter(
+              child: SearchField(
+                value: _dayQuery,
+                onValueChange: (v) => setState(() => _dayQuery = v),
+                placeholder: 'Search events...',
+              ),
             ),
-            const SizedBox(height: AppSpacing.md),
-            Expanded(
-              child: filtered.isEmpty
-                  ? const EmptyState(
-                      icon: Icons.calendar_month_outlined,
-                      title: 'Events Area',
-                      description: 'No events yet. Tap + to create one.')
-                  : ListView.builder(
-                      physics: const BouncingScrollPhysics(),
-                      itemCount: filtered.length,
-                      itemBuilder: (context, i) => Padding(
-                        padding: const EdgeInsets.only(bottom: 8),
-                        child: _SwipeableEventCard(
-                          event: filtered[i],
-                          onComplete: () =>
-                              _repo!.markEventCompleted(filtered[i].id),
-                          onEdit: () => _openEditEvent(filtered[i]),
-                          onDelete: () => _confirmDeleteEvent(filtered[i]),
-                        ),
-                      ),
+            const SliverToBoxAdapter(child: SizedBox(height: AppSpacing.md)),
+            if (filtered.isEmpty)
+              const SliverToBoxAdapter(
+                child: EmptyState(
+                    icon: Icons.calendar_month_outlined,
+                    title: 'Events Area',
+                    description: 'No events yet. Tap + to create one.'),
+              )
+            else
+              SliverList(
+                delegate: SliverChildBuilderDelegate(
+                  (context, i) => Padding(
+                    padding: const EdgeInsets.only(bottom: 8),
+                    child: _SwipeableEventCard(
+                      event: filtered[i],
+                      onComplete: () =>
+                          _repo!.markEventCompleted(filtered[i].id),
+                      onEdit: () => _openEditEvent(filtered[i]),
+                      onDelete: () => _confirmDeleteEvent(filtered[i]),
                     ),
-            ),
+                  ),
+                  childCount: filtered.length,
+                ),
+              ),
+            const SliverToBoxAdapter(
+                child: SizedBox(height: AppSpacing.bottomSafeWithFloatingNav)),
           ],
         );
       },

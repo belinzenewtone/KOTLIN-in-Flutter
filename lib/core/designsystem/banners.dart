@@ -2,8 +2,6 @@
 /// ImportHealthPanel}.kt.
 library;
 
-import 'dart:math' as math;
-
 import 'package:flutter/material.dart';
 
 import '../../ui/theme/theme.dart';
@@ -191,6 +189,11 @@ class LoadingState extends StatelessWidget {
 }
 
 /// Shimmer skeleton mimicking a list of transaction/card rows.
+///
+/// The shimmer band sweeps from left to right using a LinearGradient whose
+/// Alignment begin/end are animated. `offset` ranges [-2, 2] in Alignment
+/// space (−1 = left edge, 1 = right edge) so the highlight travels from
+/// off-screen-left through the widget to off-screen-right.
 class ShimmerLoadingState extends StatefulWidget {
   const ShimmerLoadingState({super.key, this.rows = 4});
 
@@ -207,7 +210,7 @@ class _ShimmerLoadingStateState extends State<ShimmerLoadingState>
   @override
   void initState() {
     super.initState();
-    _controller = AnimationController(vsync: this, duration: const Duration(milliseconds: 1200))
+    _controller = AnimationController(vsync: this, duration: const Duration(milliseconds: 1400))
       ..repeat();
   }
 
@@ -223,13 +226,21 @@ class _ShimmerLoadingStateState extends State<ShimmerLoadingState>
     return AnimatedBuilder(
       animation: _controller,
       builder: (context, _) {
-        final t = _controller.value;
-        final dx = Curves.fastOutSlowIn.transform(t) * 1000;
+        // offset sweeps −2 → 2 so the highlight band travels from off-screen-
+        // left to off-screen-right; easeInOut gives a smooth ramp on each side.
+        final offset = Curves.easeInOut.transform(_controller.value) * 4.0 - 2.0;
         return Column(
           children: [
             for (var i = 0; i < widget.rows; i++) ...[
               if (i > 0) const SizedBox(height: 10),
-              _ShimmerRow(translate: dx, base: c.surfaceContainerLow, highlight: c.surfaceContainerHigh),
+              _ShimmerRow(
+                shimmerOffset: offset,
+                base: c.surfaceContainerLow,
+                // surfaceContainerHighest gives a noticeably brighter sweep
+                // band compared to surfaceContainerHigh — more legible on both
+                // light and dark themes without over-saturating the skeleton.
+                highlight: c.surfaceContainerHighest,
+              ),
             ],
           ],
         );
@@ -239,21 +250,29 @@ class _ShimmerLoadingStateState extends State<ShimmerLoadingState>
 }
 
 class _ShimmerRow extends StatelessWidget {
-  const _ShimmerRow({required this.translate, required this.base, required this.highlight});
+  const _ShimmerRow({
+    required this.shimmerOffset,
+    required this.base,
+    required this.highlight,
+  });
 
-  final double translate;
+  /// Alignment-space position of the highlight centre (−2 to 2).
+  /// −1 = widget left edge, 1 = widget right edge.
+  final double shimmerOffset;
   final Color base;
   final Color highlight;
 
   @override
   Widget build(BuildContext context) {
-    LinearGradient gradient(double start, double end) => LinearGradient(
-          begin: Alignment(-1 + start / 300, 0),
-          end: Alignment(-1 + end / 300, 0),
-          colors: [base, highlight, base],
-        );
-
-    final g = gradient(math.max(-1000, translate - 1000), translate - 700);
+    // The band is 2 alignment-units wide (1 unit each side of the offset),
+    // which at the widget's own width corresponds to the full width — the
+    // gradient is a single smooth fade-in → highlight → fade-out stripe.
+    final g = LinearGradient(
+      begin: Alignment(shimmerOffset - 1.0, 0),
+      end: Alignment(shimmerOffset + 1.0, 0),
+      colors: [base, highlight, base],
+      stops: const [0.0, 0.5, 1.0],
+    );
 
     Widget box({double? w, double? h, double? fraction}) => FractionallySizedBox(
           widthFactor: fraction,

@@ -92,18 +92,6 @@ class DashboardRepository {
     ).watchSingle())
         .map((r) => (r.data['c'] as int));
 
-    final completedToday$ = (_db.customSelect(
-      "SELECT COUNT(*) AS c FROM tasks WHERE user_id = ? AND status = 'COMPLETED' "
-      'AND completed_at BETWEEN ? AND ?',
-      variables: [
-        Variable.withString(_userId),
-        Variable.withInt(todayStart),
-        Variable.withInt(todayEnd)
-      ],
-      readsFrom: {_db.tasks},
-    ).watchSingle())
-        .map((r) => r.data['c'] as int);
-
     final recentTx$ = (_db.select(_db.transactions)
           ..where((t) => t.userId.equals(_userId) & t.deletedAt.isNull())
           ..where((t) => t.date.isBetweenValues(weekStart, todayEnd))
@@ -132,7 +120,13 @@ class DashboardRepository {
         pending: pending,
         txs: txs,
       ),
-    ).asyncMap((core) async {
+    )
+    // Collapse rapid bursts (e.g. during a large SMS import that writes
+    // thousands of rows in quick succession) into a single downstream event.
+    // 250 ms is imperceptible to the user but prevents the asyncMap from
+    // queuing hundreds of concurrent DB calls that can transiently error.
+    .debounceTime(const Duration(milliseconds: 250))
+    .asyncMap((core) async {
       final completedToday = await _db.customSelect(
         "SELECT COUNT(*) AS c FROM tasks WHERE user_id = ? AND status = 'COMPLETED' "
         'AND completed_at BETWEEN ? AND ?',

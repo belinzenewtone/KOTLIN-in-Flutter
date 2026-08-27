@@ -10,6 +10,7 @@ library;
 import 'package:flutter/material.dart';
 
 import '../../../core/designsystem/controls.dart';
+import '../../../core/designsystem/dialogs.dart';
 import '../../../core/designsystem/tokens.dart';
 import '../../../core/utils/date_utils.dart';
 import '../data/calendar_repository.dart';
@@ -1244,8 +1245,7 @@ class _CustomReminderDialogState extends State<_CustomReminderDialog> {
 
   @override
   Widget build(BuildContext context) {
-    return AlertDialog(
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(6)),
+    return LifeOsAlertDialog(
       title: Text('Custom reminder',
           style: Theme.of(context).textTheme.titleMedium),
       content: Row(
@@ -1283,7 +1283,7 @@ class _CustomReminderDialogState extends State<_CustomReminderDialog> {
         FilledButton(
           onPressed: () => widget.onConfirm(_customMinutes(_currentValue, _unit)),
           style: FilledButton.styleFrom(
-            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(6)),
+            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
           ),
           child: const Text('OK'),
         ),
@@ -1739,7 +1739,7 @@ class _FormPickerRow extends StatelessWidget {
     final scheme = Theme.of(context).colorScheme;
     return InkWell(
       onTap: onClick,
-      borderRadius: BorderRadius.circular(6),
+      borderRadius: BorderRadius.circular(12),
       child: Padding(
         padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
         child: Row(

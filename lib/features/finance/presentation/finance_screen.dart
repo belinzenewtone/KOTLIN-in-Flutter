@@ -17,7 +17,7 @@ import 'package:go_router/go_router.dart';
 import '../../../core/designsystem/banners.dart';
 import '../../../core/notifications/notification_service.dart';
 import '../../../core/designsystem/page_scaffold.dart';
-import '../../../core/designsystem/tokens.dart';
+import '../../../core/designsystem/tokens.dart' show AppSpacing;
 import '../../../core/security/session_store.dart';
 import '../../../core/utils/date_utils.dart';
 import '../../../navigation/routes.dart';
@@ -53,6 +53,13 @@ class _FinanceScreenState extends ConsumerState<FinanceScreen> {
   FinanceTransactionFilter _filter = FinanceTransactionFilter.last1Month;
   String _query = '';
   List<FinanceTransaction> _transactions = [];
+
+  // Flat list for the virtualized SliverList: String = date-section header,
+  // FinanceTransaction = transaction row. Recomputed only when _transactions
+  // changes, never inside build().
+  List<Object> _flatItems = [];
+  final ScrollController _scrollController = ScrollController();
+
   FinanceSpendingSummary _summary = FinanceSpendingSummary.empty;
   bool _loading = true;
   String? _error;
@@ -112,6 +119,7 @@ class _FinanceScreenState extends ConsumerState<FinanceScreen> {
       if (!mounted) return;
       setState(() {
         _transactions = txs;
+        _flatItems = _buildFlatItems(txs);
         _summary = summary;
         _loading = false;
         _error = null;
@@ -202,9 +210,79 @@ class _FinanceScreenState extends ConsumerState<FinanceScreen> {
     _debounce = Timer(const Duration(milliseconds: 220), _reload);
   }
 
+  /// Show the detail dialog directly without going through the setState→rebuild
+  /// cycle. This avoids re-rendering all 200 transaction rows before the dialog
+  /// appears, eliminating the visible stutter on transaction tap.
+  Future<void> _openDetailDirect(FinanceTransaction tx) async {
+    if (_dialogBusy || !mounted) return;
+    _dialogBusy = true;
+    await showDialog<void>(
+      context: context,
+      builder: (dialogCtx) => TransactionDetailDialog(
+        transaction: tx,
+        onDismiss: () => Navigator.of(dialogCtx).pop(),
+        onEdit: () {
+          _dialogBusy = false;
+          Navigator.of(dialogCtx).pop();
+          // _editTarget triggers the edit sheet on next flush
+          setState(() => _editTarget = tx);
+        },
+        onDelete: () {
+          _dialogBusy = false;
+          Navigator.of(dialogCtx).pop();
+          setState(() => _deleteTarget = tx);
+        },
+        onShare: () {
+          _dialogBusy = false;
+          Navigator.of(dialogCtx).pop();
+          final code = (tx.mpesaCode?.isNotEmpty ?? false) ? '\n📟 ${tx.mpesaCode}' : '';
+          final dateStr = AppDateUtils.formatRelativeTime(tx.date);
+          final text =
+              '${AppDateUtils.formatCurrency(tx.amount)} — ${tx.merchant}$code\n'
+              '📅 $dateStr · ${tx.category} · via M-Pesa';
+          SharePlus.instance.share(ShareParams(text: text));
+        },
+      ),
+    );
+    if (_dialogBusy) _dialogBusy = false;
+    // Ensure any pending follow-up dialog (edit/delete) gets shown.
+    if (mounted && (_editTarget != null || _deleteTarget != null)) {
+      setState(() {});
+    }
+  }
+
+  /// Flattens grouped transactions: String items are date-section headers,
+  /// FinanceTransaction items are rows. O(n), called only on data reload.
+  static List<Object> _buildFlatItems(List<FinanceTransaction> txs) {
+    final items = <Object>[];
+    String? cur;
+    for (final tx in txs) {
+      final label = _dayLabel(tx.date);
+      if (label != cur) {
+        items.add(label);
+        cur = label;
+      }
+      items.add(tx);
+    }
+    return items;
+  }
+
+  static String _dayLabel(int epochMs) {
+    final d = DateTime.fromMillisecondsSinceEpoch(epochMs);
+    final today = DateTime.now();
+    final todayD = DateTime(today.year, today.month, today.day);
+    final date = DateTime(d.year, d.month, d.day);
+    if (date == todayD) return 'Today';
+    if (date == todayD.subtract(const Duration(days: 1))) return 'Yesterday';
+    const months = ['Jan','Feb','Mar','Apr','May','Jun',
+                    'Jul','Aug','Sep','Oct','Nov','Dec'];
+    return '${months[d.month - 1]} ${d.day}';
+  }
+
   @override
   void dispose() {
     _debounce?.cancel();
+    _scrollController.dispose();
     super.dispose();
   }
 
@@ -212,10 +290,13 @@ class _FinanceScreenState extends ConsumerState<FinanceScreen> {
   Widget build(BuildContext context) {
     // Only schedule a flush when there is actually a pending dialog to show,
     // avoiding a postFrameCallback registration on every build.
+    // NOTE: _editTarget MUST be included here — without it, pressing "Edit"
+    // in the detail dialog sets _editTarget but the edit sheet never opens.
     if (!_dialogBusy &&
         (_detailTarget != null ||
             _deleteTarget != null ||
             _showAddDialog ||
+            _editTarget != null ||
             _categoryPickerTarget != null ||
             _showFulizaLimitDialog ||
             _showSmsImportSheet ||
@@ -223,61 +304,160 @@ class _FinanceScreenState extends ConsumerState<FinanceScreen> {
       _scheduleFlush();
     }
 
+    // One CustomScrollView scrolls everything together (hero card, filters,
+    // and transactions) as a single unit — matching the Kotlin LazyColumn
+    // behaviour. SliverList.builder virtualizes the transaction rows so only
+    // the ~12 visible ones are built at any given time.
     return PageScaffold(
       title: 'Finance',
+      scrollable: false,
       topBanner: (_error != null)
           ? TopBanner(message: _error!, tone: TopBannerTone.error)
           : null,
-      contentPadding:
-          const EdgeInsets.only(bottom: AppSpacing.bottomSafeWithFloatingNav),
+      contentPadding: EdgeInsets.zero,
       child: _loading
           ? const ShimmerLoadingState(rows: 5)
-          : Column(
-              crossAxisAlignment: CrossAxisAlignment.stretch,
-              children: [
-                FinanceQuickActions(
-                  onAdd: () => setState(() => _showAddDialog = true),
-                  onOpenHub: widget.onOpenHub,
-                  onExportPdf: widget.onExportPdf,
-                  onImportSms: () => setState(() => _showSmsImportSheet = true),
-                  onImportCsv: () => setState(() => _showCsvImportSheet = true),
-                ),
-                const SizedBox(height: 12),
-                FinanceSpendingHeroCard(
-                  monthSpend: _summary.monthTotal,
-                  todaySpend: _summary.todayTotal,
-                  weekSpend: _summary.weekTotal,
-                  monthIncome: _summary.totalMonthBudget,
-                ),
-                const SizedBox(height: 12),
-                SegmentedControl(
-                  items: const ['23 hrs', '1 month', '3 months', '6 months'],
-                  selectedIndex: FinanceTransactionFilter.values.indexOf(_filter),
-                  onSelected: (i) {
-                    setState(() => _filter = FinanceTransactionFilter.values[i]);
-                    _reload();
+          : _buildScrollView(context),
+    );
+  }
+
+  Widget _buildScrollView(BuildContext context) {
+    final scheme = Theme.of(context).colorScheme;
+    final hasTxs = _transactions.isNotEmpty;
+
+    return CustomScrollView(
+      controller: _scrollController,
+      physics: const BouncingScrollPhysics(
+          parent: AlwaysScrollableScrollPhysics()),
+      slivers: [
+        // ── Fixed header items ─────────────────────────────────────────────
+        SliverPadding(
+          padding: const EdgeInsets.symmetric(
+              horizontal: AppSpacing.screenHorizontal),
+          sliver: SliverList(
+            delegate: SliverChildListDelegate([
+              FinanceQuickActions(
+                onAdd: () => setState(() => _showAddDialog = true),
+                onOpenHub: widget.onOpenHub,
+                onExportPdf: widget.onExportPdf,
+                onImportSms: () => setState(() => _showSmsImportSheet = true),
+                onImportCsv: () => setState(() => _showCsvImportSheet = true),
+              ),
+              const SizedBox(height: 12),
+              FinanceSpendingHeroCard(
+                monthSpend: _summary.monthTotal,
+                todaySpend: _summary.todayTotal,
+                weekSpend: _summary.weekTotal,
+                monthIncome: _summary.totalMonthBudget,
+              ),
+              const SizedBox(height: 12),
+              SegmentedControl(
+                items: const ['23 hrs', '1 month', '3 months', '6 months'],
+                selectedIndex:
+                    FinanceTransactionFilter.values.indexOf(_filter),
+                onSelected: (i) {
+                  setState(
+                      () => _filter = FinanceTransactionFilter.values[i]);
+                  _reload();
+                },
+              ),
+              const SizedBox(height: 12),
+              if (_summary.uncategorizedCount > 0) ...[
+                UncategorizedBanner(
+                  count: _summary.uncategorizedCount,
+                  // Reload summary when the user returns from the Categorize
+                  // page so the banner count decrements (or disappears) without
+                  // needing a manual refresh.
+                  onTap: () async {
+                    await context.push('/${AppRoute.categorize}');
+                    if (mounted) _reload();
                   },
                 ),
                 const SizedBox(height: 12),
-                if (_summary.uncategorizedCount > 0) ...[
-                  UncategorizedBanner(
-                    count: _summary.uncategorizedCount,
-                    onTap: () => context.push('/${AppRoute.categorize}'),
-                  ),
-                  const SizedBox(height: 12),
-                ],
-                FinanceTransactionListWidget(
-                  transactions: _transactions,
-                  query: _query,
-                  onQueryChange: _onQueryChanged,
-                  onRecategorize: (tx) => setState(() => _categoryPickerTarget = tx),
-                  onDelete: (tx) => setState(() => _deleteTarget = tx),
-                  onMerchantClick: (m) =>
-                      context.push('/${AppRoute.merchantDetail}/${Uri.encodeComponent(m)}'),
-                  onTransactionClick: (tx) => setState(() => _detailTarget = tx),
-                ),
               ],
+              // Search bar
+              SearchField(
+                value: _query,
+                onValueChange: _onQueryChanged,
+                placeholder: 'Search merchant, category, code or amount.',
+              ),
+              const SizedBox(height: 8),
+              // "Transactions" label or empty state
+              if (!hasTxs)
+                EmptyState(
+                  title: _query.isEmpty
+                      ? 'No transactions yet'
+                      : 'No matching transactions',
+                  description: _query.isEmpty
+                      ? 'Import MPESA messages or add a transaction to start your ledger.'
+                      : 'Try another filter or refine your search.',
+                )
+              else
+                Padding(
+                  padding: const EdgeInsets.only(bottom: 4),
+                  child: Text('Transactions',
+                      style: Theme.of(context)
+                          .textTheme
+                          .labelMedium
+                          ?.copyWith(color: scheme.onSurfaceVariant)),
+                ),
+            ]),
+          ),
+        ),
+
+        // ── Virtualized transaction rows ───────────────────────────────────
+        if (hasTxs)
+          SliverPadding(
+            padding: EdgeInsets.only(
+              left: AppSpacing.screenHorizontal,
+              right: AppSpacing.screenHorizontal,
+              bottom: AppSpacing.bottomSafeWithFloatingNav,
             ),
+            sliver: SliverList.builder(
+              itemCount: _flatItems.length,
+              itemBuilder: (ctx, i) {
+                final item = _flatItems[i];
+                if (item is String) {
+                  return Padding(
+                    padding: const EdgeInsets.only(top: 4, bottom: 4),
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        const SizedBox.shrink(),
+                        Text(item,
+                            style: Theme.of(ctx)
+                                .textTheme
+                                .labelSmall
+                                ?.copyWith(
+                                    color: scheme.primary,
+                                    fontWeight: FontWeight.w600)),
+                      ],
+                    ),
+                  );
+                }
+                final tx = item as FinanceTransaction;
+                return Padding(
+                  padding: const EdgeInsets.only(bottom: 4),
+                  child: FinanceTransactionRowWidget(
+                    transaction: tx,
+                    onRecategorize: () =>
+                        setState(() => _categoryPickerTarget = tx),
+                    onDelete: () => setState(() => _deleteTarget = tx),
+                    onMerchantClick: (m) => context.push(
+                        '/${AppRoute.merchantDetail}/${Uri.encodeComponent(m)}'),
+                    onClick: () => _openDetailDirect(tx),
+                  ),
+                );
+              },
+            ),
+          ),
+
+        // Bottom safe area when list is empty (no SliverList above)
+        if (!hasTxs)
+          const SliverToBoxAdapter(
+            child: SizedBox(height: AppSpacing.bottomSafeWithFloatingNav),
+          ),
+      ],
     );
   }
 
@@ -509,7 +689,7 @@ class _FinanceScreenState extends ConsumerState<FinanceScreen> {
         isScrollControlled: true,
         backgroundColor: Theme.of(context).colorScheme.surface,
         shape: const RoundedRectangleBorder(
-          borderRadius: BorderRadius.vertical(top: Radius.circular(6)),
+          borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
         ),
         builder: (_) => AddTransactionBottomSheet(
           onDismiss: () {
@@ -543,7 +723,7 @@ class _FinanceScreenState extends ConsumerState<FinanceScreen> {
         isScrollControlled: true,
         backgroundColor: Theme.of(context).colorScheme.surface,
         shape: const RoundedRectangleBorder(
-          borderRadius: BorderRadius.vertical(top: Radius.circular(6)),
+          borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
         ),
         builder: (_) => EditTransactionBottomSheet(
           transaction: tx,
@@ -551,15 +731,16 @@ class _FinanceScreenState extends ConsumerState<FinanceScreen> {
             Navigator.of(context, rootNavigator: true).pop();
             if (mounted) setState(() => _editTarget = null);
           },
-          onSave: (amount, merchant, category, notes, fee) async {
+          onSave: (category) async {
             Navigator.of(context, rootNavigator: true).pop();
+            // Only category is editable; preserve all other auto-filled fields.
             await _repo?.updateTransaction(
               id: tx.id,
-              amount: amount,
-              merchant: merchant,
+              amount: tx.amount,
+              merchant: tx.merchant,
               category: category,
-              notes: notes,
-              fee: fee,
+              notes: tx.notes,
+              fee: tx.fee,
             );
             if (mounted) setState(() => _editTarget = null);
             _reload();
@@ -577,7 +758,7 @@ class _FinanceScreenState extends ConsumerState<FinanceScreen> {
         useRootNavigator: true,
         backgroundColor: Theme.of(context).colorScheme.surface,
         shape: const RoundedRectangleBorder(
-          borderRadius: BorderRadius.vertical(top: Radius.circular(6)),
+          borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
         ),
         builder: (_) => CategoryPickerBottomSheet(
           currentCategory: tx.category,
@@ -606,7 +787,7 @@ class _FinanceScreenState extends ConsumerState<FinanceScreen> {
         isScrollControlled: true,
         backgroundColor: Theme.of(context).colorScheme.surface,
         shape: const RoundedRectangleBorder(
-          borderRadius: BorderRadius.vertical(top: Radius.circular(6)),
+          borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
         ),
         builder: (_) => _SmsSheetHost(
           key: _smsSheetStateKey,
@@ -648,7 +829,7 @@ class _FinanceScreenState extends ConsumerState<FinanceScreen> {
         isScrollControlled: true,
         backgroundColor: Theme.of(context).colorScheme.surface,
         shape: const RoundedRectangleBorder(
-          borderRadius: BorderRadius.vertical(top: Radius.circular(6)),
+          borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
         ),
         builder: (_) => CsvImportBottomSheet(
           onDismiss: () {
@@ -852,11 +1033,11 @@ class _SmsSheetHostState extends State<_SmsSheetHost> {
             padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 5),
             child: InkWell(
               onTap: () => _startDetect(days),
-              borderRadius: BorderRadius.circular(6),
+              borderRadius: BorderRadius.circular(12),
               child: Ink(
                 decoration: BoxDecoration(
                   color: scheme.surfaceContainerHigh,
-                  borderRadius: BorderRadius.circular(6),
+                  borderRadius: BorderRadius.circular(12),
                 ),
                 padding:
                     const EdgeInsets.symmetric(horizontal: 18, vertical: 14),
@@ -941,7 +1122,7 @@ class _SmsSheetHostState extends State<_SmsSheetHost> {
                   },
                   style: FilledButton.styleFrom(
                     shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(6)),
+                        borderRadius: BorderRadius.circular(20)),
                   ),
                   child: const Text('Import All'),
                 ),

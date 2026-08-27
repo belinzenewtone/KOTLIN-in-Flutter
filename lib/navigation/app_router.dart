@@ -341,6 +341,7 @@ class _MainShellState extends ConsumerState<MainShell> {
 
     return BiometricLockCoordinator(
       enabled: session.isLoggedIn && session.biometricEnabled,
+      onDisable: () => ref.read(sessionProvider.notifier).setBiometricEnabled(false),
       child: Scaffold(
         resizeToAvoidBottomInset: false,
         // Kotlin parity: the floating pill bar OVERLAYS content inside a Box;

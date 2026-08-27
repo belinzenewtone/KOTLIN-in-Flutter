@@ -16,6 +16,7 @@ import 'package:go_router/go_router.dart';
 
 import '../../../core/designsystem/banners.dart';
 import '../../../core/designsystem/controls.dart';
+import '../../../core/designsystem/dialogs.dart';
 import '../../../core/designsystem/page_scaffold.dart';
 import '../../../core/designsystem/task_row.dart';
 import '../../../core/designsystem/tokens.dart';
@@ -203,6 +204,10 @@ class _TasksScreenState extends ConsumerState<TasksScreen> {
             PageScaffold(
               title: 'Tasks',
               onBack: () => context.pop(),
+              // scrollable: false so the inner Expanded(child: ListView) works
+              // correctly — PageScaffold defaults to SingleChildScrollView which
+              // would make Expanded have unbounded height and throw an error.
+              scrollable: false,
               // Add button mirrors the Calendar screen pattern — top-right action,
               // no floating button below (matches Kotlin TasksScreen action bar).
               actions: [
@@ -401,8 +406,7 @@ class _DeleteTaskDialog extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final scheme = Theme.of(context).colorScheme;
-    return AlertDialog(
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(6)),
+    return LifeOsAlertDialog(
       title: const Text('Delete task?'),
       content: Text('Remove "${task.title}"? This cannot be undone.'),
       actions: [
@@ -412,7 +416,7 @@ class _DeleteTaskDialog extends StatelessWidget {
           style: FilledButton.styleFrom(
             backgroundColor: scheme.error,
             foregroundColor: scheme.onError,
-            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(6)),
+            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
           ),
           child: const Text('Delete'),
         ),

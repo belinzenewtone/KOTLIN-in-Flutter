@@ -30,31 +30,32 @@ class TransactionDetailDialog extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final scheme = Theme.of(context).colorScheme;
+    final tt = Theme.of(context).textTheme;
     final tx = transaction;
 
     return AlertDialog(
       backgroundColor: scheme.surface,
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(6)),
-      titlePadding: const EdgeInsets.fromLTRB(24, 20, 12, 0),
-      contentPadding: const EdgeInsets.fromLTRB(24, 12, 24, 8),
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+      // Tighter title padding — less air above merchant name.
+      titlePadding: const EdgeInsets.fromLTRB(20, 16, 8, 0),
+      contentPadding: const EdgeInsets.fromLTRB(20, 8, 20, 4),
       title: Row(
         children: [
           Expanded(
             child: Text(tx.merchant,
                 maxLines: 2,
                 overflow: TextOverflow.ellipsis,
-                style: Theme.of(context)
-                    .textTheme
-                    .titleLarge
-                    ?.copyWith(fontWeight: FontWeight.w700)),
+                style: tt.titleMedium?.copyWith(fontWeight: FontWeight.w700)),
           ),
           IconButton(
             onPressed: onShare,
+            visualDensity: VisualDensity.compact,
             icon: const Icon(Icons.share_outlined, size: 18),
             tooltip: 'Share',
           ),
           IconButton(
             onPressed: onEdit,
+            visualDensity: VisualDensity.compact,
             icon: const Icon(Icons.edit_outlined, size: 18),
             tooltip: 'Edit',
           ),
@@ -64,49 +65,52 @@ class TransactionDetailDialog extends StatelessWidget {
         mainAxisSize: MainAxisSize.min,
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // Amount block
-          Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
+          // Amount as an inline row — saves ~20dp vs the stacked layout.
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            crossAxisAlignment: CrossAxisAlignment.center,
             children: [
               Text('Amount',
-                  style: Theme.of(context)
-                      .textTheme
-                      .labelSmall
-                      ?.copyWith(color: scheme.onSurfaceVariant)),
+                  style: tt.labelSmall
+                      ?.copyWith(color: scheme.onSurfaceVariant, letterSpacing: 0.4)),
               Text(
                 AppDateUtils.formatCurrency(tx.amount),
-                style: Theme.of(context).textTheme.headlineMedium?.copyWith(
-                      fontWeight: FontWeight.w700,
-                      color: tx.amount < 0 ? scheme.primary : scheme.error,
-                    ),
+                style: tt.titleLarge?.copyWith(
+                  fontWeight: FontWeight.w700,
+                  color: tx.amount < 0 ? scheme.primary : scheme.error,
+                ),
               ),
             ],
           ),
-          const SizedBox(height: 12),
-          Divider(color: scheme.outlineVariant.withValues(alpha: 0.3), height: 1),
-          const SizedBox(height: 12),
-          DetailRow(context, 'Category', tx.category.toUpperCase()),
-          DetailRow(context, 'Type', tx.transactionType),
-          DetailRow(context, 'Date', formatDateFull(tx.date)),
-          if (tx.mpesaCode != null) DetailRow(context, 'M-Pesa Code', tx.mpesaCode!),
-          if (tx.notes != null && tx.notes!.trim().isNotEmpty)
-            DetailRow(context, 'Notes', tx.notes!),
-          if (tx.fee != 0.0)
-            DetailRow(context, 'Fee', AppDateUtils.formatCurrency(tx.fee)),
-          if (tx.balanceAfter != null)
-            DetailRow(context, 'Balance After', AppDateUtils.formatCurrency(tx.balanceAfter!)),
           const SizedBox(height: 8),
+          Divider(color: scheme.outlineVariant.withValues(alpha: 0.3), height: 1),
+          const SizedBox(height: 8),
+          // Category and Type are often identical — show Type only when different.
+          _detailRow(context, 'Category', tx.category.toUpperCase()),
+          if (tx.transactionType.toUpperCase() != tx.category.toUpperCase())
+            _detailRow(context, 'Type', tx.transactionType),
+          _detailRow(context, 'Date', _formatDateCompact(tx.date)),
+          if (tx.mpesaCode != null) _detailRow(context, 'M-Pesa Code', tx.mpesaCode!),
+          if (tx.notes != null && tx.notes!.trim().isNotEmpty)
+            _detailRow(context, 'Notes', tx.notes!),
+          if (tx.fee != 0.0)
+            _detailRow(context, 'Fee', AppDateUtils.formatCurrency(tx.fee)),
+          if (tx.balanceAfter != null)
+            _detailRow(context, 'Balance After',
+                AppDateUtils.formatCurrency(tx.balanceAfter!)),
+          const SizedBox(height: 4),
           SizedBox(
             width: double.infinity,
             child: TextButton.icon(
               onPressed: onDelete,
               style: TextButton.styleFrom(
-                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(6)),
+                padding: const EdgeInsets.symmetric(vertical: 6),
+                shape:
+                    RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
               ),
-              icon: Icon(Icons.delete_outline,
-                  size: 16, color: scheme.error),
-              label: Text('Delete transaction',
-                  style: TextStyle(color: scheme.error)),
+              icon: Icon(Icons.delete_outline, size: 16, color: scheme.error),
+              label:
+                  Text('Delete transaction', style: TextStyle(color: scheme.error)),
             ),
           ),
         ],
@@ -118,10 +122,13 @@ class TransactionDetailDialog extends StatelessWidget {
   }
 }
 
-/// "EEEE, MMM d, yyyy · h:mm a" — used by the dialog's Date row.
-String formatDateFull(int ms) {
-  const months = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
-  const weekdays = ['Monday','Tuesday','Wednesday','Thursday','Friday','Saturday','Sunday'];
+/// "Mon, Aug 24, 2026 · 9:18 AM" — shorter than the full weekday to save space.
+String _formatDateCompact(int ms) {
+  const months = [
+    'Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun',
+    'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'
+  ];
+  const weekdays = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
   final d = DateTime.fromMillisecondsSinceEpoch(ms);
   var hour = d.hour;
   final ampm = hour >= 12 ? 'PM' : 'AM';
@@ -131,33 +138,37 @@ String formatDateFull(int ms) {
   return '${weekdays[d.weekday - 1]}, ${months[d.month - 1]} ${d.day}, ${d.year} · $hour:$minute $ampm';
 }
 
-Widget DetailRow(BuildContext context, String label, String value) {
+// Keep the old export for any callsites that reference it.
+String formatDateFull(int ms) => _formatDateCompact(ms);
+
+Widget _detailRow(BuildContext context, String label, String value) {
   final scheme = Theme.of(context).colorScheme;
   return Padding(
-    padding: const EdgeInsets.only(bottom: 4),
+    padding: const EdgeInsets.only(bottom: 5),
     child: Row(
       mainAxisAlignment: MainAxisAlignment.spaceBetween,
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Expanded(
-          flex: 2,
-          child: Text(label,
-              style: Theme.of(context)
-                  .textTheme
-                  .bodyMedium
-                  ?.copyWith(color: scheme.onSurfaceVariant)),
-        ),
-        Expanded(
-          flex: 3,
+        Text(label,
+            style: Theme.of(context)
+                .textTheme
+                .bodySmall
+                ?.copyWith(color: scheme.onSurfaceVariant)),
+        const SizedBox(width: 12),
+        Flexible(
           child: Text(value,
               textAlign: TextAlign.right,
               style: Theme.of(context)
                   .textTheme
-                  .bodyMedium
-                  ?.copyWith(fontWeight: FontWeight.w500)),
+                  .bodySmall
+                  ?.copyWith(fontWeight: FontWeight.w600)),
         ),
       ],
     ),
   );
 }
 
+// Public alias kept for any existing call-sites.
+// ignore: non_constant_identifier_names
+Widget DetailRow(BuildContext context, String label, String value) =>
+    _detailRow(context, label, value);

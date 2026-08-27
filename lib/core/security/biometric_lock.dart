@@ -13,7 +13,6 @@ import 'package:flutter/services.dart';
 import 'package:local_auth/local_auth.dart';
 
 import '../../core/designsystem/tokens.dart';
-import '../../ui/theme/theme.dart';
 
 class BiometricLockState {
   const BiometricLockState({
@@ -36,6 +35,7 @@ class BiometricLockCoordinator extends StatefulWidget {
     required this.child,
     this.lockTimeoutMs = 5 * 60000,
     this.onReset,
+    this.onDisable,
   });
 
   /// authState.isLoggedIn && biometricEnabled && !onPublicFlow
@@ -43,6 +43,9 @@ class BiometricLockCoordinator extends StatefulWidget {
   final Widget child;
   final int lockTimeoutMs;
   final VoidCallback? onReset;
+  /// Called when the user chooses to turn off biometrics from the lock screen.
+  /// Clears the biometric_enabled pref so the overlay never reappears.
+  final VoidCallback? onDisable;
 
   @override
   State<BiometricLockCoordinator> createState() =>
@@ -161,6 +164,7 @@ class _BiometricLockCoordinatorState extends State<BiometricLockCoordinator>
         _authenticate();
       },
       onReset: widget.onReset,
+      onDisable: widget.onDisable,
     );
   }
 }
@@ -173,11 +177,15 @@ class BiometricLockOverlay extends StatefulWidget {
     required this.errorMessage,
     required this.onRetry,
     this.onReset,
+    this.onDisable,
   });
 
   final String? errorMessage;
   final VoidCallback onRetry;
   final VoidCallback? onReset;
+  /// Shown when [errorMessage] is non-null — lets the user disable biometrics
+  /// entirely without resetting the app (escape hatch when auth keeps failing).
+  final VoidCallback? onDisable;
 
   @override
   State<BiometricLockOverlay> createState() => _BiometricLockOverlayState();
@@ -308,6 +316,18 @@ class _BiometricLockOverlayState extends State<BiometricLockOverlay> {
                   ),
                 ],
               ),
+              // Escape hatch: shown only after a failure so the user can turn
+              // off biometrics without losing all their data.
+              if (err != null && widget.onDisable != null) ...[
+                const SizedBox(height: 8),
+                TextButton(
+                  onPressed: widget.onDisable,
+                  child: Text(
+                    'Disable biometrics',
+                    style: TextStyle(color: scheme.onSurfaceVariant, fontSize: 13),
+                  ),
+                ),
+              ],
             ],
           ),
         ),

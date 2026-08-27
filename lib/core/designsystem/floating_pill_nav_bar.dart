@@ -24,7 +24,8 @@ class LifeOsBottomBar extends StatelessWidget {
   Widget build(BuildContext context) {
     final c = Theme.of(context).extension<LifeOsColors>() ?? LifeOsColors.light;
     final scheme = Theme.of(context).colorScheme;
-    final navBarShape = BorderRadius.circular(6);
+    // 20dp — pronounced pill for the floating nav bar.
+    final navBarShape = BorderRadius.circular(20);
 
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 16),
@@ -46,12 +47,13 @@ class LifeOsBottomBar extends StatelessWidget {
                 ],
               ),
               border: GradientBoxBorder(
+                radius: BorderRadius.circular(20),
                 gradient: LinearGradient(
                   begin: Alignment.topCenter,
                   end: Alignment.bottomCenter,
                   colors: [
-                    c.outlineVariant.withValues(alpha: 0.76),
-                    c.outlineVariant.withValues(alpha: 0.38),
+                    c.primary.withValues(alpha: 0.22),
+                    c.outlineVariant.withValues(alpha: 0.28),
                   ],
                 ),
               ),
@@ -156,10 +158,12 @@ class _BottomNavItem extends StatelessWidget {
 
 /// GradientBoxBorder — Flutter lacks a gradient Border out of the box.
 class GradientBoxBorder extends BoxBorder {
-  const GradientBoxBorder({required this.gradient, this.width = 1});
+  const GradientBoxBorder({required this.gradient, this.width = 1, this.radius});
 
   final Gradient gradient;
   final double width;
+  /// Override the border radius used when painting. Defaults to circular(6).
+  final BorderRadius? radius;
 
   @override
   BorderSide get bottom => BorderSide.none;
@@ -180,7 +184,8 @@ class GradientBoxBorder extends BoxBorder {
       ..style = PaintingStyle.stroke
       ..strokeWidth = width
       ..shader = gradient.createShader(rect);
-    final rrect = (borderRadius ?? BorderRadius.circular(6)).toRRect(rect);
+    final effectiveRadius = radius ?? borderRadius ?? BorderRadius.circular(6);
+    final rrect = effectiveRadius.toRRect(rect);
     canvas.drawRRect(rrect, paint);
   }
 
@@ -191,5 +196,5 @@ class GradientBoxBorder extends BoxBorder {
 
   @override
   GradientBoxBorder scale(double t) =>
-      GradientBoxBorder(gradient: gradient, width: width * t);
+      GradientBoxBorder(gradient: gradient, width: width * t, radius: radius);
 }

@@ -1,25 +1,18 @@
-/// 1:1 port of ui/theme/Theme.kt + ui/theme/AppThemeMode.kt.
+/// LifeOS design system v2 — revamped colour & typography tokens.
 ///
-/// The full Material role set lives in [LifeOsColors] (a ThemeExtension) so every
-/// token used by the Compose design system has an exact Dart counterpart,
-/// including `background`/`onBackground`/`surfaceContainer*`.
-///
-/// Mode switches animate over 250 ms — mirrors Compose's animateColorAsState
-/// via Flutter's AnimatedTheme, which lerps the full ThemeData (including
-/// ColorScheme AND LifeOsColors) so there is no flash between layers.
+/// Primary: indigo #6366F1 (Droo Finance inspiration).
+/// Typography: Plus Jakarta Sans 800/700 (display/headline) · Inter (body/title)
+///             via Google Fonts. JetBrains Mono for all KSh amounts → kMonoStyle.
+/// Card radius: 12dp (kRadius12). Small components keep kRadius6 (6dp).
+/// Theme animation: 400ms easeInOut (intentional revamp delta; Kotlin parity was 250ms).
 library;
 
 import 'package:flutter/material.dart';
+import 'package:google_fonts/google_fonts.dart';
 
 enum AppThemeMode { system, light, dark }
 
-// ─── Light scheme (RFINAL lifeosPaperThemeLight) ─────────────────────────
-// Values transcribed verbatim from Theme.kt LightColorScheme.
-
-// ─── Dark scheme (RFINAL lifeosPaperTheme) ───────────────────────────────
-// Values transcribed verbatim from Theme.kt DarkColorScheme.
-
-/// Every color role the app references, resolved per-brightness.
+/// Every colour role the app references, resolved per-brightness.
 @immutable
 class LifeOsColors extends ThemeExtension<LifeOsColors> {
   const LifeOsColors({
@@ -84,71 +77,81 @@ class LifeOsColors extends ThemeExtension<LifeOsColors> {
   final Color surfaceContainerHighest;
   final Brightness brightness;
 
-  // Semantic accents (AppDesignTokens.colors.success / warning).
+  // ── Semantic statics ──────────────────────────────────────────────────────
+  /// Positive income / credit transactions.
+  static const income  = Color(0xFF22C55E);
+  /// Expense / debit transactions.
+  static const expense = Color(0xFFF43F5E);
+  /// Secondary accent: violet (goals, aurora gradient, secondary highlights).
+  static const violet  = Color(0xFF8B5CF6);
+  /// Success confirmation (kept at AppDesignTokens.colors.success).
   static const success = Color(0xFF16A34A);
+  /// Warning / caution (kept at AppDesignTokens.colors.warning).
   static const warning = Color(0xFFD97706);
 
+  // ── Light scheme ──────────────────────────────────────────────────────────
   static const light = LifeOsColors(
-    primary: Color(0xFF0369A1),
-    onPrimary: Colors.white,
-    primaryContainer: Color(0xFFBAE6FD),
-    onPrimaryContainer: Color(0xFF082F49),
-    secondary: Color(0xFF64748B),
-    secondaryContainer: Color(0xFFE2E8F0),
-    tertiary: Color(0xFF0F766E),
-    tertiaryContainer: Color(0xFFCCFBF1),
-    background: Color(0xFFE8EDF3),
-    onBackground: Color(0xFF0F172A),
-    surface: Color(0xFFF8FAFC),
-    onSurface: Color(0xFF0F172A),
-    surfaceVariant: Color(0xFFEEF2F7),
-    onSurfaceVariant: Color(0xFF475569),
-    outline: Color(0xFFCBD5E1),
-    outlineVariant: Color(0xFFE2E8F0),
-    error: Color(0xFFDC2626),
-    onError: Colors.white,
-    errorContainer: Color(0xFFFEE2E2),
-    onErrorContainer: Color(0xFF7F1D1D),
-    inverseSurface: Color(0xFF1E293B),
-    inverseOnSurface: Color(0xFFF8FAFC),
-    inversePrimary: Color(0xFF7DD3FC),
-    surfaceContainerLowest: Color(0xFFF8FAFC),
-    surfaceContainerLow: Color(0xFFF1F5F9),
-    surfaceContainer: Color(0xFFE2E8F0),
-    surfaceContainerHigh: Color(0xFFCBD5E1),
-    surfaceContainerHighest: Color(0xFF94A3B8),
+    primary:              Color(0xFF4F46E5), // indigo-600
+    onPrimary:            Color(0xFFFFFFFF),
+    primaryContainer:     Color(0xFFE0E7FF), // indigo-100
+    onPrimaryContainer:   Color(0xFF312E81), // indigo-900
+    secondary:            Color(0xFF7C3AED), // violet-600
+    secondaryContainer:   Color(0xFFEDE9FE), // violet-100
+    tertiary:             Color(0xFF0D9488), // teal-600
+    tertiaryContainer:    Color(0xFFCCFBF1), // teal-100
+    background:           Color(0xFFF2F2F8), // near-white, slight indigo hue
+    onBackground:         Color(0xFF0D0D18),
+    surface:              Color(0xFFFFFFFF),
+    onSurface:            Color(0xFF0D0D18),
+    surfaceVariant:       Color(0xFFEDEDF7),
+    onSurfaceVariant:     Color(0xFF44445A),
+    outline:              Color(0xFFDCDCEE),
+    outlineVariant:       Color(0xFFEDEDF7),
+    error:                Color(0xFFE11D48), // rose-600
+    onError:              Color(0xFFFFFFFF),
+    errorContainer:       Color(0xFFFFE4E6), // rose-100
+    onErrorContainer:     Color(0xFF9F1239), // rose-800
+    inverseSurface:       Color(0xFF1A1A28),
+    inverseOnSurface:     Color(0xFFF2F2F8),
+    inversePrimary:       Color(0xFFA5B4FC), // indigo-300
+    surfaceContainerLowest:  Color(0xFFFFFFFF),
+    surfaceContainerLow:     Color(0xFFF6F6FC),
+    surfaceContainer:        Color(0xFFEDEDF7),
+    surfaceContainerHigh:    Color(0xFFE4E4F0),
+    surfaceContainerHighest: Color(0xFFD8D8EC),
     brightness: Brightness.light,
   );
 
+  // ── Dark scheme ───────────────────────────────────────────────────────────
   static const dark = LifeOsColors(
-    primary: Color(0xFF57B9FF),
-    onPrimary: Color(0xFF0A0A0B),
-    primaryContainer: Color(0xFF0F2A40),
-    onPrimaryContainer: Color(0xFFBFE3FF),
-    secondary: Color(0xFFA1A1AA),
-    secondaryContainer: Color(0xFF26272B),
-    tertiary: Color(0xFF5EEAD4),
-    tertiaryContainer: Color(0xFF0F3A33),
-    background: Color(0xFF0A0A0B),
-    onBackground: Color(0xFFF4F4F5),
-    surface: Color(0xFF0A0A0B),
-    onSurface: Color(0xFFF4F4F5),
-    surfaceVariant: Color(0xFF161618),
-    onSurfaceVariant: Color(0xFFA1A1AA),
-    outline: Color(0xFF2E2E33),
-    outlineVariant: Color(0xFF222226),
-    error: Color(0xFFF87171),
-    onError: Color(0xFF0A0A0B),
-    errorContainer: Color(0xFF3A1214),
-    onErrorContainer: Color(0xFFFECACA),
-    inverseSurface: Color(0xFFF4F4F5),
-    inverseOnSurface: Color(0xFF0A0A0B),
-    inversePrimary: Color(0xFF57B9FF),
-    surfaceContainerLowest: Color(0xFF0A0A0B),
-    surfaceContainerLow: Color(0xFF111113),
-    surfaceContainer: Color(0xFF161618),
-    surfaceContainerHigh: Color(0xFF1A1A1D),
-    surfaceContainerHighest: Color(0xFF1D1D20),
+    primary:              Color(0xFF6366F1), // indigo-500
+    onPrimary:            Color(0xFFFFFFFF),
+    primaryContainer:     Color(0xFF1E1E3F), // deep indigo
+    onPrimaryContainer:   Color(0xFFC7D2FE), // indigo-200
+    secondary:            Color(0xFF8B5CF6), // violet-500
+    secondaryContainer:   Color(0xFF1A1033), // deep violet
+    tertiary:             Color(0xFF14B8A6), // teal-500
+    tertiaryContainer:    Color(0xFF0D2E2B), // deep teal
+    background:           Color(0xFF08080C), // near-black, indigo bias
+    onBackground:         Color(0xFFE8E8F2),
+    surface:              Color(0xFF0F0F18), // dark surface
+    onSurface:            Color(0xFFE8E8F2),
+    surfaceVariant:       Color(0xFF14141E), // raised surface
+    onSurfaceVariant:     Color(0xFFA0A0B8),
+    outline:              Color(0xFF464658), // raised from #252530 — visible border in dark mode
+    outlineVariant:       Color(0xFF2C2C3E), // raised from #1C1C28 — subtle but legible border
+    error:                Color(0xFFF43F5E), // rose-500
+    onError:              Color(0xFFFFFFFF),
+    errorContainer:       Color(0xFF2D0A12), // deep rose
+    onErrorContainer:     Color(0xFFFCA5A5), // rose-300
+    inverseSurface:       Color(0xFFE8E8F2),
+    inverseOnSurface:     Color(0xFF08080C),
+    inversePrimary:       Color(0xFF6366F1),
+    surfaceContainerLowest:  Color(0xFF05050A),
+    surfaceContainerLow:     Color(0xFF0F0F18),
+    surfaceContainer:        Color(0xFF14141E),
+    surfaceContainerHigh:    Color(0xFF1A1A28),
+    surfaceContainerHighest: Color(0xFF20202F),
     brightness: Brightness.dark,
   );
 
@@ -193,26 +196,68 @@ class LifeOsColors extends ThemeExtension<LifeOsColors> {
   }
 }
 
-// ─── Bolder typography to match RFINAL Paper theme ──────────────────────
-const TextTheme kLifeOsTypography = TextTheme(
-  displayLarge: TextStyle(fontWeight: FontWeight.w700, fontSize: 36, height: 42 / 36),
-  headlineLarge: TextStyle(fontWeight: FontWeight.w700, fontSize: 30, height: 36 / 30, letterSpacing: -0.5),
-  headlineMedium: TextStyle(fontWeight: FontWeight.w700, fontSize: 24, height: 30 / 24, letterSpacing: -0.4),
-  headlineSmall: TextStyle(fontWeight: FontWeight.w700, fontSize: 20, height: 26 / 20, letterSpacing: -0.3),
-  titleLarge: TextStyle(fontWeight: FontWeight.w600, fontSize: 18, height: 24 / 18, letterSpacing: -0.2),
-  titleMedium: TextStyle(fontWeight: FontWeight.w600, fontSize: 16, height: 22 / 16),
-  titleSmall: TextStyle(fontWeight: FontWeight.w500, fontSize: 14, height: 20 / 14),
-  bodyLarge: TextStyle(fontWeight: FontWeight.w400, fontSize: 16, height: 24 / 16),
-  bodyMedium: TextStyle(fontWeight: FontWeight.w400, fontSize: 14, height: 20 / 14),
-  bodySmall: TextStyle(fontWeight: FontWeight.w400, fontSize: 12, height: 16 / 12),
-  labelLarge: TextStyle(fontWeight: FontWeight.w600, fontSize: 14, height: 20 / 14),
-  labelMedium: TextStyle(fontWeight: FontWeight.w500, fontSize: 12, height: 16 / 12),
-  labelSmall: TextStyle(fontWeight: FontWeight.w500, fontSize: 11, height: 16 / 11),
+// ── Typography ────────────────────────────────────────────────────────────────
+// Display/headline → Plus Jakarta Sans 800/700 (via GoogleFonts).
+// Title/body/label  → Inter, applied via fontFamily in ThemeData.
+// Amounts           → kMonoStyle() — JetBrains Mono + tabular-nums, called at the use site.
+
+TextTheme _buildTextTheme() => TextTheme(
+  displayLarge:
+      GoogleFonts.plusJakartaSans(fontWeight: FontWeight.w800, fontSize: 36, height: 1.167),
+  headlineLarge:
+      GoogleFonts.plusJakartaSans(fontWeight: FontWeight.w800, fontSize: 30, height: 1.2, letterSpacing: -0.5),
+  headlineMedium:
+      GoogleFonts.plusJakartaSans(fontWeight: FontWeight.w700, fontSize: 24, height: 1.25, letterSpacing: -0.4),
+  headlineSmall:
+      GoogleFonts.plusJakartaSans(fontWeight: FontWeight.w700, fontSize: 20, height: 1.3, letterSpacing: -0.3),
+  titleLarge:  const TextStyle(fontWeight: FontWeight.w600, fontSize: 18, height: 1.333, letterSpacing: -0.2),
+  titleMedium: const TextStyle(fontWeight: FontWeight.w600, fontSize: 16, height: 1.375),
+  titleSmall:  const TextStyle(fontWeight: FontWeight.w500, fontSize: 14, height: 1.429),
+  bodyLarge:   const TextStyle(fontWeight: FontWeight.w400, fontSize: 16, height: 1.5),
+  bodyMedium:  const TextStyle(fontWeight: FontWeight.w400, fontSize: 14, height: 1.429),
+  bodySmall:   const TextStyle(fontWeight: FontWeight.w400, fontSize: 12, height: 1.333),
+  labelLarge:  const TextStyle(fontWeight: FontWeight.w600, fontSize: 14, height: 1.429),
+  labelMedium: const TextStyle(fontWeight: FontWeight.w500, fontSize: 12, height: 1.333),
+  labelSmall:  const TextStyle(fontWeight: FontWeight.w500, fontSize: 11, height: 1.455),
 );
 
-// ─── 6dp shapes to match RFINAL roundness ───────────────────────────────
-BorderRadius kRadius6 = BorderRadius.circular(6);
+/// Typography set for the theme. Display + headline use Plus Jakarta Sans;
+/// title / body / label roles inherit Inter from ThemeData.fontFamily.
+final TextTheme kLifeOsTypography = _buildTextTheme();
 
+/// JetBrains Mono with tabular-nums — **required** for every KSh amount,
+/// balance, or digit column in the app.
+///
+/// Results are cached by (fontSize, fontWeight) key so we never call
+/// GoogleFonts.jetBrainsMono() more than once per unique combination.
+/// Without this cache, every build of every transaction row / metric card
+/// creates a fresh TextStyle object which causes noticeable jank on lists.
+final _monoStyleCache = <int, TextStyle>{};
+
+TextStyle kMonoStyle({double fontSize = 14, FontWeight fontWeight = FontWeight.w500}) {
+  // Pack both values into a single int key — fontSize multiplied by 10 to
+  // preserve one decimal place, weight index shifted into the high bits.
+  final key = (fontSize * 10).round() | (fontWeight.value << 4);
+  return _monoStyleCache.putIfAbsent(
+    key,
+    () => GoogleFonts.jetBrainsMono(
+      fontSize: fontSize,
+      fontWeight: fontWeight,
+      fontFeatures: const [FontFeature.tabularFigures()],
+    ),
+  );
+}
+
+// ── Radii ─────────────────────────────────────────────────────────────────────
+/// 6dp — kept for small components: chips, badges, tags.
+// ignore: non_constant_identifier_names
+final BorderRadius kRadius6 = BorderRadius.circular(6);
+
+/// 12dp — standard card radius for AppCard, GlassCard, MetricCard, dialogs.
+// ignore: non_constant_identifier_names
+final BorderRadius kRadius12 = BorderRadius.circular(12);
+
+// ── App builder ───────────────────────────────────────────────────────────────
 MaterialApp buildLifeOsApp({
   required AppThemeMode themeMode,
   required RouterConfig<Object> routerConfig,
@@ -226,23 +271,23 @@ MaterialApp buildLifeOsApp({
     darkTheme: _themeData(Brightness.dark),
     themeMode: switch (themeMode) {
       AppThemeMode.system => ThemeMode.system,
-      AppThemeMode.light => ThemeMode.light,
-      AppThemeMode.dark => ThemeMode.dark,
+      AppThemeMode.light  => ThemeMode.light,
+      AppThemeMode.dark   => ThemeMode.dark,
     },
-    // AnimatedTheme is a StatefulWidget that correctly:
-    //   • Caches child so the subtree is NOT rebuilt on every animation frame.
-    //   • Lerps the FULL ThemeData via ThemeData.lerp() — which includes both
-    //     ColorScheme AND every ThemeExtension (i.e., LifeOsColors.lerp()).
-    //   This prevents the two-layer glitch where scaffold jumps to light colours
-    //   while extension colours are still lerping from dark.
+    // AnimatedTheme lerps the full ThemeData (ColorScheme + LifeOsColors.lerp)
+    // over 400ms — intentional revamp delta; Kotlin parity was 250ms.
     builder: (context, child) => AnimatedTheme(
       data: Theme.of(context),
-      duration: const Duration(milliseconds: 250),
+      duration: const Duration(milliseconds: 400),
       curve: Curves.easeInOut,
       child: child ?? const SizedBox.shrink(),
     ),
   );
 }
+
+// Cached Inter font-family name — avoids calling GoogleFonts.inter() on every
+// ThemeData rebuild (triggered by root ValueListenableBuilder on themeController).
+final String _interFontFamily = GoogleFonts.inter().fontFamily ?? 'Inter';
 
 ThemeData _themeData(Brightness brightness) {
   final colors = brightness == Brightness.light ? LifeOsColors.light : LifeOsColors.dark;
@@ -285,18 +330,64 @@ ThemeData _themeData(Brightness brightness) {
     textTheme: kLifeOsTypography,
     scaffoldBackgroundColor: colors.background,
     splashFactory: InkRipple.splashFactory,
-    fontFamily: 'Roboto',
+    // Inter as the base body/title font; Plus Jakarta Sans overrides
+    // display and headline roles directly in kLifeOsTypography.
+    // Cache the fontFamily string — GoogleFonts.inter() creates a TextStyle
+    // object each call; we only need the family name once.
+    fontFamily: _interFontFamily,
     extensions: <ThemeExtension<dynamic>>{colors},
+    // ── Global input field defaults ───────────────────────────────────────────
+    // Fixes invisible text fields in dark mode. All TextFields that don't set
+    // explicit borders/fill inherit these; fields with explicit decorations keep
+    // their own values (enabledBorder beats theme.border via applyDefaults()).
+    inputDecorationTheme: InputDecorationTheme(
+      filled: true,
+      fillColor: colors.surfaceContainerLow,
+      contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 14),
+      // Never float the label above the field — instead it sits inside like a
+      // hint, giving the clean "Add Transaction" style across the whole app.
+      floatingLabelBehavior: FloatingLabelBehavior.never,
+      border: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(12),
+        borderSide: BorderSide(color: colors.outline),
+      ),
+      enabledBorder: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(12),
+        borderSide: BorderSide(color: colors.outline),
+      ),
+      focusedBorder: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(12),
+        borderSide: BorderSide(color: colors.primary, width: 1.5),
+      ),
+      errorBorder: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(12),
+        borderSide: BorderSide(color: colors.error),
+      ),
+      focusedErrorBorder: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(12),
+        borderSide: BorderSide(color: colors.error, width: 1.5),
+      ),
+      hintStyle: TextStyle(
+        color: colors.onSurfaceVariant.withValues(alpha: 0.7),
+        fontSize: 14,
+      ),
+    ),
+    // ── Global Switch defaults ────────────────────────────────────────────────
+    // Fixes nearly-invisible Switch widgets in dark mode. Raw Switch() calls
+    // and LifeOsSwitch both benefit since LifeOsSwitch sets inactiveTrackColor
+    // explicitly; raw Switch() inherits these defaults.
+    switchTheme: SwitchThemeData(
+      thumbColor: const WidgetStatePropertyAll(Colors.white),
+      trackColor: WidgetStateProperty.resolveWith((states) {
+        if (states.contains(WidgetState.selected)) return colors.primary;
+        return colors.onSurface.withValues(alpha: 0.28);
+      }),
+      trackOutlineColor: const WidgetStatePropertyAll(Colors.transparent),
+    ),
   );
 }
 
-// _AnimatedScheme deleted — see AnimatedTheme builder in buildLifeOsApp().
-// Bug that was here: the StatelessWidget builder captured `this.child` instead
-// of using TweenAnimationBuilder's stable child param, so the entire app tree
-// rebuilt on every animation frame (freeze). It also only lerped LifeOsColors
-// while ColorScheme jumped instantly (light-mode glitch).
-
-/// Convenience accessor mirroring `AppDesignTokens.colors`.
+/// Convenience accessor — `context.appColors.primary` etc.
 extension LifeOsColorsX on BuildContext {
   LifeOsColors get appColors => Theme.of(this).extension<LifeOsColors>() ?? LifeOsColors.light;
 }

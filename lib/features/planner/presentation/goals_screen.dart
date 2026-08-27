@@ -8,8 +8,10 @@ import 'package:go_router/go_router.dart';
 import '../../../core/database/database.dart';
 import '../../../core/designsystem/app_card.dart';
 import '../../../core/designsystem/banners.dart';
+import '../../../core/designsystem/dialogs.dart';
 import '../../../core/designsystem/metric_card.dart';
 import '../../../core/designsystem/page_scaffold.dart';
+import '../../../ui/theme/theme.dart' show LifeOsColors;
 import '../../../core/utils/date_utils.dart';
 import '../../../navigation/routes.dart';
 import '../data/planner_repository.dart';
@@ -61,9 +63,8 @@ class _GoalsScreenState extends ConsumerState<GoalsScreen> {
     await showDialog<void>(
       context: context,
       builder: (ctx) => StatefulBuilder(
-        builder: (ctx, setDialogState) => AlertDialog(
-          backgroundColor: Theme.of(ctx).colorScheme.surfaceContainerHighest,
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(6)),
+        builder: (ctx, setDialogState) => LifeOsAlertDialog(
+          scrollable: true,
           title: const Text('Add Goal'),
           content: SingleChildScrollView(
             child: Column(
@@ -199,9 +200,8 @@ class _GoalsScreenState extends ConsumerState<GoalsScreen> {
     await showDialog<void>(
       context: context,
       builder: (ctx) => StatefulBuilder(
-        builder: (ctx, setDialogState) => AlertDialog(
-          backgroundColor: Theme.of(ctx).colorScheme.surfaceContainerHighest,
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(6)),
+        builder: (ctx, setDialogState) => LifeOsAlertDialog(
+          scrollable: true,
           title: const Text('Edit Goal'),
           content: SingleChildScrollView(
             child: Column(
@@ -314,9 +314,7 @@ class _GoalsScreenState extends ConsumerState<GoalsScreen> {
 
     await showDialog<void>(
       context: context,
-      builder: (ctx) => AlertDialog(
-        backgroundColor: Theme.of(ctx).colorScheme.surfaceContainerHighest,
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(6)),
+      builder: (ctx) => LifeOsAlertDialog(
         title: Text('Update Progress — ${g.title}'),
         content: TextField(
           controller: progressC,
@@ -401,7 +399,7 @@ class _GoalsScreenState extends ConsumerState<GoalsScreen> {
             heroTag: 'goals_fab',
             onPressed: _showAddGoalDialog,
             elevation: 4,
-            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(6)),
+            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
             backgroundColor: Theme.of(context).colorScheme.primary,
             foregroundColor: Theme.of(context).colorScheme.onPrimary,
             icon: const Icon(Icons.add),
@@ -514,7 +512,7 @@ class _GoalCard extends StatelessWidget {
               minHeight: 6,
               backgroundColor: scheme.surfaceContainerHighest,
               valueColor: AlwaysStoppedAnimation<Color>(
-                isComplete ? const Color(0xFF34D399) : scheme.primary,
+                isComplete ? LifeOsColors.income : scheme.primary,
               ),
             ),
           ),

@@ -59,7 +59,11 @@ class HomeUiState {
   }
 }
 
-final homeUiStreamProvider = StreamProvider.autoDispose<HomeUiState>(
+// Non-autoDispose: keeps the stream and its cached value alive for the whole
+// app session. GoRouter rebuilds the ShellRoute child on every tab switch, so
+// autoDispose would destroy and recreate the stream each time — causing a
+// visible shimmer skeleton flash on every return to the Home tab.
+final homeUiStreamProvider = StreamProvider<HomeUiState>(
     (ref) => watchHomeUiState(ref));
 
 class HomeScreen extends ConsumerWidget {
@@ -106,6 +110,9 @@ class HomeScreen extends ConsumerWidget {
     final state = snap.value ?? initial;
 
     return Scaffold(
+      // Explicit background prevents a one-frame black flash before the aurora
+      // canvas and content widgets paint themselves in.
+      backgroundColor: Theme.of(context).colorScheme.surface,
       body: Stack(
         fit: StackFit.expand,
         children: [
@@ -141,10 +148,18 @@ class HomeScreen extends ConsumerWidget {
                           ],
                         ),
                       ),
-                      IconButton(
-                        onPressed: () => context.go('/${AppRoute.profile}'),
-                        icon: const Icon(Icons.person_outline),
-                        tooltip: 'Profile',
+                      // 44dp logo with 6dp clip — DashboardComponents.kt parity.
+                      GestureDetector(
+                        onTap: () => context.go('/${AppRoute.profile}'),
+                        child: ClipRRect(
+                          borderRadius: BorderRadius.circular(6),
+                          child: Image.asset(
+                            'assets/logo/logo_personalos.png',
+                            width: 44,
+                            height: 44,
+                            fit: BoxFit.cover,
+                          ),
+                        ),
                       ),
                     ],
                   ),
@@ -249,31 +264,65 @@ class HomeScreen extends ConsumerWidget {
   }
 }
 
-/// Three radial aurora washes drawn behind content — exact Kotlin colors.
-class _AuroraBackdrop extends StatelessWidget {
+/// Three radial aurora washes with a 12-second slow-breathe opacity animation.
+/// Indigo primary wash top-left, violet secondary mid-right, teal accent low.
+class _AuroraBackdrop extends StatefulWidget {
   const _AuroraBackdrop();
 
-  // Singleton painter — allocated once, never reallocated since shouldRepaint
-  // returns false and the aurora never changes.
-  static final _painter = _AuroraPainter();
+  @override
+  State<_AuroraBackdrop> createState() => _AuroraBackdropState();
+}
+
+class _AuroraBackdropState extends State<_AuroraBackdrop>
+    with SingleTickerProviderStateMixin {
+  late final AnimationController _ctrl;
+  late final Animation<double> _opacity;
+
+  @override
+  void initState() {
+    super.initState();
+    _ctrl = AnimationController(
+      vsync: this,
+      duration: const Duration(seconds: 12),
+    )..repeat(reverse: true);
+    // Subtle breathe: 78% → 100% opacity on the full aurora layer.
+    _opacity = Tween<double>(begin: 0.78, end: 1.0).animate(
+      CurvedAnimation(parent: _ctrl, curve: Curves.easeInOut),
+    );
+  }
+
+  @override
+  void dispose() {
+    _ctrl.dispose();
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) {
     return IgnorePointer(
-      child: CustomPaint(
-        size: Size.infinite,
-        painter: _painter,
+      child: AnimatedBuilder(
+        animation: _opacity,
+        builder: (_, __) => Opacity(
+          opacity: _opacity.value,
+          child: const CustomPaint(
+            size: Size.infinite,
+            painter: _AuroraPainter(),
+          ),
+        ),
       ),
     );
   }
 }
 
 class _AuroraPainter extends CustomPainter {
-  // Cached Paint objects (with shaders) keyed to the Size they were built for.
-  Size? _cachedSize;
-  Paint? _p1, _p2, _p3;
+  const _AuroraPainter();
 
-  void _buildPaints(Size size) {
+  // Cached Paint objects (with shaders) keyed to the Size they were built for.
+  // ignore: prefer_final_fields
+  static Size? _cachedSize;
+  static Paint? _p1, _p2, _p3;
+
+  static void _buildPaints(Size size) {
     if (_cachedSize == size) return;
     _cachedSize = size;
     final maxDim = size.shortestSide;
@@ -284,20 +333,23 @@ class _AuroraPainter extends CustomPainter {
             Rect.fromCircle(center: center, radius: radius),
           );
 
+    // Indigo primary wash — top-left anchor.
     _p1 = makePaint(
       Offset(size.width * 0.25, size.height * 0.08),
-      maxDim * 0.55,
-      [const Color(0x1A57B9FF), const Color(0x0857B9FF), Colors.transparent],
+      maxDim * 0.58,
+      [const Color(0x226366F1), const Color(0x0C6366F1), Colors.transparent],
     );
+    // Violet secondary wash — mid-right.
     _p2 = makePaint(
-      Offset(size.width * 0.72, size.height * 0.45),
-      maxDim * 0.48,
-      [const Color(0x188B5CF6), const Color(0x088B5CF6), Colors.transparent],
+      Offset(size.width * 0.78, size.height * 0.40),
+      maxDim * 0.50,
+      [const Color(0x1C8B5CF6), const Color(0x088B5CF6), Colors.transparent],
     );
+    // Teal accent — bottom-centre.
     _p3 = makePaint(
-      Offset(size.width * 0.5, size.height * 0.78),
-      maxDim * 0.42,
-      [const Color(0x0C5EEAD4), Colors.transparent],
+      Offset(size.width * 0.5, size.height * 0.80),
+      maxDim * 0.44,
+      [const Color(0x1014B8A6), const Color(0x0514B8A6), Colors.transparent],
     );
   }
 
@@ -306,11 +358,11 @@ class _AuroraPainter extends CustomPainter {
     _buildPaints(size);
     final maxDim = size.shortestSide;
     canvas.drawCircle(
-        Offset(size.width * 0.25, size.height * 0.08), maxDim * 0.55, _p1!);
+        Offset(size.width * 0.25, size.height * 0.08), maxDim * 0.58, _p1!);
     canvas.drawCircle(
-        Offset(size.width * 0.72, size.height * 0.45), maxDim * 0.48, _p2!);
+        Offset(size.width * 0.78, size.height * 0.40), maxDim * 0.50, _p2!);
     canvas.drawCircle(
-        Offset(size.width * 0.5, size.height * 0.78), maxDim * 0.42, _p3!);
+        Offset(size.width * 0.5, size.height * 0.80), maxDim * 0.44, _p3!);
   }
 
   @override
@@ -340,7 +392,7 @@ class HomeMenuCard extends StatelessWidget {
 
     return Material(
       color: bg,
-      borderRadius: BorderRadius.circular(6),
+      borderRadius: BorderRadius.circular(12),
       clipBehavior: Clip.antiAlias,
       child: Column(
         children: [
@@ -435,8 +487,12 @@ class WeeklyResetCard extends StatelessWidget {
 
     return Container(
       decoration: BoxDecoration(
-        borderRadius: BorderRadius.circular(6),
-        color: scheme.primaryContainer.withValues(alpha: 0.45),
+        borderRadius: BorderRadius.circular(12),
+        color: scheme.primaryContainer.withValues(alpha: 0.40),
+        border: Border.all(
+          color: scheme.primary.withValues(alpha: 0.18),
+          width: 1,
+        ),
       ),
       padding: const EdgeInsets.all(16),
       child: Column(
@@ -461,8 +517,8 @@ class WeeklyResetCard extends StatelessWidget {
             label: const Text('Open Weekly Review'),
             style: OutlinedButton.styleFrom(
               foregroundColor: scheme.primary,
-              shape:
-                  RoundedRectangleBorder(borderRadius: BorderRadius.circular(6)),
+              shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(20)),
             ),
           ),
         ],

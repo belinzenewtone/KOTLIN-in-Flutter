@@ -11,6 +11,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 
 import '../../../core/designsystem/app_card.dart';
 import '../../../core/designsystem/controls.dart';
+import '../../../core/designsystem/dialogs.dart';
 import '../../../core/designsystem/page_scaffold.dart';
 import '../../../core/designsystem/tokens.dart' show AppSpacing;
 import '../../../core/platform/system_bridge.dart';
@@ -68,6 +69,10 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
     final prefs = await SharedPreferences.getInstance();
     await prefs.setString('theme_mode', mode.name.toUpperCase());
     themeController.value = mode;
+    // Refresh the session notifier so session.themeMode stays in sync with
+    // SharedPreferences — without this the toggle highlight stays stuck on
+    // the old value even though the theme itself switches correctly.
+    ref.read(sessionProvider.notifier).refresh();
   }
 
   Future<void> _setFulizaLimit(double? limit) async {
@@ -83,8 +88,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
   Future<void> _clearLocalData() async {
     final confirmed = await showDialog<bool>(
       context: context,
-      builder: (ctx) => AlertDialog(
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(6)),
+      builder: (ctx) => LifeOsAlertDialog(
         title: const Text('Clear all local data?'),
         content: const Text(
             'This will remove all app data stored on this device. This cannot be undone.'),
@@ -98,7 +102,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
               backgroundColor: Theme.of(context).colorScheme.error,
               foregroundColor: Theme.of(context).colorScheme.onError,
               shape:
-                  RoundedRectangleBorder(borderRadius: BorderRadius.circular(6)),
+                  RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
             ),
             child: const Text('Clear'),
           ),
@@ -360,8 +364,8 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
     final saved = await showDialog<double?>(
       context: context,
       builder: (ctx) => StatefulBuilder(
-        builder: (ctx, setStateDlg) => AlertDialog(
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(6)),
+        builder: (ctx, setStateDlg) => LifeOsAlertDialog(
+          scrollable: true,
           title: const Text('Fuliza Credit Limit'),
           content: Column(
             mainAxisSize: MainAxisSize.min,
@@ -410,7 +414,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
               },
               style: FilledButton.styleFrom(
                 shape:
-                    RoundedRectangleBorder(borderRadius: BorderRadius.circular(6)),
+                    RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
               ),
               child: const Text('Save'),
             ),

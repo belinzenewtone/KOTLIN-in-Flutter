@@ -12,7 +12,9 @@ import '../../../core/designsystem/app_card.dart';
 import '../../../core/designsystem/banners.dart';
 import '../../../core/designsystem/controls.dart';
 import '../../../core/designsystem/metric_card.dart';
+import '../../../core/designsystem/dialogs.dart';
 import '../../../core/designsystem/page_scaffold.dart';
+import '../../../ui/theme/theme.dart' show LifeOsColors;
 import '../../../core/notifications/notification_service.dart';
 import '../../../core/utils/date_utils.dart';
 import '../../../navigation/routes.dart';
@@ -55,9 +57,8 @@ class _IncomeScreenState extends ConsumerState<IncomeScreen> {
     await showDialog<void>(
       context: context,
       builder: (ctx) => StatefulBuilder(
-        builder: (ctx, setDialogState) => AlertDialog(
-          backgroundColor: Theme.of(ctx).colorScheme.surfaceContainerHighest,
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(6)),
+        builder: (ctx, setDialogState) => LifeOsAlertDialog(
+          scrollable: true,
           title: const Text('Add Income'),
           content: SingleChildScrollView(
             child: Column(
@@ -196,9 +197,8 @@ class _IncomeScreenState extends ConsumerState<IncomeScreen> {
     await showDialog<void>(
       context: context,
       builder: (ctx) => StatefulBuilder(
-        builder: (ctx, setDialogState) => AlertDialog(
-          backgroundColor: Theme.of(ctx).colorScheme.surfaceContainerHighest,
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(6)),
+        builder: (ctx, setDialogState) => LifeOsAlertDialog(
+          scrollable: true,
           title: const Text('Edit Income'),
           content: SingleChildScrollView(
             child: Column(
@@ -391,7 +391,7 @@ class _IncomeCard extends StatelessWidget {
               ),
               Text(
                 formatCurrency(income.amount),
-                style: tt.titleSmall?.copyWith(fontWeight: FontWeight.w700),
+                style: kMonoStyle(fontSize: 13, fontWeight: FontWeight.w700),
               ),
               const SizedBox(width: 4),
               SizedBox(
@@ -509,9 +509,8 @@ class _RecurringScreenState extends ConsumerState<RecurringScreen> {
     await showDialog<void>(
       context: context,
       builder: (ctx) => StatefulBuilder(
-        builder: (ctx, setDialogState) => AlertDialog(
-          backgroundColor: Theme.of(ctx).colorScheme.surfaceContainerHighest,
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(6)),
+        builder: (ctx, setDialogState) => LifeOsAlertDialog(
+          scrollable: true,
           title: const Text('Add Recurring Rule'),
           content: SingleChildScrollView(
             child: Column(
@@ -656,9 +655,8 @@ class _RecurringScreenState extends ConsumerState<RecurringScreen> {
     await showDialog<void>(
       context: context,
       builder: (ctx) => StatefulBuilder(
-        builder: (ctx, setDialogState) => AlertDialog(
-          backgroundColor: Theme.of(ctx).colorScheme.surfaceContainerHighest,
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(6)),
+        builder: (ctx, setDialogState) => LifeOsAlertDialog(
+          scrollable: true,
           title: const Text('Edit Recurring Rule'),
           content: SingleChildScrollView(
             child: Column(
@@ -945,10 +943,8 @@ class _BillsScreenState extends ConsumerState<BillsScreen> {
     await showDialog<void>(
       context: context,
       builder: (ctx) => StatefulBuilder(
-        builder: (ctx, setDialogState) => AlertDialog(
-          backgroundColor: Theme.of(ctx).colorScheme.surfaceContainerHighest,
-          shape:
-              RoundedRectangleBorder(borderRadius: BorderRadius.circular(6)),
+        builder: (ctx, setDialogState) => LifeOsAlertDialog(
+          scrollable: true,
           title: const Text('Edit Bill'),
           content: SingleChildScrollView(
             child: Column(
@@ -1077,9 +1073,8 @@ class _BillsScreenState extends ConsumerState<BillsScreen> {
     await showDialog<void>(
       context: context,
       builder: (ctx) => StatefulBuilder(
-        builder: (ctx, setDialogState) => AlertDialog(
-          backgroundColor: Theme.of(ctx).colorScheme.surfaceContainerHighest,
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(6)),
+        builder: (ctx, setDialogState) => LifeOsAlertDialog(
+          scrollable: true,
           title: const Text('Add Bill'),
           content: SingleChildScrollView(
             child: Column(
@@ -1276,7 +1271,7 @@ class _BillCard extends StatelessWidget {
 
     final cardBody = InkWell(
       onTap: onEdit,
-      borderRadius: BorderRadius.circular(6),
+      borderRadius: BorderRadius.circular(12),
       child: Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       mainAxisSize: MainAxisSize.min,
@@ -1322,11 +1317,11 @@ class _BillCard extends StatelessWidget {
             _SmallChip(
               label: bill.paidStatus ? 'Paid' : 'Unpaid',
               backgroundColor: bill.paidStatus
-                  ? const Color(0xFF34D399).withValues(alpha: 0.18)
-                  : const Color(0xFFF59E0B).withValues(alpha: 0.18),
+                  ? LifeOsColors.income.withValues(alpha: 0.18)
+                  : LifeOsColors.warning.withValues(alpha: 0.18),
               borderColor: bill.paidStatus
-                  ? const Color(0xFF34D399)
-                  : const Color(0xFFF59E0B),
+                  ? LifeOsColors.income
+                  : LifeOsColors.warning,
               textColor: bill.paidStatus
                   ? const Color(0xFF16A34A)
                   : const Color(0xFFD97706),
@@ -1370,7 +1365,7 @@ class _BillCard extends StatelessWidget {
       return Container(
         decoration: BoxDecoration(
           color: scheme.errorContainer,
-          borderRadius: BorderRadius.circular(6),
+          borderRadius: BorderRadius.circular(12),
           border: Border.all(
             color: scheme.error.withValues(alpha: 0.45),
             width: 0.85,

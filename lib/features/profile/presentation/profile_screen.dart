@@ -12,6 +12,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 
 import '../../../core/designsystem/app_card.dart';
 import '../../../core/designsystem/controls.dart';
+import '../../../core/designsystem/dialogs.dart';
 import '../../../core/designsystem/page_scaffold.dart';
 import '../../../core/designsystem/tokens.dart';
 import '../../../core/security/session_store.dart';
@@ -103,7 +104,23 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                       child: Stack(
                         clipBehavior: Clip.none,
                         children: [
+                          // Gradient ring
                           Container(
+                            width: 68,
+                            height: 68,
+                            decoration: const BoxDecoration(
+                              shape: BoxShape.circle,
+                              gradient: LinearGradient(
+                                colors: [Color(0xFF6366F1), Color(0xFF8B5CF6), Color(0xFF14B8A6)],
+                                begin: Alignment.topLeft,
+                                end: Alignment.bottomRight,
+                              ),
+                            ),
+                          ),
+                          Positioned(
+                            left: 2,
+                            top: 2,
+                            child: Container(
                             width: 64,
                             height: 64,
                             decoration: BoxDecoration(
@@ -127,6 +144,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                                         ?.copyWith(color: scheme.onPrimaryContainer),
                                   ),
                           ),
+                          ), // close Positioned(left: 2)
                           Positioned(
                             bottom: -2,
                             right: -2,
@@ -197,7 +215,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                       child: OutlinedButton.icon(
                         style: OutlinedButton.styleFrom(
                           shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(6)),
+                              borderRadius: BorderRadius.circular(20)),
                           padding:
                               const EdgeInsets.symmetric(vertical: 12),
                         ),
@@ -212,7 +230,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                       child: OutlinedButton.icon(
                         style: OutlinedButton.styleFrom(
                           shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(6)),
+                              borderRadius: BorderRadius.circular(20)),
                           padding:
                               const EdgeInsets.symmetric(vertical: 12),
                         ),
@@ -242,20 +260,20 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                         fontWeight: FontWeight.w600)),
                 const SizedBox(height: 12),
                 _toolRow([
-                  _Tool(Icons.analytics_outlined, 'Insights', const Color(0xFF2DD4BF),
+                  _Tool(Icons.analytics_outlined, 'Insights', const Color(0xFF14B8A6),
                       () => context.push('/${AppRoute.insights}')),
-                  _Tool(Icons.explore_outlined, 'Review', const Color(0xFFA78BFA),
+                  _Tool(Icons.explore_outlined, 'Review', const Color(0xFF8B5CF6),
                       () => context.push('/${AppRoute.review}')),
-                  _Tool(Icons.search_outlined, 'Search', const Color(0xFF60A5FA),
+                  _Tool(Icons.search_outlined, 'Search', const Color(0xFF6366F1),
                       () => context.push('/${AppRoute.search}')),
                 ]),
                 const SizedBox(height: 12),
                 _toolRow([
-                  _Tool(Icons.event_repeat_outlined, 'Recurring', const Color(0xFF34D399),
+                  _Tool(Icons.event_repeat_outlined, 'Recurring', const Color(0xFF22C55E),
                       () => context.push('/${AppRoute.recurring}')),
-                  _Tool(Icons.download_outlined, 'Export', const Color(0xFFFBBF24),
+                  _Tool(Icons.download_outlined, 'Export', const Color(0xFFF59E0B),
                       () => context.push('/${AppRoute.export}')),
-                  _Tool(Icons.account_balance_outlined, 'Hub', const Color(0xFF22D3EE),
+                  _Tool(Icons.account_balance_outlined, 'Hub', const Color(0xFF14B8A6),
                       () => context.push('/${AppRoute.planner}')),
                 ]),
               ],
@@ -271,19 +289,11 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
       context: context,
       useRootNavigator: true,
       useSafeArea: true,
-      shape: const RoundedRectangleBorder(
-          borderRadius: BorderRadius.vertical(top: Radius.circular(16))),
+      shape: kSheetShape,
       builder: (sheetCtx) => Column(
         mainAxisSize: MainAxisSize.min,
         children: [
-          const SizedBox(height: 8),
-          Container(
-            width: 36, height: 4,
-            decoration: BoxDecoration(
-              color: scheme.outlineVariant,
-              borderRadius: BorderRadius.circular(2),
-            ),
-          ),
+          const SheetHandle(),
           const SizedBox(height: 16),
           if (_avatarPath != null && File(_avatarPath!).existsSync())
             ListTile(
@@ -401,14 +411,14 @@ class _ToolCard extends StatelessWidget {
     final scheme = Theme.of(context).colorScheme;
     return Material(
       color: scheme.surfaceContainerLowest,
-      borderRadius: BorderRadius.circular(6),
+      borderRadius: BorderRadius.circular(12),
       child: InkWell(
         onTap: tool.onTap,
-        borderRadius: BorderRadius.circular(6),
+        borderRadius: BorderRadius.circular(12),
         child: Container(
           padding: const EdgeInsets.all(12),
           decoration: BoxDecoration(
-            borderRadius: BorderRadius.circular(6),
+            borderRadius: BorderRadius.circular(12),
             border: Border.all(
               color: scheme.outlineVariant.withValues(alpha: 0.54),
               width: 0.85,

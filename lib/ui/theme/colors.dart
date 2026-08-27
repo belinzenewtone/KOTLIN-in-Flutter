@@ -3,33 +3,33 @@ library;
 
 import 'package:flutter/material.dart';
 
-// ─── Cyan primary palette (matches RFINAL lifeosPaperTheme) ─────────────────
-const Color kPrimary = Color(0xFF57B9FF);
-const Color kPrimaryMuted = Color(0xFF3A7FBF);
-const Color kPrimaryContainer = Color(0xFF0F2A40);
-const Color kOnPrimary = Color(0xFF0A0A0B);
-const Color kOnPrimaryContainer = Color(0xFFBFE3FF);
+// ─── Indigo primary palette (LifeOS v2 design system) ────────────────────
+const Color kPrimary = Color(0xFF6366F1);          // indigo-500
+const Color kPrimaryMuted = Color(0xFF4F46E5);     // indigo-600
+const Color kPrimaryContainer = Color(0xFF1E1E3F); // deep indigo surface
+const Color kOnPrimary = Color(0xFFFFFFFF);
+const Color kOnPrimaryContainer = Color(0xFFC7D2FE); // indigo-200
 
-// ─── Near-black surfaces ──────────────────────────────────────────────────
-const Color kBackgroundColor = Color(0xFF0A0A0B);
-const Color kSurfaceColor = Color(0xFF111113);
-const Color kSurfaceVariantColor = Color(0xFF1A1A1D);
-const Color kSurfaceElevated = Color(0xFF1D1D20);
+// ─── Near-black surfaces (indigo-bias) ───────────────────────────────────
+const Color kBackgroundColor = Color(0xFF08080C);
+const Color kSurfaceColor = Color(0xFF0F0F18);
+const Color kSurfaceVariantColor = Color(0xFF14141E);
+const Color kSurfaceElevated = Color(0xFF1A1A28);
 
 // ─── Text ─────────────────────────────────────────────────────────────────
-const Color kTextOnSurface = Color(0xFFF4F4F5);
-const Color kTextOnSurfaceVariant = Color(0xFF9CA3AF);
-const Color kTextSubtle = Color(0xFF6B7280);
+const Color kTextOnSurface = Color(0xFFE8E8F2);
+const Color kTextOnSurfaceVariant = Color(0xFFA0A0B8);
+const Color kTextSubtle = Color(0xFF6B6B85);
 
 // ─── Outlines ─────────────────────────────────────────────────────────────
-const Color kOutlineColor = Color(0xFF2E2E33);
-const Color kOutlineVariantColor = Color(0xFF222226);
+const Color kOutlineColor = Color(0xFF252530);
+const Color kOutlineVariantColor = Color(0xFF1C1C28);
 
 // ─── Semantic ─────────────────────────────────────────────────────────────
-const Color kSuccessColor = Color(0xFF34D399);
-const Color kWarningColor = Color(0xFFF59E0B);
-const Color kErrorColor = Color(0xFFF87171);
-const Color kInfoColor = Color(0xFF57B9FF);
+const Color kSuccessColor = Color(0xFF22C55E);   // income green
+const Color kWarningColor = Color(0xFFF59E0B);   // amber
+const Color kErrorColor = Color(0xFFF43F5E);     // rose
+const Color kInfoColor = Color(0xFF6366F1);      // indigo (matches primary)
 
 // ─── Category colours (match RFINAL CATEGORY_COLORS) ──────────────────────
 const Color categoryFood = Color(0xFFF59E0B);

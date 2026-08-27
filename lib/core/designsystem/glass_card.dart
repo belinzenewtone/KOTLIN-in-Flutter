@@ -74,7 +74,7 @@ class AccentGlassCard extends StatelessWidget {
     required this.child,
   });
 
-  static const Color kPrimaryAccentFallback = Color(0xFF0369A1);
+  static const Color kPrimaryAccentFallback = Color(0xFF6366F1); // indigo-500
 
   final Color accentColor;
   final double cornerRadius;

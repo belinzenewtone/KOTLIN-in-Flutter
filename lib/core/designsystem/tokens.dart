@@ -48,6 +48,9 @@ class AppColorRoles {
     required this.success,
     required this.warning,
     required this.error,
+    required this.income,
+    required this.expense,
+    required this.violet,
   });
 
   final Color primary;
@@ -61,6 +64,12 @@ class AppColorRoles {
   final Color success;
   final Color warning;
   final Color error;
+  /// Semantic green for income / credit transactions.
+  final Color income;
+  /// Semantic rose for expense / debit transactions.
+  final Color expense;
+  /// Violet accent for goals, aurora, secondary highlights.
+  final Color violet;
 
   static AppSemanticTone toneOf(String s) {
     switch (s.toUpperCase()) {
@@ -143,6 +152,9 @@ abstract final class AppDesignTokens {
       success: LifeOsColors.success,
       warning: LifeOsColors.warning,
       error: c.error,
+      income: LifeOsColors.income,
+      expense: LifeOsColors.expense,
+      violet: LifeOsColors.violet,
     );
   }
 
@@ -150,7 +162,8 @@ abstract final class AppDesignTokens {
 
   static const spacing = AppSpacingScale(xs: 4, sm: 8, md: 12, lg: 16, xl: 24);
 
-  static const radius = AppRadiusScale(sm: 6, pill: 28);
+  /// sm = 12dp card radius (upgraded from 6dp); pill = 28dp for tab/badge pills.
+  static const radius = AppRadiusScale(sm: 12, pill: 28);
 
   static const double floatingNavBarHeight = 58;
   static const double floatingNavBarBottomOffset = 4;

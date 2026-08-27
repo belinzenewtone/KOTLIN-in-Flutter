@@ -14,9 +14,11 @@ import 'package:go_router/go_router.dart';
 import '../../../core/database/database.dart';
 import '../../../core/designsystem/app_card.dart';
 import '../../../core/designsystem/banners.dart';
+import '../../../core/designsystem/dialogs.dart';
 import '../../../core/designsystem/metric_card.dart';
 import '../../../core/designsystem/page_scaffold.dart';
 import '../../../core/designsystem/tokens.dart';
+import '../../../ui/theme/theme.dart' show LifeOsColors;
 import '../../../navigation/routes.dart';
 import '../../dashboard/data/providers.dart';
 import '../data/planner_repository.dart';
@@ -49,8 +51,8 @@ String _titleCase(String s) => s
 Color _statusColor(BuildContext ctx, double ratio) {
   final s = Theme.of(ctx).colorScheme;
   if (ratio >= 1.0) return s.error;
-  if (ratio >= 0.8) return const Color(0xFFFBBF24);
-  return const Color(0xFF34D399);
+  if (ratio >= 0.8) return LifeOsColors.warning;
+  return LifeOsColors.income;
 }
 
 // ── Hub ───────────────────────────────────────────────────────────────────────
@@ -128,7 +130,7 @@ class PlannerScreen extends StatelessWidget {
                 contentPadding: const EdgeInsets.all(16),
                 child: InkWell(
                   onTap: () => context.push('/$route'),
-                  borderRadius: BorderRadius.circular(6),
+                  borderRadius: BorderRadius.circular(12),
                   child: Row(
                     children: [
                       Icon(icon, size: 22, color: scheme.primary),
@@ -234,11 +236,8 @@ class _BudgetScreenState extends ConsumerState<BudgetScreen> {
                 }
               : null;
 
-          return AlertDialog(
-            backgroundColor:
-                Theme.of(ctx).colorScheme.surfaceContainerHighest,
-            shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(6)),
+          return LifeOsAlertDialog(
+            scrollable: true,
             title: Text(editing != null ? 'Edit Budget' : 'Set Budget'),
             content: SingleChildScrollView(
               child: Column(
@@ -422,7 +421,7 @@ class _BudgetScreenState extends ConsumerState<BudgetScreen> {
                 },
                 style: FilledButton.styleFrom(
                   shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(6)),
+                      borderRadius: BorderRadius.circular(20)),
                 ),
                 child:
                     Text(editing != null ? 'Update' : 'Set Budget'),
@@ -581,8 +580,7 @@ class _BudgetMonthSummaryCard extends StatelessWidget {
                   mainAxisSize: MainAxisSize.min,
                   children: [
                     Text(formatCurrency(totalSpent),
-                        style: tt.titleMedium
-                            ?.copyWith(fontWeight: FontWeight.w700)),
+                        style: kMonoStyle(fontSize: 15, fontWeight: FontWeight.w700)),
                     Text('of ${formatCurrency(totalBudgeted)}',
                         style: tt.bodySmall
                             ?.copyWith(color: scheme.onSurfaceVariant)),
@@ -779,7 +777,7 @@ class _BudgetItemCard extends StatelessWidget {
                     style: TextButton.styleFrom(
                       padding: const EdgeInsets.symmetric(vertical: 4),
                       shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(6)),
+                          borderRadius: BorderRadius.circular(12)),
                     ),
                   ),
                 ),
@@ -793,7 +791,7 @@ class _BudgetItemCard extends StatelessWidget {
                     style: TextButton.styleFrom(
                       padding: const EdgeInsets.symmetric(vertical: 4),
                       shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(6)),
+                          borderRadius: BorderRadius.circular(12)),
                     ),
                   ),
                 ),

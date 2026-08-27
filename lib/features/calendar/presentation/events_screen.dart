@@ -12,6 +12,7 @@ import 'package:go_router/go_router.dart';
 
 import '../../../core/designsystem/app_card.dart';
 import '../../../core/designsystem/banners.dart';
+import '../../../core/designsystem/dialogs.dart';
 import '../../../core/designsystem/controls.dart';
 import '../../../core/designsystem/page_scaffold.dart';
 import '../../../core/designsystem/tokens.dart';
@@ -435,8 +436,7 @@ class _DeleteEventDialog extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final scheme = Theme.of(context).colorScheme;
-    return AlertDialog(
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(6)),
+    return LifeOsAlertDialog(
       title: const Text('Delete event?'),
       content: Text('Remove "${event.title}"? This cannot be undone.'),
       actions: [
@@ -446,7 +446,7 @@ class _DeleteEventDialog extends StatelessWidget {
           style: FilledButton.styleFrom(
             backgroundColor: scheme.error,
             foregroundColor: scheme.onError,
-            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(6)),
+            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
           ),
           child: const Text('Delete'),
         ),
