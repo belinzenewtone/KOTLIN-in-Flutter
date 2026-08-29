@@ -44,7 +44,7 @@ class _PersonalOsSplashScreenState extends State<PersonalOsSplashScreen>
     return AnimatedBuilder(
       animation: _pulse,
       builder: (context, child) => Container(
-        color: scheme.background,
+        color: scheme.surface,
         alignment: Alignment.center,
         child: Column(
           mainAxisSize: MainAxisSize.min,
@@ -114,3 +114,4 @@ class _PersonalOsSplashScreenState extends State<PersonalOsSplashScreen>
     );
   }
 }
+

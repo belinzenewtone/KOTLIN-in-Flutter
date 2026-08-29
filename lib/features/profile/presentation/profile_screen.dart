@@ -189,7 +189,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                             const SizedBox(height: 6),
                             Container(
                               decoration: BoxDecoration(
-                                color: scheme.surfaceVariant,
+                                color: scheme.surfaceContainerHighest,
                                 borderRadius: BorderRadius.circular(
                                     AppDesignTokens.radius.sm),
                               ),
@@ -450,3 +450,5 @@ class _ToolCard extends StatelessWidget {
     );
   }
 }
+
+

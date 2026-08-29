@@ -28,7 +28,7 @@ void smsBackgroundDispatcher() {
   Workmanager().executeTask((taskName, _) async {
     try {
       final prefs = await SharedPreferences.getInstance();
-      final userId = prefs.getString('user_id');
+      final userId = prefs.getString('auth_user_id');
       if (userId == null || userId.isEmpty) return true;
 
       // Periodic scan reads the full inbox; on-resume drain only drains queue.

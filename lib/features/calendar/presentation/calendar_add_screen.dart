@@ -188,6 +188,10 @@ class _CalendarAddScreenState extends State<CalendarAddScreen> {
   late int _countdownAlarmHour;
   late int _countdownAlarmMinute;
 
+  // Persisted scroll position so navigating to timezone/repeat/reminders
+  // sub-pages and back does not jump the form scroll to the top.
+  final ScrollController _formScrollController = ScrollController();
+
   @override
   void initState() {
     super.initState();
@@ -334,6 +338,12 @@ class _CalendarAddScreenState extends State<CalendarAddScreen> {
   }
 
   @override
+  void dispose() {
+    _formScrollController.dispose();
+    super.dispose();
+  }
+
+  @override
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: Theme.of(context).colorScheme.surface,
@@ -359,6 +369,7 @@ class _CalendarAddScreenState extends State<CalendarAddScreen> {
                 onDismiss: widget.onDismiss,
                 onSave: _save,
                 state: this,
+                scrollController: _formScrollController,
               ),
             _AddPage.repeat => _RepeatPickerPage(
                 key: const ValueKey('repeat'),
@@ -477,6 +488,7 @@ class _FormPage extends StatelessWidget {
     required this.onDismiss,
     required this.onSave,
     required this.state,
+    required this.scrollController,
   });
 
   final AddTab tab;
@@ -486,6 +498,7 @@ class _FormPage extends StatelessWidget {
   final VoidCallback onDismiss;
   final VoidCallback onSave;
   final _CalendarAddScreenState state;
+  final ScrollController scrollController;
 
   @override
   Widget build(BuildContext context) {
@@ -566,6 +579,7 @@ class _FormPage extends StatelessWidget {
         // Form content
         Expanded(
           child: SingleChildScrollView(
+            controller: scrollController,
             padding: const EdgeInsets.fromLTRB(16, 8, 16, 0),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -1311,13 +1325,13 @@ class _WheelPicker extends StatefulWidget {
 
 class _WheelPickerState extends State<_WheelPicker> {
   static const double _itemHeight = 48;
-  late final ScrollController _controller;
+  late final FixedExtentScrollController _controller;
 
   @override
   void initState() {
     super.initState();
-    _controller = ScrollController(
-      initialScrollOffset: widget.selectedIndex * _itemHeight,
+    _controller = FixedExtentScrollController(
+      initialItem: widget.selectedIndex,
     );
   }
 
@@ -1326,8 +1340,8 @@ class _WheelPickerState extends State<_WheelPicker> {
     super.didUpdateWidget(old);
     if (widget.selectedIndex != old.selectedIndex &&
         _controller.hasClients) {
-      _controller.animateTo(
-        widget.selectedIndex * _itemHeight,
+      _controller.animateToItem(
+        widget.selectedIndex,
         duration: const Duration(milliseconds: 200),
         curve: Curves.easeOut,
       );
@@ -1349,8 +1363,7 @@ class _WheelPickerState extends State<_WheelPicker> {
         children: [
           NotificationListener<ScrollEndNotification>(
             onNotification: (n) {
-              final idx = (_controller.offset / _itemHeight)
-                  .round()
+              final idx = _controller.selectedItem
                   .clamp(0, widget.items.length - 1);
               if (idx != widget.selectedIndex) {
                 widget.onSelectedIndexChange(idx);

@@ -167,26 +167,6 @@ class _EventsScreenState extends ConsumerState<EventsScreen> {
                     },
                   ),
           ),
-          // ExtendedFAB "Add event" (EventsScreen.kt parity).
-          Positioned(
-            right: AppSpacing.screenHorizontal,
-            bottom: AppSpacing.bottomSafeWithFloatingNav + 8,
-            child: FloatingActionButton.extended(
-              onPressed: _repo == null
-                  ? null
-                  : () => setState(() {
-                        _editingEvent = null;
-                        _showAddScreen = true;
-                      }),
-              backgroundColor: scheme.primary,
-              foregroundColor: scheme.onPrimary,
-              elevation: 6,
-              shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(6)),
-              icon: const Icon(Icons.add),
-              label: const Text('Add event'),
-            ),
-          ),
           // Add/edit wizard (EVENT tab only).
           if (_showAddScreen)
             Positioned.fill(

@@ -228,6 +228,15 @@ class UncategorizedBanner extends StatelessWidget {
 
 // ── Transaction list ───────────────────────────────────────────────────────
 
+/// Convert raw category enum strings (e.g. "FOOD_AND_DINING") to readable label.
+String _displayCategory(String raw) {
+  if (raw.isEmpty || raw == 'UNCATEGORIZED') return 'Uncategorized';
+  return raw
+      .split('_')
+      .map((w) => w.isEmpty ? '' : w[0] + w.substring(1).toLowerCase())
+      .join(' ');
+}
+
 const List<String> kMonthNamesShort = [
   'Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun',
   'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'
@@ -457,7 +466,7 @@ class FinanceTransactionRowWidget extends StatelessWidget {
                             ?.copyWith(color: scheme.primary)),
                   ),
                   const SizedBox(height: 4),
-                  Text('${tx.category} · $timeStr',
+                  Text('${_displayCategory(tx.category)} · $timeStr',
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
                       style: Theme.of(context)

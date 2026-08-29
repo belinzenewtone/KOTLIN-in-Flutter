@@ -2,6 +2,8 @@
 /// ImportHealthPanel}.kt.
 library;
 
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 
 import '../../ui/theme/theme.dart';
@@ -19,7 +21,9 @@ typedef ImportHealthUiModel = ({
 });
 
 /// TopBanner — high-priority floating banner with tinted icon badge.
-class TopBanner extends StatelessWidget {
+/// Auto-dismisses after [autoDismissDuration] (default 3 s) by calling
+/// [onDismiss]. Pass [autoDismissDuration] as null to disable auto-dismiss.
+class TopBanner extends StatefulWidget {
   const TopBanner({
     super.key,
     required this.message,
@@ -28,6 +32,7 @@ class TopBanner extends StatelessWidget {
     this.actionLabel,
     this.onAction,
     this.onDismiss,
+    this.autoDismissDuration = const Duration(seconds: 3),
   });
 
   final String message;
@@ -36,9 +41,48 @@ class TopBanner extends StatelessWidget {
   final String? actionLabel;
   final VoidCallback? onAction;
   final VoidCallback? onDismiss;
+  final Duration? autoDismissDuration;
+
+  @override
+  State<TopBanner> createState() => _TopBannerState();
+}
+
+class _TopBannerState extends State<TopBanner> {
+  Timer? _timer;
+
+  @override
+  void initState() {
+    super.initState();
+    _scheduleAutoDismiss();
+  }
+
+  @override
+  void didUpdateWidget(TopBanner old) {
+    super.didUpdateWidget(old);
+    // Reset timer when the message changes (new banner replaces old one).
+    if (old.message != widget.message) {
+      _timer?.cancel();
+      _scheduleAutoDismiss();
+    }
+  }
+
+  void _scheduleAutoDismiss() {
+    if (widget.autoDismissDuration != null && widget.onDismiss != null) {
+      _timer = Timer(widget.autoDismissDuration!, () {
+        if (mounted) widget.onDismiss!();
+      });
+    }
+  }
+
+  @override
+  void dispose() {
+    _timer?.cancel();
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) {
+    final tone = widget.tone;
     final semanticTone = switch (tone) {
       TopBannerTone.info => AppSemanticTone.info,
       TopBannerTone.success => AppSemanticTone.success,
@@ -82,23 +126,23 @@ class TopBanner extends StatelessWidget {
               crossAxisAlignment: CrossAxisAlignment.start,
               mainAxisSize: MainAxisSize.min,
               children: [
-                if (title != null)
-                  Text(title!,
+                if (widget.title != null)
+                  Text(widget.title!,
                       style: Theme.of(context)
                           .textTheme
                           .titleSmall
                           ?.copyWith(fontWeight: FontWeight.w600)),
-                Text(message,
+                Text(widget.message,
                     style: Theme.of(context)
                         .textTheme
                         .bodySmall
                         ?.copyWith(fontWeight: FontWeight.w500)),
-                if (actionLabel != null && onAction != null)
+                if (widget.actionLabel != null && widget.onAction != null)
                   InkWell(
-                    onTap: onAction,
+                    onTap: widget.onAction,
                     child: Padding(
                       padding: const EdgeInsets.symmetric(vertical: 4),
-                      child: Text(actionLabel!,
+                      child: Text(widget.actionLabel!,
                           style: TextStyle(
                               fontSize: 12,
                               fontWeight: FontWeight.w600,
@@ -108,9 +152,9 @@ class TopBanner extends StatelessWidget {
               ],
             ),
           ),
-          if (onDismiss != null)
+          if (widget.onDismiss != null)
             IconButton(
-              onPressed: onDismiss,
+              onPressed: widget.onDismiss,
               icon: Icon(Icons.close_outlined, size: 14, color: scheme.onSurfaceVariant),
               constraints: const BoxConstraints.tightFor(width: 28, height: 28),
               padding: EdgeInsets.zero,

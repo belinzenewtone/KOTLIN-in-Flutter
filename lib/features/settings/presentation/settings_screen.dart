@@ -268,7 +268,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
               context,
               title: 'Quick suggestions',
               subtitle:
-                  'Allow the assistant to propose actions based on your messages',
+                  'Show 4 prompt chips below the greeting when starting a fresh conversation',
               value: _quickSuggestions,
               onChanged: (v) {
                 setState(() => _quickSuggestions = v);

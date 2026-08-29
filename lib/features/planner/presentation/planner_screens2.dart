@@ -21,6 +21,31 @@ import '../../../navigation/routes.dart';
 import '../data/planner_repository.dart';
 import 'planner_screens.dart';
 
+// ── Shared confirm-delete dialog ─────────────────────────────────────────────
+
+Future<bool> _confirmDeleteDialog(
+    BuildContext context, String title, String body) async {
+  final result = await showDialog<bool>(
+    context: context,
+    builder: (ctx) => LifeOsAlertDialog(
+      title: Text(title),
+      content: Text(body),
+      actions: [
+        TextButton(
+            onPressed: () => Navigator.pop(ctx, false),
+            child: const Text('Cancel')),
+        FilledButton(
+          onPressed: () => Navigator.pop(ctx, true),
+          style: FilledButton.styleFrom(
+              backgroundColor: Theme.of(context).colorScheme.error),
+          child: const Text('Delete'),
+        ),
+      ],
+    ),
+  );
+  return result == true;
+}
+
 // ── Income ───────────────────────────────────────────────────────────────────
 
 class IncomeScreen extends ConsumerStatefulWidget {
@@ -342,7 +367,13 @@ class _IncomeScreenState extends ConsumerState<IncomeScreen> {
                     child: _IncomeCard(
                       income: inc,
                       onEdit: () => _showEditIncomeDialog(inc),
-                      onDelete: () async => _repo!.deleteIncome(inc.id),
+                      onDelete: () async {
+                        if (await _confirmDeleteDialog(context,
+                            'Delete income stream?',
+                            'Remove "${inc.source}"? This cannot be undone.')) {
+                          await _repo!.deleteIncome(inc.id);
+                        }
+                      },
                     ),
                   ),
             ],
@@ -367,68 +398,109 @@ class _IncomeCard extends StatelessWidget {
   Widget build(BuildContext context) {
     final tt = Theme.of(context).textTheme;
     final scheme = Theme.of(context).colorScheme;
+    const incomeColor = Color(0xFF34D399); // green income tint
+
     return AppCard(
-      contentPadding: const EdgeInsets.all(16),
-      child: Column(
+      contentPadding: const EdgeInsets.all(14),
+      child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
-        mainAxisSize: MainAxisSize.min,
         children: [
-          Row(
-            children: [
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  mainAxisSize: MainAxisSize.min,
+          // Icon badge
+          Container(
+            width: 40,
+            height: 40,
+            decoration: BoxDecoration(
+              color: incomeColor.withValues(alpha: 0.14),
+              borderRadius: BorderRadius.circular(10),
+            ),
+            child: const Icon(Icons.account_balance_wallet_outlined,
+                size: 20, color: incomeColor),
+          ),
+          const SizedBox(width: 10),
+          // Centre content
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Text(income.source,
+                    style: tt.titleSmall,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis),
+                const SizedBox(height: 2),
+                Row(
                   children: [
-                    Text(income.source, style: tt.titleSmall),
                     Text(
                       AppDateUtils.formatDate(income.date, 'MMM dd, yyyy'),
                       style: tt.labelSmall
                           ?.copyWith(color: scheme.onSurfaceVariant),
                     ),
+                    if (income.isRecurring && income.frequency != null) ...[
+                      const SizedBox(width: 8),
+                      Container(
+                        padding: const EdgeInsets.symmetric(
+                            horizontal: 6, vertical: 1),
+                        decoration: BoxDecoration(
+                          color: scheme.primaryContainer
+                              .withValues(alpha: 0.7),
+                          borderRadius: BorderRadius.circular(8),
+                        ),
+                        child: Text('↻ ${income.frequency}',
+                            style: tt.labelSmall
+                                ?.copyWith(color: scheme.primary)),
+                      ),
+                    ],
                   ],
                 ),
-              ),
+                if (income.note.isNotEmpty) ...[
+                  const SizedBox(height: 3),
+                  Text(income.note,
+                      style: tt.bodySmall
+                          ?.copyWith(color: scheme.onSurfaceVariant),
+                      maxLines: 2,
+                      overflow: TextOverflow.ellipsis),
+                ],
+              ],
+            ),
+          ),
+          // Right: amount + icons
+          Column(
+            crossAxisAlignment: CrossAxisAlignment.end,
+            mainAxisSize: MainAxisSize.min,
+            children: [
               Text(
                 formatCurrency(income.amount),
-                style: kMonoStyle(fontSize: 13, fontWeight: FontWeight.w700),
+                style: kMonoStyle(fontSize: 13, fontWeight: FontWeight.w700)
+                    .copyWith(color: incomeColor),
               ),
-              const SizedBox(width: 4),
-              SizedBox(
-                width: 32,
-                height: 32,
-                child: IconButton(
-                  onPressed: onEdit,
-                  icon: Icon(Icons.edit_outlined, size: 18, color: scheme.primary),
-                  padding: EdgeInsets.zero,
-                ),
-              ),
-              SizedBox(
-                width: 32,
-                height: 32,
-                child: IconButton(
-                  onPressed: onDelete,
-                  icon: Icon(Icons.delete_outline,
-                      size: 18, color: scheme.error),
-                  padding: EdgeInsets.zero,
-                ),
+              const SizedBox(height: 4),
+              Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  SizedBox(
+                    width: 28,
+                    height: 28,
+                    child: IconButton(
+                      onPressed: onEdit,
+                      icon: Icon(Icons.edit_outlined,
+                          size: 16, color: scheme.primary),
+                      padding: EdgeInsets.zero,
+                    ),
+                  ),
+                  SizedBox(
+                    width: 28,
+                    height: 28,
+                    child: IconButton(
+                      onPressed: onDelete,
+                      icon: Icon(Icons.delete_outline,
+                          size: 16, color: scheme.error),
+                      padding: EdgeInsets.zero,
+                    ),
+                  ),
+                ],
               ),
             ],
           ),
-          if (income.note.isNotEmpty) ...[
-            const SizedBox(height: 4),
-            Text(
-              income.note,
-              style: tt.bodySmall?.copyWith(color: scheme.onSurfaceVariant),
-            ),
-          ],
-          if (income.isRecurring && income.frequency != null) ...[
-            const SizedBox(height: 4),
-            Text(
-              '↻ ${income.frequency}',
-              style: tt.labelSmall?.copyWith(color: scheme.primary),
-            ),
-          ],
         ],
       ),
     );
@@ -806,7 +878,13 @@ class _RecurringScreenState extends ConsumerState<RecurringScreen> {
                         child: _RecurringCard(
                           rule: r,
                           onToggle: () async => _repo!.toggleRecurring(r),
-                          onDelete: () async => _repo!.deleteRecurring(r.id),
+                          onDelete: () async {
+                            if (await _confirmDeleteDialog(context,
+                                'Delete recurring rule?',
+                                'Remove "${r.title}"? This cannot be undone.')) {
+                              await _repo!.deleteRecurring(r.id);
+                            }
+                          },
                           onEdit: () => _showEditRecurringDialog(r),
                         ),
                       ),
@@ -858,28 +936,10 @@ class _RecurringCard extends StatelessWidget {
                   ],
                 ),
               ),
+              // Toggle on the far right of the header row.
               LifeOsSwitch(
                 value: rule.enabled,
                 onChanged: (_) => onToggle(),
-              ),
-              SizedBox(
-                width: 32,
-                height: 32,
-                child: IconButton(
-                  onPressed: onEdit,
-                  icon: Icon(Icons.edit_outlined, size: 18, color: scheme.primary),
-                  padding: EdgeInsets.zero,
-                ),
-              ),
-              SizedBox(
-                width: 32,
-                height: 32,
-                child: IconButton(
-                  onPressed: onDelete,
-                  icon: Icon(Icons.delete_outline,
-                      size: 18, color: scheme.error),
-                  padding: EdgeInsets.zero,
-                ),
               ),
             ],
           ),
@@ -892,9 +952,34 @@ class _RecurringCard extends StatelessWidget {
             ),
           ],
           const SizedBox(height: 4),
-          Text(
-            'Next run: $nextRun',
-            style: tt.labelSmall?.copyWith(color: scheme.onSurfaceVariant),
+          // "Next run" line with Edit and Delete on the same row.
+          Row(
+            children: [
+              Expanded(
+                child: Text(
+                  'Next run: $nextRun',
+                  style: tt.labelSmall?.copyWith(color: scheme.onSurfaceVariant),
+                ),
+              ),
+              SizedBox(
+                width: 28,
+                height: 28,
+                child: IconButton(
+                  onPressed: onEdit,
+                  icon: Icon(Icons.edit_outlined, size: 16, color: scheme.primary),
+                  padding: EdgeInsets.zero,
+                ),
+              ),
+              SizedBox(
+                width: 28,
+                height: 28,
+                child: IconButton(
+                  onPressed: onDelete,
+                  icon: Icon(Icons.delete_outline, size: 16, color: scheme.error),
+                  padding: EdgeInsets.zero,
+                ),
+              ),
+            ],
           ),
         ],
       ),
@@ -1231,7 +1316,13 @@ class _BillsScreenState extends ConsumerState<BillsScreen> {
                           onMarkPaid: () async => _repo!.markBillPaid(b),
                           onTogglePaid: () async => _repo!.toggleBillPaid(b),
                           onToggleActive: () async => _repo!.toggleActiveBill(b),
-                          onDelete: () async => _repo!.deleteBill(b.id),
+                          onDelete: () async {
+                            if (await _confirmDeleteDialog(context,
+                                'Delete bill?',
+                                'Remove "${b.title}"? This cannot be undone.')) {
+                              await _repo!.deleteBill(b.id);
+                            }
+                          },
                           onEdit: () => _showEditBillDialog(b),
                         ),
                       ),
@@ -1269,45 +1360,39 @@ class _BillCard extends StatelessWidget {
     final now = DateTime.now().millisecondsSinceEpoch;
     final isOverdue = bill.nextDueDate < now && !bill.paidStatus;
 
-    final cardBody = InkWell(
-      onTap: onEdit,
-      borderRadius: BorderRadius.circular(12),
-      child: Column(
+    final cardBody = Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       mainAxisSize: MainAxisSize.min,
       children: [
-        // ── Row 1: title + paid switch + delete ────────────────────────────
+        // ── Row 1: title + active toggle ──────────────────────────────────
         Row(
           crossAxisAlignment: CrossAxisAlignment.center,
           children: [
             Expanded(
-              child: Text(bill.title, style: tt.titleSmall),
+              child: Text(
+                bill.title,
+                style: tt.titleSmall,
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+              ),
             ),
             LifeOsSwitch(
               value: bill.isActive,
               onChanged: (_) => onToggleActive(),
             ),
-            SizedBox(
-              width: 32,
-              height: 32,
-              child: IconButton(
-                onPressed: onDelete,
-                icon: Icon(Icons.delete_outline, size: 18, color: scheme.error),
-                padding: EdgeInsets.zero,
-              ),
-            ),
           ],
         ),
         const SizedBox(height: 6),
-        // ── Row 2: amount+cycle label, due-date chip, paid chip ────────────
+        // ── Row 2: amount chip, due-date chip, paid status chip ────────────
         Wrap(
           spacing: 6,
           runSpacing: 6,
           crossAxisAlignment: WrapCrossAlignment.center,
           children: [
-            Text(
-              '${formatCurrency(bill.amount)} · ${bill.cycle}',
-              style: tt.labelSmall?.copyWith(color: scheme.onSurfaceVariant),
+            _SmallChip(
+              label: '${formatCurrency(bill.amount)} · ${bill.cycle}',
+              borderColor: scheme.outlineVariant,
+              textColor: scheme.onSurfaceVariant,
             ),
             _SmallChip(
               label: 'Due ${AppDateUtils.formatDate(bill.nextDueDate, 'MMM dd')}',
@@ -1328,35 +1413,57 @@ class _BillCard extends StatelessWidget {
             ),
           ],
         ),
-        // ── Notes ──────────────────────────────────────────────────────────
+        // ── Notes ─────────────────────────────────────────────────────────
         if (bill.notes.isNotEmpty) ...[
           const SizedBox(height: 4),
           Text(
             bill.notes,
+            maxLines: 2,
+            overflow: TextOverflow.ellipsis,
             style: tt.bodySmall?.copyWith(color: scheme.onSurfaceVariant),
           ),
         ],
-        // ── Mark Paid / Mark Unpaid ────────────────────────────────────────
-        const SizedBox(height: 4),
-        Align(
-          alignment: Alignment.centerRight,
-          child: TextButton(
-            style: TextButton.styleFrom(
-              minimumSize: const Size(0, 32),
-              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
-              tapTargetSize: MaterialTapTargetSize.shrinkWrap,
-            ),
-            onPressed: onTogglePaid,
-            child: Text(
-              bill.paidStatus ? 'Mark Unpaid' : 'Mark Paid',
-              style: tt.labelMedium?.copyWith(
-                color: bill.paidStatus ? scheme.onSurfaceVariant : scheme.primary,
+        const SizedBox(height: 6),
+        // ── Actions row: Mark Paid · Edit · Delete ─────────────────────────
+        Row(
+          children: [
+            TextButton(
+              style: TextButton.styleFrom(
+                minimumSize: const Size(0, 28),
+                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 2),
+                tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+              ),
+              onPressed: onTogglePaid,
+              child: Text(
+                bill.paidStatus ? 'Mark Unpaid' : 'Mark Paid',
+                style: tt.labelSmall?.copyWith(
+                  color: bill.paidStatus ? scheme.onSurfaceVariant : scheme.primary,
+                  fontWeight: FontWeight.w600,
+                ),
               ),
             ),
-          ),
+            const Spacer(),
+            SizedBox(
+              width: 28,
+              height: 28,
+              child: IconButton(
+                onPressed: onEdit,
+                icon: Icon(Icons.edit_outlined, size: 16, color: scheme.primary),
+                padding: EdgeInsets.zero,
+              ),
+            ),
+            SizedBox(
+              width: 28,
+              height: 28,
+              child: IconButton(
+                onPressed: onDelete,
+                icon: Icon(Icons.delete_outline, size: 16, color: scheme.error),
+                padding: EdgeInsets.zero,
+              ),
+            ),
+          ],
         ),
       ],
-    ),
     );
 
     // Overdue unpaid bills get an errorContainer background — AppCard does not

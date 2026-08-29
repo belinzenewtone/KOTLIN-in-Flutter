@@ -11,6 +11,7 @@ import '../../../core/designsystem/banners.dart';
 import '../../../core/designsystem/dialogs.dart';
 import '../../../core/designsystem/metric_card.dart';
 import '../../../core/designsystem/page_scaffold.dart';
+import '../../../core/designsystem/tokens.dart' show AppSpacing;
 import '../../../ui/theme/theme.dart' show LifeOsColors;
 import '../../../core/utils/date_utils.dart';
 import '../../../navigation/routes.dart';
@@ -56,7 +57,7 @@ class _GoalsScreenState extends ConsumerState<GoalsScreen> {
     final descC = TextEditingController();
     final targetC = TextEditingController();
     final unitC = TextEditingController(text: 'KES');
-    final deadlineC = TextEditingController();
+    DateTime? deadlineDate;
     String selectedCategory = 'SAVINGS';
     String? titleError;
 
@@ -80,9 +81,7 @@ class _GoalsScreenState extends ConsumerState<GoalsScreen> {
                     errorText: titleError,
                   ),
                   onChanged: (_) {
-                    if (titleError != null) {
-                      setDialogState(() => titleError = null);
-                    }
+                    if (titleError != null) setDialogState(() => titleError = null);
                   },
                 ),
                 const SizedBox(height: 12),
@@ -92,7 +91,7 @@ class _GoalsScreenState extends ConsumerState<GoalsScreen> {
                   minLines: 2,
                   maxLines: 3,
                   decoration: const InputDecoration(
-                    labelText: 'Description',
+                    labelText: 'Description (optional)',
                     border: OutlineInputBorder(),
                   ),
                 ),
@@ -103,7 +102,8 @@ class _GoalsScreenState extends ConsumerState<GoalsScreen> {
                       flex: 3,
                       child: TextField(
                         controller: targetC,
-                        keyboardType: const TextInputType.numberWithOptions(decimal: true),
+                        keyboardType:
+                            const TextInputType.numberWithOptions(decimal: true),
                         decoration: const InputDecoration(
                           labelText: 'Target',
                           border: OutlineInputBorder(),
@@ -131,21 +131,34 @@ class _GoalsScreenState extends ConsumerState<GoalsScreen> {
                     border: OutlineInputBorder(),
                   ),
                   items: _kGoalCategories
-                      .map((c) => DropdownMenuItem(value: c, child: Text(c)))
+                      .map((c) =>
+                          DropdownMenuItem(value: c, child: Text(_goalTitleCase(c))))
                       .toList(),
                   onChanged: (v) {
                     if (v != null) setDialogState(() => selectedCategory = v);
                   },
                 ),
                 const SizedBox(height: 12),
-                TextField(
-                  controller: deadlineC,
-                  keyboardType: TextInputType.datetime,
-                  decoration: const InputDecoration(
-                    labelText: 'Deadline',
-                    hintText: 'dd/MM/yyyy — optional',
-                    border: OutlineInputBorder(),
-                  ),
+                // Date picker button — replaces manual dd/MM/yyyy text entry.
+                OutlinedButton.icon(
+                  onPressed: () async {
+                    final now = DateTime.now();
+                    final picked = await showDatePicker(
+                      context: ctx,
+                      initialDate: deadlineDate ??
+                          now.add(const Duration(days: 30)),
+                      firstDate: now,
+                      lastDate: now.add(const Duration(days: 365 * 5)),
+                    );
+                    if (picked != null) {
+                      setDialogState(() => deadlineDate = picked);
+                    }
+                  },
+                  icon: const Icon(Icons.calendar_today_outlined, size: 16),
+                  label: Text(deadlineDate == null
+                      ? 'Set deadline (optional)'
+                      : AppDateUtils.formatDate(
+                          deadlineDate!.millisecondsSinceEpoch, 'MMM dd, yyyy')),
                 ),
               ],
             ),
@@ -155,6 +168,11 @@ class _GoalsScreenState extends ConsumerState<GoalsScreen> {
               onPressed: () => Navigator.pop(ctx),
               child: const Text('Cancel'),
             ),
+            if (deadlineDate != null)
+              TextButton(
+                onPressed: () => setDialogState(() => deadlineDate = null),
+                child: const Text('Clear date'),
+              ),
             FilledButton(
               onPressed: () async {
                 if (titleC.text.trim().isEmpty) {
@@ -162,16 +180,13 @@ class _GoalsScreenState extends ConsumerState<GoalsScreen> {
                   return;
                 }
                 final target = double.tryParse(targetC.text.trim()) ?? 0;
-                final deadline = deadlineC.text.trim().isEmpty
-                    ? null
-                    : AppDateUtils.parseDdMmYyyy(deadlineC.text.trim());
                 await _repo!.addGoal(
                   title: titleC.text.trim(),
                   description: descC.text.trim(),
                   targetValue: target,
                   unit: unitC.text.trim().isEmpty ? 'KES' : unitC.text.trim(),
                   category: selectedCategory,
-                  deadline: deadline,
+                  deadline: deadlineDate?.millisecondsSinceEpoch,
                 );
                 if (ctx.mounted) Navigator.pop(ctx);
               },
@@ -191,10 +206,9 @@ class _GoalsScreenState extends ConsumerState<GoalsScreen> {
     final targetC = TextEditingController(
         text: g.targetValue > 0 ? g.targetValue.toStringAsFixed(0) : '');
     final unitC = TextEditingController(text: g.unit);
-    final deadlineC = TextEditingController(
-        text: g.deadline != null
-            ? AppDateUtils.formatDate(g.deadline!, 'dd/MM/yyyy')
-            : '');
+    DateTime? deadlineDate = g.deadline != null
+        ? DateTime.fromMillisecondsSinceEpoch(g.deadline!)
+        : null;
     String selectedCategory = g.category.isNotEmpty ? g.category : 'SAVINGS';
 
     await showDialog<void>(
@@ -212,7 +226,7 @@ class _GoalsScreenState extends ConsumerState<GoalsScreen> {
                   controller: titleC,
                   textCapitalization: TextCapitalization.sentences,
                   decoration: const InputDecoration(
-                    labelText: 'Title', border: OutlineInputBorder()),
+                      labelText: 'Title', border: OutlineInputBorder()),
                 ),
                 const SizedBox(height: 12),
                 TextField(
@@ -220,8 +234,8 @@ class _GoalsScreenState extends ConsumerState<GoalsScreen> {
                   maxLines: 2,
                   textCapitalization: TextCapitalization.sentences,
                   decoration: const InputDecoration(
-                    labelText: 'Description (optional)',
-                    border: OutlineInputBorder()),
+                      labelText: 'Description (optional)',
+                      border: OutlineInputBorder()),
                 ),
                 const SizedBox(height: 12),
                 Row(children: [
@@ -231,8 +245,7 @@ class _GoalsScreenState extends ConsumerState<GoalsScreen> {
                       keyboardType:
                           const TextInputType.numberWithOptions(decimal: true),
                       decoration: const InputDecoration(
-                        labelText: 'Target',
-                        border: OutlineInputBorder()),
+                          labelText: 'Target', border: OutlineInputBorder()),
                     ),
                   ),
                   const SizedBox(width: 8),
@@ -241,8 +254,7 @@ class _GoalsScreenState extends ConsumerState<GoalsScreen> {
                     child: TextField(
                       controller: unitC,
                       decoration: const InputDecoration(
-                        labelText: 'Unit',
-                        border: OutlineInputBorder()),
+                          labelText: 'Unit', border: OutlineInputBorder()),
                     ),
                   ),
                 ]),
@@ -250,7 +262,7 @@ class _GoalsScreenState extends ConsumerState<GoalsScreen> {
                 DropdownButtonFormField<String>(
                   value: selectedCategory,
                   decoration: const InputDecoration(
-                    labelText: 'Category', border: OutlineInputBorder()),
+                      labelText: 'Category', border: OutlineInputBorder()),
                   items: _kGoalCategories
                       .map((c) => DropdownMenuItem(
                           value: c, child: Text(_goalTitleCase(c))))
@@ -260,12 +272,25 @@ class _GoalsScreenState extends ConsumerState<GoalsScreen> {
                   },
                 ),
                 const SizedBox(height: 12),
-                TextField(
-                  controller: deadlineC,
-                  keyboardType: TextInputType.datetime,
-                  decoration: const InputDecoration(
-                    labelText: 'Deadline (dd/mm/yyyy, optional)',
-                    border: OutlineInputBorder()),
+                OutlinedButton.icon(
+                  onPressed: () async {
+                    final now = DateTime.now();
+                    final picked = await showDatePicker(
+                      context: ctx,
+                      initialDate: deadlineDate ??
+                          now.add(const Duration(days: 30)),
+                      firstDate: now.subtract(const Duration(days: 1)),
+                      lastDate: now.add(const Duration(days: 365 * 5)),
+                    );
+                    if (picked != null) {
+                      setDialogState(() => deadlineDate = picked);
+                    }
+                  },
+                  icon: const Icon(Icons.calendar_today_outlined, size: 16),
+                  label: Text(deadlineDate == null
+                      ? 'Set deadline (optional)'
+                      : AppDateUtils.formatDate(
+                          deadlineDate!.millisecondsSinceEpoch, 'MMM dd, yyyy')),
                 ),
               ],
             ),
@@ -274,13 +299,15 @@ class _GoalsScreenState extends ConsumerState<GoalsScreen> {
             TextButton(
                 onPressed: () => Navigator.pop(ctx),
                 child: const Text('Cancel')),
+            if (deadlineDate != null)
+              TextButton(
+                onPressed: () => setDialogState(() => deadlineDate = null),
+                child: const Text('Clear date'),
+              ),
             FilledButton(
               onPressed: () async {
                 if (titleC.text.trim().isEmpty) return;
                 final target = double.tryParse(targetC.text.trim()) ?? 0;
-                final deadline = deadlineC.text.trim().isEmpty
-                    ? null
-                    : AppDateUtils.parseDdMmYyyy(deadlineC.text.trim());
                 await _repo!.updateGoal(
                   id: g.id,
                   title: titleC.text.trim(),
@@ -288,7 +315,7 @@ class _GoalsScreenState extends ConsumerState<GoalsScreen> {
                   targetValue: target,
                   unit: unitC.text.trim().isEmpty ? 'KES' : unitC.text.trim(),
                   category: selectedCategory,
-                  deadline: deadline,
+                  deadline: deadlineDate?.millisecondsSinceEpoch,
                 );
                 if (ctx.mounted) Navigator.pop(ctx);
               },
@@ -302,7 +329,6 @@ class _GoalsScreenState extends ConsumerState<GoalsScreen> {
     descC.dispose();
     targetC.dispose();
     unitC.dispose();
-    deadlineC.dispose();
   }
 
   // ── Log progress dialog ──────────────────────────────────────────────────
@@ -349,16 +375,22 @@ class _GoalsScreenState extends ConsumerState<GoalsScreen> {
   @override
   Widget build(BuildContext context) {
     if (_repo == null) return const SizedBox.shrink();
-    return Stack(
-      children: [
-        PageScaffold(
-          title: 'Goals',
-          headerEyebrow: 'Personal Growth',
-          subtitle: 'What you are working toward',
-          onBack: () => context.pop(),
-          // extra bottom padding so cards don't hide behind the FAB
-          contentPadding: const EdgeInsets.only(bottom: 228 + 16),
-          child: StreamBuilder<List<Goal>>(
+    final scheme = Theme.of(context).colorScheme;
+    return PageScaffold(
+      title: 'Goals',
+      headerEyebrow: 'Personal Growth',
+      subtitle: 'What you are working toward',
+      onBack: () => context.pop(),
+      actions: [
+        IconButton(
+          onPressed: _showAddGoalDialog,
+          icon: Icon(Icons.add_outlined, size: 24, color: scheme.primary),
+          tooltip: 'Add goal',
+        ),
+      ],
+      contentPadding:
+          const EdgeInsets.only(bottom: AppSpacing.bottomSafeWithFloatingNav),
+      child: StreamBuilder<List<Goal>>(
             stream: _repo!.watchGoals(),
             builder: (context, snap) {
               final goals = snap.data ?? [];
@@ -382,7 +414,31 @@ class _GoalsScreenState extends ConsumerState<GoalsScreen> {
                         onLogProgress: () => _showLogProgressDialog(g),
                         onEdit: () => _showEditGoalDialog(g),
                         onDelete: () async {
-                          await _repo!.deleteGoal(g.id);
+                          final confirmed = await showDialog<bool>(
+                            context: context,
+                            builder: (ctx) => LifeOsAlertDialog(
+                              title: const Text('Delete goal?'),
+                              content: Text(
+                                  'Remove "${g.title}"? This cannot be undone.'),
+                              actions: [
+                                TextButton(
+                                    onPressed: () =>
+                                        Navigator.pop(ctx, false),
+                                    child: const Text('Cancel')),
+                                FilledButton(
+                                    onPressed: () =>
+                                        Navigator.pop(ctx, true),
+                                    style: FilledButton.styleFrom(
+                                        backgroundColor: Theme.of(context)
+                                            .colorScheme
+                                            .error),
+                                    child: const Text('Delete')),
+                              ],
+                            ),
+                          );
+                          if (confirmed == true) {
+                            await _repo!.deleteGoal(g.id);
+                          }
                         },
                       ),
                     ),
@@ -390,23 +446,6 @@ class _GoalsScreenState extends ConsumerState<GoalsScreen> {
               );
             },
           ),
-        ),
-        // ExtendedFAB — bottom=228 end=8 (matches Kotlin Modifier.align + padding)
-        Positioned(
-          bottom: 228,
-          right: 8,
-          child: FloatingActionButton.extended(
-            heroTag: 'goals_fab',
-            onPressed: _showAddGoalDialog,
-            elevation: 4,
-            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-            backgroundColor: Theme.of(context).colorScheme.primary,
-            foregroundColor: Theme.of(context).colorScheme.onPrimary,
-            icon: const Icon(Icons.add),
-            label: const Text('Add Goal'),
-          ),
-        ),
-      ],
     );
   }
 }
@@ -428,6 +467,14 @@ class _GoalCard extends StatelessWidget {
   final VoidCallback onDelete;
   final VoidCallback onEdit;
 
+  static const _categoryIcons = {
+    'SAVINGS': Icons.savings_outlined,
+    'HEALTH': Icons.favorite_outline,
+    'EDUCATION': Icons.school_outlined,
+    'CAREER': Icons.work_outline,
+    'PERSONAL': Icons.person_outline,
+  };
+
   @override
   Widget build(BuildContext context) {
     final scheme = Theme.of(context).colorScheme;
@@ -435,7 +482,25 @@ class _GoalCard extends StatelessWidget {
     final ratio = goal.targetValue <= 0
         ? 0.0
         : (goal.currentValue / goal.targetValue).clamp(0.0, 1.0);
-    final isComplete = goal.currentValue >= goal.targetValue && goal.targetValue > 0;
+    final isComplete =
+        goal.currentValue >= goal.targetValue && goal.targetValue > 0;
+    final progressColor =
+        isComplete ? LifeOsColors.income : scheme.primary;
+    final categoryIcon =
+        _categoryIcons[goal.category] ?? Icons.flag_outlined;
+
+    // Determine deadline urgency.
+    final now = DateTime.now().millisecondsSinceEpoch;
+    final daysLeft = goal.deadline != null
+        ? ((goal.deadline! - now) / 86400000).ceil()
+        : null;
+    final deadlineColor = daysLeft == null
+        ? scheme.onSecondaryContainer
+        : daysLeft < 0
+            ? scheme.error
+            : daysLeft <= 7
+                ? const Color(0xFFF59E0B)
+                : scheme.onSecondaryContainer;
 
     return AppCard(
       contentPadding: const EdgeInsets.all(16),
@@ -443,105 +508,148 @@ class _GoalCard extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.start,
         mainAxisSize: MainAxisSize.min,
         children: [
-          // Title row + edit + delete
+          // ── Header row ────────────────────────────────────────────
           Row(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Expanded(
-                child: Text(goal.title, style: tt.titleSmall),
+              // Category icon badge
+              Container(
+                width: 40,
+                height: 40,
+                decoration: BoxDecoration(
+                  color: progressColor.withValues(alpha: 0.12),
+                  borderRadius: BorderRadius.circular(10),
+                ),
+                child: Icon(categoryIcon, size: 20, color: progressColor),
               ),
+              const SizedBox(width: 10),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Text(goal.title,
+                        style: tt.titleSmall,
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis),
+                    if (goal.description.isNotEmpty)
+                      Text(goal.description,
+                          style: tt.bodySmall
+                              ?.copyWith(color: scheme.onSurfaceVariant),
+                          maxLines: 2,
+                          overflow: TextOverflow.ellipsis),
+                  ],
+                ),
+              ),
+              // Edit / delete compact icons
               SizedBox(
-                width: 32,
-                height: 32,
+                width: 28,
+                height: 28,
                 child: IconButton(
                   onPressed: onEdit,
-                  icon: Icon(Icons.edit_outlined, size: 18, color: scheme.primary),
+                  icon: Icon(Icons.edit_outlined, size: 16, color: scheme.primary),
                   padding: EdgeInsets.zero,
                 ),
               ),
               SizedBox(
-                width: 32,
-                height: 32,
+                width: 28,
+                height: 28,
                 child: IconButton(
                   onPressed: onDelete,
-                  icon: Icon(Icons.delete_outline,
-                      size: 18, color: scheme.error),
+                  icon: Icon(Icons.delete_outline, size: 16, color: scheme.error),
                   padding: EdgeInsets.zero,
                 ),
               ),
             ],
           ),
-          // Category + deadline chips
-          const SizedBox(height: 4),
-          Wrap(
-            spacing: 6,
-            runSpacing: 4,
-            children: [
-              if (goal.category.isNotEmpty)
-                _GoalChip(
-                  label: _goalTitleCase(goal.category),
-                  color: scheme.primaryContainer,
-                  textColor: scheme.onPrimaryContainer,
-                ),
-              if (goal.deadline != null)
-                _GoalChip(
-                  label: '⏰ ${AppDateUtils.formatDate(goal.deadline!, 'MMM dd, yyyy')}',
-                  color: isComplete
-                      ? const Color(0xFF34D399).withValues(alpha: 0.18)
-                      : scheme.secondaryContainer,
-                  textColor: isComplete
-                      ? const Color(0xFF16A34A)
-                      : scheme.onSecondaryContainer,
-                ),
-            ],
-          ),
-          // Description
-          if (goal.description.isNotEmpty) ...[
-            const SizedBox(height: 4),
-            Text(
-              goal.description,
-              style: tt.bodySmall?.copyWith(color: scheme.onSurfaceVariant),
-            ),
-          ],
           const SizedBox(height: 10),
-          // Progress bar — height 6, rounded corners 6
-          ClipRRect(
-            borderRadius: BorderRadius.circular(6),
-            child: LinearProgressIndicator(
-              value: ratio,
-              minHeight: 6,
-              backgroundColor: scheme.surfaceContainerHighest,
-              valueColor: AlwaysStoppedAnimation<Color>(
-                isComplete ? LifeOsColors.income : scheme.primary,
+          // ── Progress bar ──────────────────────────────────────────
+          TweenAnimationBuilder<double>(
+            tween: Tween(begin: 0.0, end: ratio),
+            duration: const Duration(milliseconds: 600),
+            builder: (context, v, _) => ClipRRect(
+              borderRadius: BorderRadius.circular(6),
+              child: LinearProgressIndicator(
+                value: v,
+                minHeight: 8,
+                backgroundColor: scheme.surfaceContainerHighest,
+                valueColor: AlwaysStoppedAnimation<Color>(progressColor),
               ),
             ),
           ),
           const SizedBox(height: 6),
-          // Progress label — raw values, not currency-formatted
-          Text(
-            '${_rawNum(goal.currentValue)} / ${_rawNum(goal.targetValue)} ${goal.unit}',
-            style: tt.labelSmall?.copyWith(color: scheme.onSurfaceVariant),
-          ),
-          const SizedBox(height: 4),
-          // Action row
+          // ── Progress text + chips ─────────────────────────────────
           Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Expanded(
+                child: Text(
+                  '${_rawNum(goal.currentValue)} / ${_rawNum(goal.targetValue)} ${goal.unit}  ·  ${(ratio * 100).toStringAsFixed(0)}%',
+                  style: tt.labelSmall
+                      ?.copyWith(color: scheme.onSurfaceVariant),
+                ),
+              ),
+              if (isComplete)
+                Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                  decoration: BoxDecoration(
+                    color: LifeOsColors.income.withValues(alpha: 0.15),
+                    borderRadius: BorderRadius.circular(10),
+                  ),
+                  child: Text('✓ Done',
+                      style: tt.labelSmall?.copyWith(
+                          color: LifeOsColors.income,
+                          fontWeight: FontWeight.w600)),
+                ),
+            ],
+          ),
+          // Deadline chip + category chip
+          const SizedBox(height: 6),
+          Wrap(
+            spacing: 6,
+            runSpacing: 4,
+            children: [
+              _GoalChip(
+                label: _goalTitleCase(goal.category),
+                color: scheme.primaryContainer,
+                textColor: scheme.onPrimaryContainer,
+              ),
+              if (goal.deadline != null)
+                _GoalChip(
+                  label: daysLeft != null && daysLeft < 0
+                      ? '⏰ Overdue'
+                      : daysLeft == 0
+                          ? '⏰ Today'
+                          : '⏰ ${AppDateUtils.formatDate(goal.deadline!, 'MMM dd, yyyy')}',
+                  color: deadlineColor.withValues(alpha: 0.14),
+                  textColor: deadlineColor,
+                ),
+            ],
+          ),
+          // ── Actions ───────────────────────────────────────────────
+          const SizedBox(height: 4),
+          Divider(
+              height: 1,
+              color: scheme.onSurfaceVariant.withValues(alpha: 0.10)),
+          const SizedBox(height: 4),
+          Row(
             children: [
               TextButton(
                 onPressed: onLogProgress,
                 style: TextButton.styleFrom(
                   padding: const EdgeInsets.symmetric(horizontal: 4),
                   minimumSize: const Size(0, 32),
+                  foregroundColor: scheme.primary,
                 ),
                 child: const Text('Log Progress'),
               ),
+              const Spacer(),
               if (!isComplete)
                 TextButton(
                   onPressed: onMarkComplete,
                   style: TextButton.styleFrom(
                     padding: const EdgeInsets.symmetric(horizontal: 4),
                     minimumSize: const Size(0, 32),
-                    foregroundColor: scheme.primary,
+                    foregroundColor: LifeOsColors.income,
                   ),
                   child: const Text('Mark Complete'),
                 ),

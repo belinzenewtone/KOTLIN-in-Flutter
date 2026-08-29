@@ -463,8 +463,6 @@ class ReviewScreen extends ConsumerStatefulWidget {
 }
 
 class _ReviewScreenState extends ConsumerState<ReviewScreen> {
-  int? _selectedBarIdx;
-
   // Cached future — only reset on explicit retry. Prevents _load() being
   // called on every setState (e.g. bar tap), which caused a full-screen flash.
   late Future<_ReviewData> _reviewFuture;
@@ -563,9 +561,10 @@ class _ReviewScreenState extends ConsumerState<ReviewScreen> {
                 ),
               ),
               const SizedBox(height: 12),
-              // 7-Day Spend Pattern
+              // 7-Day Spend Pattern — isolated StatefulWidget so bar taps
+              // do not rebuild the entire ReviewScreen.
               if (d.dayBars.isNotEmpty) ...[
-                _dayBarsCard(context, d.dayBars),
+                _DayBarChart(bars: d.dayBars),
                 const SizedBox(height: 12),
               ],
               // What Changed
@@ -652,155 +651,6 @@ class _ReviewScreenState extends ConsumerState<ReviewScreen> {
                 ? 'Fair'
                 : 'Needs attention';
     return (score, label);
-  }
-
-  Widget _dayBarsCard(BuildContext context, List<_DayBar> bars) {
-    final scheme = Theme.of(context).colorScheme;
-    final maxSpend = bars.fold<double>(1.0, (a, b) => b.amount > a ? b.amount : a);
-    return AppCard(
-      contentPadding: const EdgeInsets.all(16),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text('7-Day Spend Pattern',
-              style: Theme.of(context)
-                  .textTheme
-                  .labelMedium
-                  ?.copyWith(
-                      color: scheme.onSurfaceVariant,
-                      fontWeight: FontWeight.w600)),
-          const SizedBox(height: 10),
-          SizedBox(
-            height: 148,
-            child: Row(
-              crossAxisAlignment: CrossAxisAlignment.end,
-              children: [
-                for (var i = 0; i < bars.length; i++)
-                  Expanded(
-                    child: GestureDetector(
-                      onTap: () {
-                        if (bars[i].amount > 0) {
-                          setState(() => _selectedBarIdx =
-                              _selectedBarIdx == i ? null : i);
-                        }
-                      },
-                      child: Column(
-                        mainAxisAlignment: MainAxisAlignment.end,
-                        children: [
-                          SizedBox(
-                            width: 40,
-                            height: 100,
-                            child: Stack(
-                              alignment: Alignment.bottomCenter,
-                              clipBehavior: Clip.none,
-                              children: [
-                                if (bars[i].amount > 0)
-                                  Container(
-                                    width: 22,
-                                    height: (100 * (bars[i].amount / maxSpend))
-                                        .clamp(2.0, 100.0),
-                                    decoration: BoxDecoration(
-                                      color: bars[i].color.withValues(
-                                          alpha:
-                                              bars[i].isFuture ? 0.25 : 1.0),
-                                      borderRadius: BorderRadius.circular(4),
-                                    ),
-                                  )
-                                else
-                                  Container(
-                                    width: 22,
-                                    height: 2,
-                                    decoration: BoxDecoration(
-                                      color: bars[i].color.withValues(
-                                          alpha:
-                                              bars[i].isFuture ? 0.15 : 0.3),
-                                      borderRadius: BorderRadius.circular(4),
-                                    ),
-                                  ),
-                                if (_selectedBarIdx == i && bars[i].amount > 0)
-                                  Positioned(
-                                    bottom: (100 * (bars[i].amount / maxSpend))
-                                            .clamp(2.0, 100.0) +
-                                        4,
-                                    child: Container(
-                                      padding: const EdgeInsets.symmetric(
-                                          horizontal: 6, vertical: 2),
-                                      decoration: BoxDecoration(
-                                        color: bars[i].color,
-                                        borderRadius: BorderRadius.circular(4),
-                                      ),
-                                      child: Text(
-                                        formatCurrency(bars[i].amount),
-                                        style: Theme.of(context)
-                                            .textTheme
-                                            .labelSmall
-                                            ?.copyWith(
-                                                fontWeight: FontWeight.bold,
-                                                color: Colors.white),
-                                      ),
-                                    ),
-                                  ),
-                              ],
-                            ),
-                          ),
-                          const SizedBox(height: 4),
-                          Text(bars[i].label,
-                              style: Theme.of(context)
-                                  .textTheme
-                                  .labelSmall
-                                  ?.copyWith(
-                                      color: _selectedBarIdx == i
-                                          ? bars[i].color
-                                          : scheme.onSurfaceVariant)),
-                        ],
-                      ),
-                    ),
-                  ),
-              ],
-            ),
-          ),
-          const SizedBox(height: 8),
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              Row(
-                children: [
-                  _legendDot(context, kReviewNormal, 'Normal'),
-                  const SizedBox(width: 12),
-                  _legendDot(context, kReviewHigh, 'High'),
-                  const SizedBox(width: 12),
-                  _legendDot(context, kReviewPeak, 'Peak'),
-                ],
-              ),
-              Text('Tap bar for details',
-                  style: Theme.of(context)
-                      .textTheme
-                      .labelSmall
-                      ?.copyWith(color: scheme.outline)),
-            ],
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _legendDot(BuildContext context, Color color, String label) {
-    return Row(
-      mainAxisSize: MainAxisSize.min,
-      children: [
-        Container(
-          width: 8,
-          height: 8,
-          decoration: BoxDecoration(shape: BoxShape.circle, color: color),
-        ),
-        const SizedBox(width: 4),
-        Text(label,
-            style: Theme.of(context)
-                .textTheme
-                .labelSmall
-                ?.copyWith(color: Theme.of(context).colorScheme.onSurfaceVariant)),
-      ],
-    );
   }
 
   Widget _whatChangedCard(BuildContext context, _ReviewData d) {
@@ -1106,6 +956,175 @@ class _DayBar {
   final bool isFuture;
 }
 
+/// Isolated bar-chart widget so bar taps only rebuild this card,
+/// not the entire ReviewScreen.
+class _DayBarChart extends StatefulWidget {
+  const _DayBarChart({required this.bars});
+  final List<_DayBar> bars;
+
+  @override
+  State<_DayBarChart> createState() => _DayBarChartState();
+}
+
+class _DayBarChartState extends State<_DayBarChart> {
+  int? _selectedIdx;
+
+  @override
+  Widget build(BuildContext context) {
+    final scheme = Theme.of(context).colorScheme;
+    final bars = widget.bars;
+    final maxSpend =
+        bars.fold<double>(1.0, (a, b) => b.amount > a ? b.amount : a);
+
+    Widget legendDot(Color color, String label) => Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Container(
+              width: 8,
+              height: 8,
+              decoration: BoxDecoration(shape: BoxShape.circle, color: color),
+            ),
+            const SizedBox(width: 4),
+            Text(label,
+                style: Theme.of(context)
+                    .textTheme
+                    .labelSmall
+                    ?.copyWith(color: scheme.onSurfaceVariant)),
+          ],
+        );
+
+    return AppCard(
+      contentPadding: const EdgeInsets.all(16),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text('7-Day Spend Pattern',
+              style: Theme.of(context).textTheme.labelMedium?.copyWith(
+                  color: scheme.onSurfaceVariant,
+                  fontWeight: FontWeight.w600)),
+          const SizedBox(height: 10),
+          SizedBox(
+            height: 148,
+            child: Row(
+              crossAxisAlignment: CrossAxisAlignment.end,
+              children: [
+                for (var i = 0; i < bars.length; i++)
+                  Expanded(
+                    child: GestureDetector(
+                      onTap: () {
+                        if (bars[i].amount > 0) {
+                          setState(
+                              () => _selectedIdx =
+                                  _selectedIdx == i ? null : i);
+                        }
+                      },
+                      child: Column(
+                        mainAxisAlignment: MainAxisAlignment.end,
+                        children: [
+                          SizedBox(
+                            width: 40,
+                            height: 100,
+                            child: Stack(
+                              alignment: Alignment.bottomCenter,
+                              clipBehavior: Clip.none,
+                              children: [
+                                if (bars[i].amount > 0)
+                                  Container(
+                                    width: 22,
+                                    height: (100 *
+                                            (bars[i].amount / maxSpend))
+                                        .clamp(2.0, 100.0),
+                                    decoration: BoxDecoration(
+                                      color: bars[i].color.withValues(
+                                          alpha: bars[i].isFuture
+                                              ? 0.25
+                                              : 1.0),
+                                      borderRadius:
+                                          BorderRadius.circular(4),
+                                    ),
+                                  )
+                                else
+                                  Container(
+                                    width: 22,
+                                    height: 2,
+                                    decoration: BoxDecoration(
+                                      color: bars[i].color.withValues(
+                                          alpha: bars[i].isFuture
+                                              ? 0.15
+                                              : 0.3),
+                                      borderRadius:
+                                          BorderRadius.circular(4),
+                                    ),
+                                  ),
+                                if (_selectedIdx == i &&
+                                    bars[i].amount > 0)
+                                  Positioned(
+                                    bottom: (100 *
+                                                (bars[i].amount / maxSpend))
+                                            .clamp(2.0, 100.0) +
+                                        4,
+                                    child: Container(
+                                      padding: const EdgeInsets.symmetric(
+                                          horizontal: 6, vertical: 2),
+                                      decoration: BoxDecoration(
+                                        color: bars[i].color,
+                                        borderRadius:
+                                            BorderRadius.circular(4),
+                                      ),
+                                      child: Text(
+                                        formatCurrency(bars[i].amount),
+                                        style: Theme.of(context)
+                                            .textTheme
+                                            .labelSmall
+                                            ?.copyWith(
+                                                fontWeight: FontWeight.bold,
+                                                color: Colors.white),
+                                      ),
+                                    ),
+                                  ),
+                              ],
+                            ),
+                          ),
+                          const SizedBox(height: 4),
+                          Text(bars[i].label,
+                              style: Theme.of(context)
+                                  .textTheme
+                                  .labelSmall
+                                  ?.copyWith(
+                                      color: _selectedIdx == i
+                                          ? bars[i].color
+                                          : scheme.onSurfaceVariant)),
+                        ],
+                      ),
+                    ),
+                  ),
+              ],
+            ),
+          ),
+          const SizedBox(height: 8),
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Row(children: [
+                legendDot(kReviewNormal, 'Normal'),
+                const SizedBox(width: 12),
+                legendDot(kReviewHigh, 'High'),
+                const SizedBox(width: 12),
+                legendDot(kReviewPeak, 'Peak'),
+              ]),
+              Text('Tap bar for details',
+                  style: Theme.of(context)
+                      .textTheme
+                      .labelSmall
+                      ?.copyWith(color: scheme.outline)),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+}
+
 class _ReviewData {
   const _ReviewData({
     required this.weekSpend,
@@ -1181,17 +1200,44 @@ class _ExportScreenState extends ConsumerState<ExportScreen> {
     'tasks': 'tasks',
     'events': 'events',
   };
-  static const _datePresets = {
-    'this_month': 'this month',
-    'last_3_months': 'last 3 months',
-    'this_year': 'this year',
-    'all_time': 'all time',
-  };
+
+  // Populated on init from the DB — drives smart date presets.
+  int? _earliestDataMs;
+  // Available presets recomputed whenever _earliestDataMs is loaded.
+  Map<String, String> _datePresets = {'this_month': 'This month'};
+
+  /// Recompute available date presets from the earliest known data point.
+  /// Must be called inside setState().
+  void _refreshDatePresets() {
+    final now = DateTime.now();
+    final monthStart = DateTime(now.year, now.month, 1);
+    final threeMonthsAgo = now.subtract(const Duration(days: 90));
+    final yearStart = DateTime(now.year, 1, 1);
+    final earliest = _earliestDataMs != null
+        ? DateTime.fromMillisecondsSinceEpoch(_earliestDataMs!)
+        : null;
+
+    final result = <String, String>{'this_month': 'This month'};
+    if (earliest != null && earliest.isBefore(monthStart)) {
+      result['last_3_months'] = 'Last 3 months';
+    }
+    if (earliest != null && earliest.isBefore(threeMonthsAgo)) {
+      result['this_year'] = 'This year';
+    }
+    if (earliest != null && earliest.isBefore(yearStart)) {
+      result['all_time'] = 'All time';
+    }
+    _datePresets = result;
+    if (!_datePresets.containsKey(_datePreset)) {
+      _datePreset = _datePresets.keys.first;
+    }
+  }
 
   @override
   void initState() {
     super.initState();
     _loadHistory();
+    _loadEarliestDataMs();
     _previewFuture = _previewCount();
     if (widget.openPdfSheet) {
       WidgetsBinding.instance.addPostFrameCallback((_) {
@@ -1218,6 +1264,30 @@ class _ExportScreenState extends ConsumerState<ExportScreen> {
       if (mounted) setState(() => _history = rows.map((r) => r.data).toList());
     } catch (_) {
       // ignore
+    }
+  }
+
+  Future<void> _loadEarliestDataMs() async {
+    try {
+      final db = await ref.read(lifeOsDatabaseProvider.future);
+      final userId = await ref.read(userIdProvider.future);
+      // Use the earliest transaction as the anchor — covers the most data.
+      final row = await db.customSelect(
+        'SELECT MIN(date) AS d FROM transactions WHERE user_id=? AND deleted_at IS NULL',
+        variables: [Variable.withString(userId)],
+        readsFrom: {db.transactions},
+      ).getSingleOrNull();
+      final earliest = (row?.data['d'] as num?)?.toInt();
+      if (mounted && earliest != null) {
+        setState(() {
+          _earliestDataMs = earliest;
+          _refreshDatePresets();
+        });
+        // Re-run preview with the potentially new date preset.
+        setState(() => _previewFuture = _previewCount());
+      }
+    } catch (_) {
+      // ignore — presets stay as the default single option
     }
   }
 
@@ -1603,39 +1673,54 @@ class _ExportScreenState extends ConsumerState<ExportScreen> {
                 ],
               ),
               const SizedBox(height: 12),
-              // 2-column grid of domain counts — matches Kotlin ExportScreen.
+              // 2-column grid of domain counts, filtered to the selected domain.
               for (final row in _kPreviewDomains)
-                Padding(
-                  padding: const EdgeInsets.only(bottom: 8),
-                  child: Row(
-                    children: [
-                      for (final (key, label) in row) ...[
-                        Expanded(
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Text(
-                                loading ? '—' : '${counts[key] ?? 0}',
-                                style: Theme.of(context)
-                                    .textTheme
-                                    .titleMedium
-                                    ?.copyWith(
-                                        color: scheme.primary,
-                                        fontWeight: FontWeight.bold),
-                              ),
-                              Text(label,
+                Builder(builder: (context) {
+                  // Only include columns relevant to the current _domain.
+                  final visibleCols = row.where((entry) {
+                    final key = entry.$1;
+                    if (_domain == 'all') return true;
+                    // budgets/incomes/recurringRules/merchantRules always show
+                    // (they are not date-filtered exports).
+                    const dateFiltered = {'transactions', 'tasks', 'events'};
+                    if (!dateFiltered.contains(key)) return true;
+                    return key == _domain;
+                  }).toList();
+                  if (visibleCols.isEmpty) return const SizedBox.shrink();
+                  return Padding(
+                    padding: const EdgeInsets.only(bottom: 8),
+                    child: Row(
+                      children: [
+                        for (final (key, label) in visibleCols) ...[
+                          Expanded(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text(
+                                  loading ? '—' : '${counts[key] ?? 0}',
                                   style: Theme.of(context)
                                       .textTheme
-                                      .bodySmall
+                                      .titleMedium
                                       ?.copyWith(
-                                          color: scheme.onSurfaceVariant)),
-                            ],
+                                          color: scheme.primary,
+                                          fontWeight: FontWeight.bold),
+                                ),
+                                Text(label,
+                                    style: Theme.of(context)
+                                        .textTheme
+                                        .bodySmall
+                                        ?.copyWith(
+                                            color: scheme.onSurfaceVariant)),
+                              ],
+                            ),
                           ),
-                        ),
+                          // Pad to keep 2-column layout when only 1 visible col.
+                          if (visibleCols.length == 1) const Expanded(child: SizedBox()),
+                        ],
                       ],
-                    ],
-                  ),
-                ),
+                    ),
+                  );
+                }),
             ],
           );
         },
@@ -1686,6 +1771,20 @@ class _ExportScreenState extends ConsumerState<ExportScreen> {
     );
   }
 
+  Future<void> _clearHistory() async {
+    try {
+      final db = await ref.read(lifeOsDatabaseProvider.future);
+      final userId = await ref.read(userIdProvider.future);
+      await db.customStatement(
+        'DELETE FROM export_history WHERE user_id=?',
+        [userId],
+      );
+      if (mounted) setState(() => _history = []);
+    } catch (_) {
+      // ignore
+    }
+  }
+
   Widget _historyCard(BuildContext context) {
     final scheme = Theme.of(context).colorScheme;
     return AppCard(
@@ -1694,7 +1793,29 @@ class _ExportScreenState extends ConsumerState<ExportScreen> {
         crossAxisAlignment: CrossAxisAlignment.start,
         mainAxisSize: MainAxisSize.min,
         children: [
-          Text('History', style: Theme.of(context).textTheme.titleMedium),
+          Row(
+            crossAxisAlignment: CrossAxisAlignment.center,
+            children: [
+              Text('History', style: Theme.of(context).textTheme.titleMedium),
+              const Spacer(),
+              if (_history.isNotEmpty)
+                TextButton(
+                  style: TextButton.styleFrom(
+                    minimumSize: const Size(0, 28),
+                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                    tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                  ),
+                  onPressed: _clearHistory,
+                  child: Text(
+                    'Clear',
+                    style: Theme.of(context).textTheme.labelSmall?.copyWith(
+                          color: scheme.error,
+                          fontWeight: FontWeight.w600,
+                        ),
+                  ),
+                ),
+            ],
+          ),
           const SizedBox(height: 8),
           if (_history.isEmpty)
             Text('No exports yet',
@@ -2579,8 +2700,11 @@ class _SmsImportHealthPageState extends ConsumerState<SmsImportHealthPage> {
                 contentPadding: const EdgeInsets.all(16),
                 child: Column(
                   children: [
-                    _activityRow(context, Icons.sms_outlined, 'Last SMS received', 'Never', scheme),
-                    _activityRow(context, Icons.sync_outlined, 'Last realtime capture', 'Never', scheme),
+                    _activityRow(context, Icons.timer_outlined, 'Last background scan',
+                        d.lastBgScanAt != null
+                            ? AppDateUtils.formatRelativeTime(d.lastBgScanAt!)
+                            : 'Never',
+                        scheme),
                     _activityRow(context, Icons.inbox_outlined, 'Last inbox scan',
                         d.lastInboxScanAt != null
                             ? AppDateUtils.formatRelativeTime(d.lastInboxScanAt!)
@@ -2862,20 +2986,25 @@ class _SmsImportHealthPageState extends ConsumerState<SmsImportHealthPage> {
       "SELECT COUNT(*) as n FROM import_audit WHERE user_id=? AND LOWER(outcome) IN ('imported','recovered_from_backfill')",
       variables: [Variable.withString(userId)], readsFrom: {db.importAudit},
     ).get();
+    // Skipped = confirmed duplicates only.
     final skip = await db.customSelect(
-      "SELECT COUNT(*) as n FROM import_audit WHERE user_id=? AND LOWER(outcome) IN ('duplicate','skipped','not_mpesa','ignored')",
+      "SELECT COUNT(*) as n FROM import_audit WHERE user_id=? AND outcome='duplicate'",
       variables: [Variable.withString(userId)], readsFrom: {db.importAudit},
     ).get();
+    // Errors = ignored/irrelevant messages that are NOT simply non-M-Pesa
+    // (those are captured separately in notMpesa below).
     final fail = await db.customSelect(
-      "SELECT COUNT(*) as n FROM import_audit WHERE user_id=? AND (LOWER(outcome) LIKE '%fail%' OR LOWER(outcome) LIKE '%error%')",
+      "SELECT COUNT(*) as n FROM import_audit WHERE user_id=? AND outcome='ignored_irrelevant' AND (failure_reason IS NULL OR failure_reason != 'not_mpesa')",
       variables: [Variable.withString(userId)], readsFrom: {db.importAudit},
     ).get();
     final pend = await db.customSelect(
       "SELECT COUNT(*) as n FROM sms_review_queue WHERE user_id=? AND reviewed_at IS NULL",
       variables: [Variable.withString(userId)], readsFrom: {db.smsReviewQueue},
     ).get();
+    // Not M-Pesa = messages the parser rejected specifically because they are
+    // not M-Pesa (failure_reason='not_mpesa').
     final notMpesa = await db.customSelect(
-      "SELECT COUNT(*) as n FROM import_audit WHERE user_id=? AND LOWER(outcome) IN ('not_mpesa','ignored')",
+      "SELECT COUNT(*) as n FROM import_audit WHERE user_id=? AND outcome='ignored_irrelevant' AND failure_reason='not_mpesa'",
       variables: [Variable.withString(userId)], readsFrom: {db.importAudit},
     ).get();
     final lastScan = await db.customSelect(
@@ -2896,6 +3025,8 @@ class _SmsImportHealthPageState extends ConsumerState<SmsImportHealthPage> {
     ).get();
 
     final hasPermission = await SmsPlatformBridge.hasSmsPermissions();
+    final prefs = await SharedPreferences.getInstance();
+    final lastBgScanMs = prefs.getInt('last_bg_scan_ms');
 
     return _HealthData(
       hasPermission: hasPermission,
@@ -2904,6 +3035,7 @@ class _SmsImportHealthPageState extends ConsumerState<SmsImportHealthPage> {
       pending: count(pend),
       errors: count(fail),
       notMpesaCount: count(notMpesa),
+      lastBgScanAt: lastBgScanMs,
       lastInboxScanAt: (lastScan?.data['ts'] as num?)?.toInt(),
       lastSuccessfulImportAt: (lastSuccess?.data['ts'] as num?)?.toInt(),
       lastMpesaCode: lastCode?.data['mpesa_code'] as String?,
@@ -2920,6 +3052,7 @@ class _HealthData {
     this.pending = 0,
     this.errors = 0,
     this.notMpesaCount = 0,
+    this.lastBgScanAt,
     this.lastInboxScanAt,
     this.lastSuccessfulImportAt,
     this.lastMpesaCode,
@@ -2927,6 +3060,7 @@ class _HealthData {
   });
   final bool hasPermission;
   final int imported, skipped, pending, errors, notMpesaCount;
+  final int? lastBgScanAt;
   final int? lastInboxScanAt;
   final int? lastSuccessfulImportAt;
   final String? lastMpesaCode;
@@ -4006,87 +4140,118 @@ class _LearningState extends ConsumerState<LearningPage> {
   @override
   Widget build(BuildContext context) {
     final scheme = Theme.of(context).colorScheme;
+    final tt = Theme.of(context).textTheme;
     return PageScaffold(
       title: 'Learn',
       subtitle: 'Track your learning sessions',
       onBack: () => context.pop(),
-      contentPadding: const EdgeInsets.only(bottom: AppSpacing.bottomSafeWithFloatingNav + 8),
+      actions: [
+        IconButton(
+          onPressed: _showLogDialog,
+          icon: Icon(Icons.add_outlined, size: 24, color: scheme.primary),
+          tooltip: 'Log Session',
+        ),
+      ],
+      contentPadding: const EdgeInsets.only(bottom: AppSpacing.bottomSafeWithFloatingNav),
       child: FutureBuilder<_LearningData>(
         future: _load(),
         builder: (context, snap) {
           final d = snap.data ?? _LearningData(0, []);
           final progress = (d.monthMinutes / _goalMinutes).clamp(0.0, 1.0);
-          final progressColor = progress >= 0.8 ? const Color(0xFF34D399) : progress >= 0.4 ? const Color(0xFFF59E0B) : scheme.error;
-          return Stack(
+          final progressColor = progress >= 0.8
+              ? const Color(0xFF34D399)
+              : progress >= 0.4
+                  ? const Color(0xFFF59E0B)
+                  : scheme.error;
+          final hoursLogged = d.monthMinutes / 60;
+          return Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
-              Column(
-                crossAxisAlignment: CrossAxisAlignment.stretch,
-                children: [
-                  // Monthly goal card
-                  AppCard(
-                    contentPadding: const EdgeInsets.all(16),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      mainAxisSize: MainAxisSize.min,
+              // ── Monthly goal hero card ─────────────────────────────────
+              AppCard(
+                contentPadding: const EdgeInsets.all(16),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Row(
                       children: [
-                        Text('Monthly Goal', style: Theme.of(context).textTheme.titleSmall),
-                        const SizedBox(height: 4),
-                        Text('${(d.monthMinutes / 60).toStringAsFixed(1)} / 10.0 hours', style: Theme.of(context).textTheme.labelMedium?.copyWith(color: scheme.onSurfaceVariant)),
-                        const SizedBox(height: 8),
-                        ClipRRect(
-                          borderRadius: BorderRadius.circular(3),
-                          child: LinearProgressIndicator(value: progress, minHeight: 6, backgroundColor: scheme.surfaceContainerHighest, valueColor: AlwaysStoppedAnimation(progressColor)),
+                        Container(
+                          width: 40,
+                          height: 40,
+                          decoration: BoxDecoration(
+                            color: progressColor.withValues(alpha: 0.14),
+                            borderRadius: BorderRadius.circular(10),
+                          ),
+                          child: Icon(Icons.school_outlined,
+                              size: 20, color: progressColor),
                         ),
-                      ],
-                    ),
-                  ),
-                  const SizedBox(height: 12),
-                  // Sessions
-                  if (d.sessions.isEmpty)
-                    const EmptyState(icon: Icons.school_outlined, title: 'No sessions yet', description: 'Tap + to log your first learning session.')
-                  else
-                    for (final s in d.sessions)
-                      Padding(
-                        padding: const EdgeInsets.only(bottom: 8),
-                        child: AppCard(
-                          contentPadding: const EdgeInsets.all(16),
+                        const SizedBox(width: 10),
+                        Expanded(
                           child: Column(
                             crossAxisAlignment: CrossAxisAlignment.start,
                             mainAxisSize: MainAxisSize.min,
                             children: [
-                              Text(s['topic'] as String, style: Theme.of(context).textTheme.titleSmall),
-                              const SizedBox(height: 4),
-                              Row(
-                                children: [
-                                  Icon(Icons.timer_outlined, size: 14, color: scheme.onSurfaceVariant),
-                                  const SizedBox(width: 4),
-                                  Text('${s['duration_minutes']} min', style: Theme.of(context).textTheme.labelSmall?.copyWith(color: scheme.onSurfaceVariant)),
-                                  const SizedBox(width: 12),
-                                  Text(AppDateUtils.formatDate((s['date'] as int?)??0, 'MMM dd, yyyy'), style: Theme.of(context).textTheme.labelSmall?.copyWith(color: scheme.onSurfaceVariant)),
-                                ],
+                              Text('Monthly Learning Goal',
+                                  style: tt.titleSmall),
+                              Text(
+                                '${hoursLogged.toStringAsFixed(1)} / 10.0 hrs  ·  ${(progress * 100).toStringAsFixed(0)}%',
+                                style: tt.labelSmall?.copyWith(
+                                    color: scheme.onSurfaceVariant),
                               ),
-                              if ((s['notes'] as String?)?.isNotEmpty == true) ...[
-                                const SizedBox(height: 4),
-                                Text(s['notes'] as String, style: Theme.of(context).textTheme.bodySmall?.copyWith(color: scheme.onSurfaceVariant)),
-                              ],
                             ],
                           ),
                         ),
+                        Container(
+                          padding: const EdgeInsets.symmetric(
+                              horizontal: 8, vertical: 3),
+                          decoration: BoxDecoration(
+                            color: progressColor.withValues(alpha: 0.14),
+                            borderRadius: BorderRadius.circular(10),
+                          ),
+                          child: Text(
+                            progress >= 1.0
+                                ? '✓ Done'
+                                : progress >= 0.8
+                                    ? 'Almost!'
+                                    : 'In progress',
+                            style: tt.labelSmall?.copyWith(
+                                color: progressColor,
+                                fontWeight: FontWeight.w600),
+                          ),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 10),
+                    TweenAnimationBuilder<double>(
+                      tween: Tween(begin: 0.0, end: progress),
+                      duration: const Duration(milliseconds: 600),
+                      builder: (context, v, _) => ClipRRect(
+                        borderRadius: BorderRadius.circular(6),
+                        child: LinearProgressIndicator(
+                          value: v,
+                          minHeight: 8,
+                          backgroundColor: scheme.surfaceContainerHighest,
+                          valueColor: AlwaysStoppedAnimation(progressColor),
+                        ),
                       ),
-                ],
-              ),
-              Positioned(
-                bottom: 0, right: AppSpacing.screenHorizontal,
-                child: FloatingActionButton.extended(
-                  backgroundColor: scheme.primary,
-                  foregroundColor: scheme.onPrimary,
-                  elevation: 4,
-                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-                  onPressed: _showLogDialog,
-                  icon: const Icon(Icons.add),
-                  label: const Text('Log Session'),
+                    ),
+                  ],
                 ),
               ),
+              const SizedBox(height: 12),
+              // ── Session list ───────────────────────────────────────────
+              if (d.sessions.isEmpty)
+                const EmptyState(
+                    icon: Icons.school_outlined,
+                    title: 'No sessions yet',
+                    description: 'Tap + to log your first learning session.')
+              else
+                for (final s in d.sessions)
+                  Padding(
+                    padding: const EdgeInsets.only(bottom: 8),
+                    child: _LearningSessionCard(session: s),
+                  ),
             ],
           );
         },
@@ -4101,6 +4266,85 @@ class _LearningState extends ConsumerState<LearningPage> {
     final monthRow = await db.customSelect('SELECT COALESCE(SUM(duration_minutes),0) as total FROM learning_sessions WHERE user_id=? AND deleted_at IS NULL AND date>=?', variables: [Variable.withString(userId), Variable.withInt(monthStart)], readsFrom: {db.learningSessions}).get();
     final sessions = await db.customSelect('SELECT * FROM learning_sessions WHERE user_id=? AND deleted_at IS NULL ORDER BY date DESC', variables: [Variable.withString(userId)], readsFrom: {db.learningSessions}).get();
     return _LearningData((monthRow.first.data['total'] as num?)?.toInt() ?? 0, sessions.map((r) => r.data).toList());
+  }
+}
+
+class _LearningSessionCard extends StatelessWidget {
+  const _LearningSessionCard({required this.session});
+  final Map<String, Object?> session;
+
+  @override
+  Widget build(BuildContext context) {
+    final scheme = Theme.of(context).colorScheme;
+    final tt = Theme.of(context).textTheme;
+    final minutes = (session['duration_minutes'] as int?) ?? 0;
+    final hours = minutes ~/ 60;
+    final mins = minutes % 60;
+    final durationLabel = hours > 0
+        ? '${hours}h ${mins}m'
+        : '${minutes}m';
+    final dateMs = (session['date'] as int?) ?? 0;
+
+    return AppCard(
+      contentPadding: const EdgeInsets.all(14),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          // Icon badge
+          Container(
+            width: 38,
+            height: 38,
+            decoration: BoxDecoration(
+              color: scheme.primaryContainer.withValues(alpha: 0.8),
+              borderRadius: BorderRadius.circular(9),
+            ),
+            child: Icon(Icons.menu_book_outlined,
+                size: 18, color: scheme.primary),
+          ),
+          const SizedBox(width: 10),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Text(session['topic'] as String? ?? '',
+                    style: tt.titleSmall,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis),
+                const SizedBox(height: 2),
+                Row(
+                  children: [
+                    Icon(Icons.timer_outlined,
+                        size: 12, color: scheme.onSurfaceVariant),
+                    const SizedBox(width: 3),
+                    Text(durationLabel,
+                        style: tt.labelSmall
+                            ?.copyWith(color: scheme.onSurfaceVariant)),
+                    const SizedBox(width: 10),
+                    Icon(Icons.calendar_today_outlined,
+                        size: 12, color: scheme.onSurfaceVariant),
+                    const SizedBox(width: 3),
+                    Text(AppDateUtils.formatDate(dateMs, 'MMM dd, yyyy'),
+                        style: tt.labelSmall
+                            ?.copyWith(color: scheme.onSurfaceVariant)),
+                  ],
+                ),
+                if ((session['notes'] as String?)?.isNotEmpty == true) ...[
+                  const SizedBox(height: 3),
+                  Text(
+                    session['notes'] as String,
+                    style: tt.bodySmall
+                        ?.copyWith(color: scheme.onSurfaceVariant),
+                    maxLines: 2,
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                ],
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
   }
 }
 

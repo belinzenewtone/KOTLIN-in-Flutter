@@ -395,12 +395,12 @@ class ProfileSecurityScreen extends ConsumerWidget {
               children: [
                 Row(
                   children: [
-                    // Lock icon box — 36dp, surfaceVariant bg, RoundedCornerShape(6)
+                    // Lock icon box — 36dp, surfaceContainerHighest bg, RoundedCornerShape(6)
                     Container(
                       width: 36,
                       height: 36,
                       decoration: BoxDecoration(
-                        color: scheme.surfaceVariant,
+                        color: scheme.surfaceContainerHighest,
                         borderRadius: BorderRadius.circular(6),
                       ),
                       alignment: Alignment.center,
@@ -527,7 +527,7 @@ class _ProfilePreferencesScreenState
                         width: 36,
                         height: 36,
                         decoration: BoxDecoration(
-                          color: scheme.surfaceVariant,
+                          color: scheme.surfaceContainerHighest,
                           borderRadius: BorderRadius.circular(6),
                         ),
                         alignment: Alignment.center,
@@ -643,3 +643,5 @@ class _ThemeToggleButton extends StatelessWidget {
     );
   }
 }
+
+

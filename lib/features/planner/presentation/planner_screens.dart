@@ -14,6 +14,7 @@ import 'package:go_router/go_router.dart';
 import '../../../core/database/database.dart';
 import '../../../core/designsystem/app_card.dart';
 import '../../../core/designsystem/banners.dart';
+import '../../../core/designsystem/controls.dart' show LifeOsSwitch;
 import '../../../core/designsystem/dialogs.dart';
 import '../../../core/designsystem/metric_card.dart';
 import '../../../core/designsystem/page_scaffold.dart';
@@ -111,6 +112,18 @@ class PlannerScreen extends StatelessWidget {
         'Your month in review — spending totals, top categories, and highlights',
         Icons.auto_awesome_outlined,
         AppRoute.monthlyWrapped
+      ),
+      (
+        'Goals',
+        'Track personal, savings, health, and career goals with progress logs',
+        Icons.flag_outlined,
+        AppRoute.goals
+      ),
+      (
+        'Learning',
+        'Log study sessions and track monthly learning hours',
+        Icons.school_outlined,
+        AppRoute.learning
       ),
     ];
 
@@ -504,10 +517,30 @@ class _BudgetScreenState extends ConsumerState<BudgetScreen> {
                     spent: _spend[b.category] ?? 0.0,
                     onEdit: () => _showBudgetDialog(editing: b),
                     onDelete: () async {
-                      await _repo!.deleteBudget(b.id);
-                      if (mounted) {
-                        setState(
-                            () => _successMessage = 'Budget deleted');
+                      final confirmed = await showDialog<bool>(
+                        context: context,
+                        builder: (ctx) => LifeOsAlertDialog(
+                          title: const Text('Delete budget?'),
+                          content: Text(
+                              'Remove "${b.category}" budget? This cannot be undone.'),
+                          actions: [
+                            TextButton(
+                                onPressed: () => Navigator.pop(ctx, false),
+                                child: const Text('Cancel')),
+                            FilledButton(
+                                onPressed: () => Navigator.pop(ctx, true),
+                                style: FilledButton.styleFrom(
+                                    backgroundColor:
+                                        Theme.of(context).colorScheme.error),
+                                child: const Text('Delete')),
+                          ],
+                        ),
+                      );
+                      if (confirmed == true) {
+                        await _repo!.deleteBudget(b.id);
+                        if (mounted) {
+                          setState(() => _successMessage = 'Budget deleted');
+                        }
                       }
                     },
                     onToggleActive: (v) async {
@@ -712,15 +745,10 @@ class _BudgetItemCard extends StatelessWidget {
                         color: statusColor, fontWeight: FontWeight.w600),
                   ),
                 ),
-                // Active toggle
-                Transform.scale(
-                  scale: 0.8,
-                  child: Switch(
-                    value: budget.isActive,
-                    onChanged: onToggleActive,
-                    activeColor: scheme.primary,
-                    materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
-                  ),
+                // Active toggle — use LifeOsSwitch for consistent theming.
+                LifeOsSwitch(
+                  value: budget.isActive,
+                  onChanged: onToggleActive,
                 ),
               ],
             ),

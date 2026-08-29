@@ -124,8 +124,8 @@ class _FinanceScreenState extends ConsumerState<FinanceScreen> {
         _loading = false;
         _error = null;
       });
-      // finance?transactionId= deep-link: auto-open the category picker
-      // (FinanceScreen.kt LaunchedEffect parity).
+      // finance?transactionId= deep-link: auto-open the detail dialog so the
+      // user lands on the specific transaction they tapped in Search.
       final deepLinkId = widget.initialTransactionId;
       if (deepLinkId != null && !_pickerAutoOpened) {
         FinanceTransaction? tx;
@@ -137,7 +137,10 @@ class _FinanceScreenState extends ConsumerState<FinanceScreen> {
         }
         if (tx != null) {
           _pickerAutoOpened = true;
-          setState(() => _categoryPickerTarget = tx);
+          final target = tx;
+          WidgetsBinding.instance.addPostFrameCallback((_) {
+            if (mounted) _openDetailDirect(target);
+          });
         }
       }
       _maybeShowFulizaDialog();

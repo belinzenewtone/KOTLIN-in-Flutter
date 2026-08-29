@@ -69,7 +69,12 @@ class SegmentedControl extends StatelessWidget {
 }
 
 /// SearchField — outlined rounded search input with clear button.
-class SearchField extends StatelessWidget {
+///
+/// The widget is stateful so it owns its [TextEditingController] and avoids
+/// creating a new controller on every rebuild (which broke the text field in
+/// Finance and elsewhere). The parent still owns the value string; changes are
+/// propagated via [onValueChange] and synced back via [didUpdateWidget].
+class SearchField extends StatefulWidget {
   const SearchField({
     super.key,
     required this.value,
@@ -78,20 +83,50 @@ class SearchField extends StatelessWidget {
     this.autofocus = false,
   });
 
-  /// Current text; the parent owns state (Compose parity).
   final String value;
   final ValueChanged<String> onValueChange;
   final String placeholder;
   final bool autofocus;
 
   @override
+  State<SearchField> createState() => _SearchFieldState();
+}
+
+class _SearchFieldState extends State<SearchField> {
+  late final TextEditingController _controller;
+
+  @override
+  void initState() {
+    super.initState();
+    _controller = TextEditingController(text: widget.value);
+  }
+
+  @override
+  void didUpdateWidget(SearchField old) {
+    super.didUpdateWidget(old);
+    // Sync only when the parent clears the field (e.g. clear-button press)
+    // without disturbing the cursor position during normal typing.
+    if (widget.value != _controller.text) {
+      _controller.value = TextEditingValue(
+        text: widget.value,
+        selection: TextSelection.collapsed(offset: widget.value.length),
+      );
+    }
+  }
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
+
+  @override
   Widget build(BuildContext context) {
     final scheme = Theme.of(context).colorScheme;
     return TextField(
-      controller: TextEditingController(text: value)
-        ..selection = TextSelection.collapsed(offset: value.length),
-      onChanged: onValueChange,
-      autofocus: autofocus,
+      controller: _controller,
+      onChanged: widget.onValueChange,
+      autofocus: widget.autofocus,
       textAlignVertical: TextAlignVertical.center,
       style: TextStyle(color: scheme.onSurface, fontSize: 14),
       decoration: InputDecoration(
@@ -101,24 +136,28 @@ class SearchField extends StatelessWidget {
         contentPadding: const EdgeInsets.symmetric(vertical: 14),
         border: OutlineInputBorder(
           borderRadius: BorderRadius.circular(AppDesignTokens.radius.sm),
-          borderSide: BorderSide(color: scheme.outlineVariant.withValues(alpha: 0.48)),
+          borderSide:
+              BorderSide(color: scheme.outlineVariant.withValues(alpha: 0.48)),
         ),
         enabledBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(AppDesignTokens.radius.sm),
-          borderSide: BorderSide(color: scheme.outlineVariant.withValues(alpha: 0.48)),
+          borderSide:
+              BorderSide(color: scheme.outlineVariant.withValues(alpha: 0.48)),
         ),
         focusedBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(AppDesignTokens.radius.sm),
           borderSide: BorderSide(color: scheme.primary),
         ),
-        hintText: placeholder,
-        hintStyle:
-            Theme.of(context).textTheme.bodyMedium?.copyWith(color: scheme.onSurfaceVariant),
+        hintText: widget.placeholder,
+        hintStyle: Theme.of(context)
+            .textTheme
+            .bodyMedium
+            ?.copyWith(color: scheme.onSurfaceVariant),
         prefixIcon: Icon(Icons.search_outlined,
             size: 22, color: scheme.onSurfaceVariant.withValues(alpha: 0.85)),
-        suffixIcon: value.isNotEmpty
+        suffixIcon: widget.value.isNotEmpty
             ? IconButton(
-                onPressed: () => onValueChange(''),
+                onPressed: () => widget.onValueChange(''),
                 icon: const Icon(Icons.close_outlined, size: 20))
             : null,
       ),
@@ -147,14 +186,23 @@ class LifeOsSwitch extends StatelessWidget {
       value: value,
       onChanged: enabled
           ? (v) {
-              if (hapticsController.value) HapticFeedback.selectionClick();
+              if (hapticsController.value) HapticFeedback.lightImpact();
               onChanged?.call(v);
             }
           : null,
-      activeTrackColor: activeColor,
-      inactiveTrackColor: inactive,
+      // Use M3 WidgetStateProperty so active/inactive track are properly distinct.
+      trackColor: WidgetStateProperty.resolveWith((states) {
+        if (states.contains(WidgetState.selected)) return activeColor;
+        return inactive;
+      }),
       trackOutlineColor: const WidgetStatePropertyAll(Colors.transparent),
-      thumbColor: const WidgetStatePropertyAll(Colors.white),
+      thumbColor: WidgetStateProperty.resolveWith((states) {
+        // Slightly dim thumb when disabled so the inactive state is visible.
+        if (!states.contains(WidgetState.selected)) {
+          return Colors.white.withValues(alpha: 0.9);
+        }
+        return Colors.white;
+      }),
     );
   }
 }
