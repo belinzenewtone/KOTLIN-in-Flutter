@@ -327,8 +327,6 @@ class MainShell extends ConsumerStatefulWidget {
 }
 
 class _MainShellState extends ConsumerState<MainShell> {
-  bool _imeVisible = false;
-
   @override
   Widget build(BuildContext context) {
     final session = ref.watch(sessionProvider);
@@ -336,11 +334,23 @@ class _MainShellState extends ConsumerState<MainShell> {
     // Kotlin parity (LifeOSNavHost.kt:234-238): the bar is hidden only on the
     // public flow (auth/onboarding), while locked, or when the IME is open —
     // it stays visible on pushed secondary pages too.
+    //
+    // Read the keyboard state LIVE from MediaQuery every build rather than
+    // caching it in a flag: MainShell already rebuilds when viewInsets change,
+    // and the old cached _imeVisible flag could get stuck true (the floating
+    // bar vanished on the AI page after tapping a suggestion — a
+    // LayoutChangedNotification fired while the keyboard was up, but because the
+    // Scaffold uses resizeToAvoidBottomInset:false, the keyboard CLOSING fired
+    // no matching notification, so the flag never reset until app relaunch).
     final isPublic = isPublicRoute(activeRoute);
-    final showBottomBar = !_imeVisible && !isPublic && session.isLoggedIn;
+    final imeVisible = MediaQuery.viewInsetsOf(context).bottom > 0;
+    final showBottomBar = !imeVisible && !isPublic && session.isLoggedIn;
 
     return BiometricLockCoordinator(
-      enabled: session.isLoggedIn && session.biometricEnabled,
+      enabled: session.isLoggedIn &&
+          (session.biometricEnabled || session.hasScreenPin),
+      biometricEnabled: session.biometricEnabled,
+      pin: session.screenPin,
       child: Scaffold(
         resizeToAvoidBottomInset: false,
         // Kotlin parity: the floating pill bar OVERLAYS content inside a Box;
@@ -348,15 +358,7 @@ class _MainShellState extends ConsumerState<MainShell> {
         // so lists scroll visually beneath the bar.
         body: Stack(
           children: [
-            NotificationListener<LayoutChangedNotification>(
-              onNotification: (_) {
-                final insets = MediaQuery.viewInsetsOf(context);
-                final ime = insets.bottom > 0;
-                if (ime != _imeVisible) setState(() => _imeVisible = ime);
-                return false;
-              },
-              child: widget.child,
-            ),
+            widget.child,
             // Contextual permission cards (AppPermissionsOrchestrator parity) —
             // Home → notification permission, Finance → SMS permission, once each.
             Align(
