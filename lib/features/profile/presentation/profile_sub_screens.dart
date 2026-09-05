@@ -201,17 +201,17 @@ class _ProfileDetailsCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return AppCard(
-      contentPadding: const EdgeInsets.all(20),
+      contentPadding: const EdgeInsets.all(16),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         mainAxisSize: MainAxisSize.min,
         children: [
           // Full Name row
           _InfoRow(label: 'Full Name', value: name.isEmpty ? '—' : name),
-          const SizedBox(height: AppSpacing.lg),
+          const SizedBox(height: AppSpacing.md),
           // Username row
           _InfoRow(label: 'Username', value: username.isEmpty ? '—' : username),
-          const SizedBox(height: AppSpacing.xl),
+          const SizedBox(height: AppSpacing.md),
           // Edit Profile button — fills max width
           SizedBox(
             width: double.infinity,

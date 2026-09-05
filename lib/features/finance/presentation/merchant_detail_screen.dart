@@ -303,14 +303,14 @@ class _EmptyState extends StatelessWidget {
   Widget build(BuildContext context) {
     final scheme = Theme.of(context).colorScheme;
     return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 48),
+      padding: const EdgeInsets.symmetric(vertical: 24),
       child: Column(
         mainAxisSize: MainAxisSize.min,
         crossAxisAlignment: CrossAxisAlignment.center,
         children: [
           Icon(
             Icons.receipt_outlined,
-            size: 48,
+            size: 40,
             color: scheme.onSurfaceVariant,
           ),
           const SizedBox(height: 12),

@@ -1911,7 +1911,7 @@ class _StatementExportSheetState extends ConsumerState<_StatementExportSheet> {
         borderRadius: BorderRadius.vertical(top: Radius.circular(6)),
       ),
       child: Padding(
-        padding: const EdgeInsets.fromLTRB(24, 20, 24, 32),
+        padding: const EdgeInsets.fromLTRB(20, 16, 20, 20),
         child: Column(
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -2017,6 +2017,20 @@ class _ScreenLockSettingsState extends ConsumerState<ScreenLockSettingsPage> {
   final _confirmPin = TextEditingController();
   String? _pinError;
   bool _pinSaved = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _loadTimeout();
+  }
+
+  Future<void> _loadTimeout() async {
+    final prefs = await SharedPreferences.getInstance();
+    if (!mounted) return;
+    setState(() {
+      _timeout = prefs.getInt('biometric_timeout_minutes') ?? 5;
+    });
+  }
 
   @override
   void dispose() {
@@ -2161,13 +2175,29 @@ class _ScreenLockSettingsState extends ConsumerState<ScreenLockSettingsPage> {
                     onPressed: () async {
                       if (_newPin.text.length < 4) { setState(() => _pinError = 'PIN must be 4–6 digits'); return; }
                       if (_newPin.text != _confirmPin.text) { setState(() => _pinError = 'PINs do not match'); return; }
-                      final prefs = await SharedPreferences.getInstance();
-                      await prefs.setString('screen_pin', _newPin.text);
+                      // Use the reactive notifier so BiometricLockCoordinator
+                      // sees the new PIN without an app restart.
+                      await ref.read(sessionProvider.notifier).setScreenPin(_newPin.text);
                       setState(() { _pinError = null; _pinSaved = true; _newPin.clear(); _confirmPin.clear(); });
                       Future.delayed(const Duration(seconds: 2), () { if (mounted) setState(() => _pinSaved = false); });
                     },
-                    child: const Text('Save PIN'),
+                    child: Text(ref.watch(sessionProvider).hasScreenPin ? 'Update PIN' : 'Save PIN'),
                   ),
+                  if (ref.watch(sessionProvider).hasScreenPin) ...[
+                    const SizedBox(height: 8),
+                    OutlinedButton(
+                      style: OutlinedButton.styleFrom(
+                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(6)),
+                        foregroundColor: Theme.of(context).colorScheme.error,
+                        side: BorderSide(color: Theme.of(context).colorScheme.error),
+                      ),
+                      onPressed: () async {
+                        await ref.read(sessionProvider.notifier).setScreenPin(null);
+                        setState(() { _pinError = null; _pinSaved = false; });
+                      },
+                      child: const Text('Remove PIN'),
+                    ),
+                  ],
                 ],
               ),
             ),
@@ -2917,11 +2947,11 @@ class _ReviewQueueState extends ConsumerState<ReviewQueuePage> {
       isScrollControlled: true,
       shape: const RoundedRectangleBorder(borderRadius: BorderRadius.vertical(top: Radius.circular(6))),
       builder: (ctx) => Padding(
-        padding: const EdgeInsets.only(bottom: 32),
+        padding: const EdgeInsets.only(bottom: 16),
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            const SizedBox(height: 16),
+            const SizedBox(height: 8),
             Text('Assign Category', style: Theme.of(ctx).textTheme.titleSmall),
             const SizedBox(height: 8),
             for (final (cat, emoji) in _categories)

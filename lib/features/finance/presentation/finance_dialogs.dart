@@ -139,6 +139,7 @@ class _AddTransactionSheetState extends State<AddTransactionBottomSheet> {
   final _fee = TextEditingController();
   final _notes = TextEditingController();
   String _category = 'Other';
+  String? _error;
 
   @override
   void dispose() {
@@ -222,6 +223,11 @@ class _AddTransactionSheetState extends State<AddTransactionBottomSheet> {
               child: Row(
                 mainAxisAlignment: MainAxisAlignment.end,
                 children: [
+                  if (_error != null) ...[
+                    Text(_error!,
+                        style: TextStyle(color: scheme.error, fontSize: 12)),
+                    const SizedBox(width: 8),
+                  ],
                   TextButton(
                       onPressed: widget.onDismiss,
                       child: Text('Cancel',
@@ -229,17 +235,23 @@ class _AddTransactionSheetState extends State<AddTransactionBottomSheet> {
                   const SizedBox(width: 8),
                   FilledButton(
                     onPressed: () {
-                      final amount = double.tryParse(_amount.text.trim());
+                      final amount = double.tryParse(_amount.text.trim()) ?? 0;
                       final merchant = _merchant.text.trim();
-                      if (amount != null && merchant.isNotEmpty) {
-                        widget.onAdd(
-                          amount,
-                          merchant,
-                          _category,
-                          _notes.text.trim().isEmpty ? null : _notes.text.trim(),
-                          double.tryParse(_fee.text.trim()) ?? 0.0,
-                        );
+                      if (amount <= 0) {
+                        setState(() => _error = 'Enter an amount greater than 0');
+                        return;
                       }
+                      if (merchant.isEmpty) {
+                        setState(() => _error = 'Merchant / description is required');
+                        return;
+                      }
+                      widget.onAdd(
+                        amount,
+                        merchant,
+                        _category,
+                        _notes.text.trim().isEmpty ? null : _notes.text.trim(),
+                        double.tryParse(_fee.text.trim()) ?? 0.0,
+                      );
                     },
                     style: FilledButton.styleFrom(
                       shape: RoundedRectangleBorder(
@@ -284,6 +296,9 @@ class _AddTransactionSheetState extends State<AddTransactionBottomSheet> {
 
 // ── Edit Transaction — ModalBottomSheet ─────────────────────────────────────
 
+/// Bottom sheet that lets the user re-categorize a transaction.
+/// All other fields (amount, merchant, fee, notes) are auto-filled from the
+/// SMS parse and are shown read-only — only the category can be changed.
 class EditTransactionBottomSheet extends StatefulWidget {
   const EditTransactionBottomSheet({
     super.key,
@@ -292,11 +307,10 @@ class EditTransactionBottomSheet extends StatefulWidget {
     required this.onSave,
   });
 
-  final dynamic transaction; // FinanceTransaction — imported via finance_screen
+  final dynamic transaction; // FinanceTransaction
   final VoidCallback onDismiss;
-  final void Function(
-          double amount, String merchant, String category, String? notes, double fee)
-      onSave;
+  /// Called with the newly selected category string.
+  final void Function(String category) onSave;
 
   @override
   State<EditTransactionBottomSheet> createState() =>
@@ -304,43 +318,23 @@ class EditTransactionBottomSheet extends StatefulWidget {
 }
 
 class _EditTransactionSheetState extends State<EditTransactionBottomSheet> {
-  late final TextEditingController _amount;
-  late final TextEditingController _merchant;
-  late final TextEditingController _fee;
-  late final TextEditingController _notes;
   late String _category;
 
   @override
   void initState() {
     super.initState();
     final tx = widget.transaction;
-    _amount = TextEditingController(
-        text: tx.amount.toStringAsFixed(tx.amount.truncateToDouble() == tx.amount ? 0 : 2));
-    _merchant = TextEditingController(text: tx.merchant);
-    _fee = TextEditingController(
-        text: tx.fee != null && tx.fee != 0 ? tx.fee.toStringAsFixed(0) : '');
-    _notes = TextEditingController(text: tx.notes ?? '');
-    // Normalise stored category to match the picker list.
-    final stored = (tx.category ?? 'Other');
-    final match = kFinanceCategories.firstWhere(
+    final stored = (tx.category ?? 'Other') as String;
+    _category = kFinanceCategories.firstWhere(
       (c) => c.toLowerCase() == stored.toLowerCase(),
       orElse: () => 'Other',
     );
-    _category = match;
-  }
-
-  @override
-  void dispose() {
-    _amount.dispose();
-    _merchant.dispose();
-    _fee.dispose();
-    _notes.dispose();
-    super.dispose();
   }
 
   @override
   Widget build(BuildContext context) {
     final scheme = Theme.of(context).colorScheme;
+    final tx = widget.transaction;
     return Padding(
       padding: EdgeInsets.only(
           bottom: MediaQuery.viewInsetsOf(context).bottom +
@@ -351,26 +345,42 @@ class _EditTransactionSheetState extends State<EditTransactionBottomSheet> {
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
+            // Drag handle
+            Center(
+              child: Container(
+                width: 32, height: 4,
+                margin: const EdgeInsets.only(top: 8, bottom: 12),
+                decoration: BoxDecoration(
+                  color: scheme.outlineVariant,
+                  borderRadius: BorderRadius.circular(2),
+                ),
+              ),
+            ),
+            // ── Header ──────────────────────────────────────────────────────
             Padding(
               padding: const EdgeInsets.symmetric(horizontal: 20),
-              child: Text('Edit Transaction',
+              child: Text('Edit Category',
                   style: Theme.of(context)
                       .textTheme
                       .titleMedium
                       ?.copyWith(color: scheme.onSurface)),
             ),
-            const SizedBox(height: 12),
+            const SizedBox(height: 4),
+            // ── Read-only transaction summary ────────────────────────────────
             Padding(
               padding: const EdgeInsets.symmetric(horizontal: 20),
-              child: _outlinedField(
-                  _amount, 'Amount (KES)', TextInputType.numberWithOptions(decimal: true)),
+              child: Text(
+                '${tx.merchant} · ${tx.amount < 0 ? '-' : ''}KSh ${tx.amount.abs().toStringAsFixed(0)}',
+                style: Theme.of(context)
+                    .textTheme
+                    .bodySmall
+                    ?.copyWith(color: scheme.onSurfaceVariant),
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+              ),
             ),
-            const SizedBox(height: 12),
-            Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 20),
-              child: _outlinedField(_merchant, 'Merchant / Payee', TextInputType.text),
-            ),
-            const SizedBox(height: 12),
+            const SizedBox(height: 16),
+            // ── Category picker ──────────────────────────────────────────────
             Padding(
               padding: const EdgeInsets.symmetric(horizontal: 20),
               child: DropdownButtonFormField<String>(
@@ -379,6 +389,14 @@ class _EditTransactionSheetState extends State<EditTransactionBottomSheet> {
                 decoration: InputDecoration(
                   labelText: 'Category',
                   border: OutlineInputBorder(borderRadius: BorderRadius.circular(6)),
+                  enabledBorder: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(6),
+                    borderSide: BorderSide(color: scheme.outlineVariant),
+                  ),
+                  focusedBorder: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(6),
+                    borderSide: BorderSide(color: scheme.primary),
+                  ),
                 ),
                 items: [
                   for (final c in kFinanceCategories)
@@ -387,25 +405,8 @@ class _EditTransactionSheetState extends State<EditTransactionBottomSheet> {
                 onChanged: (v) => setState(() => _category = v ?? 'Other'),
               ),
             ),
-            const SizedBox(height: 12),
-            Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 20),
-              child: _outlinedField(
-                  _fee, 'Transaction Fee (KES)', TextInputType.numberWithOptions(decimal: true)),
-            ),
-            const SizedBox(height: 12),
-            Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 20),
-              child: TextField(
-                controller: _notes,
-                maxLines: 3,
-                decoration: InputDecoration(
-                  labelText: 'Notes (optional)',
-                  border: OutlineInputBorder(borderRadius: BorderRadius.circular(16)),
-                ),
-              ),
-            ),
-            const SizedBox(height: 12),
+            const SizedBox(height: 16),
+            // ── Actions ──────────────────────────────────────────────────────
             Padding(
               padding: const EdgeInsets.symmetric(horizontal: 20),
               child: Row(
@@ -417,19 +418,7 @@ class _EditTransactionSheetState extends State<EditTransactionBottomSheet> {
                           style: TextStyle(color: scheme.onSurfaceVariant))),
                   const SizedBox(width: 8),
                   FilledButton(
-                    onPressed: () {
-                      final amount = double.tryParse(_amount.text.trim());
-                      final merchant = _merchant.text.trim();
-                      if (amount != null && merchant.isNotEmpty) {
-                        widget.onSave(
-                          amount,
-                          merchant,
-                          _category,
-                          _notes.text.trim().isEmpty ? null : _notes.text.trim(),
-                          double.tryParse(_fee.text.trim()) ?? 0.0,
-                        );
-                      }
-                    },
+                    onPressed: () => widget.onSave(_category),
                     style: FilledButton.styleFrom(
                       shape: RoundedRectangleBorder(
                           borderRadius: BorderRadius.circular(6)),
@@ -439,32 +428,8 @@ class _EditTransactionSheetState extends State<EditTransactionBottomSheet> {
                 ],
               ),
             ),
-            const SizedBox(height: 8),
+            const SizedBox(height: 16),
           ],
-        ),
-      ),
-    );
-  }
-
-  Widget _outlinedField(
-      TextEditingController controller, String label, TextInputType type) {
-    final scheme = Theme.of(context).colorScheme;
-    return TextField(
-      controller: controller,
-      keyboardType: type,
-      decoration: InputDecoration(
-        labelText: label,
-        isDense: true,
-        filled: true,
-        fillColor: scheme.surface,
-        border: OutlineInputBorder(borderRadius: BorderRadius.circular(6)),
-        enabledBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(6),
-          borderSide: BorderSide(color: scheme.outlineVariant),
-        ),
-        focusedBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(6),
-          borderSide: BorderSide(color: scheme.primary),
         ),
       ),
     );
@@ -949,7 +914,7 @@ class _CsvImportBottomSheetState extends State<CsvImportBottomSheet> {
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
           Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
+            padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
             child: step,
           ),
         ],

@@ -34,13 +34,20 @@ class BiometricLockCoordinator extends StatefulWidget {
     super.key,
     required this.enabled,
     required this.child,
+    this.biometricEnabled = true,
+    this.pin,
     this.lockTimeoutMs = 5 * 60000,
     this.onReset,
   });
 
-  /// authState.isLoggedIn && biometricEnabled && !onPublicFlow
+  /// true when locking is active (isLoggedIn && (biometric || pin)).
   final bool enabled;
   final Widget child;
+  /// Whether to use local_auth (biometrics/device PIN). When false and [pin]
+  /// is set, the overlay shows a PIN entry form instead.
+  final bool biometricEnabled;
+  /// App-level PIN set by the user in ScreenLockSettingsPage.
+  final String? pin;
   final int lockTimeoutMs;
   final VoidCallback? onReset;
 
@@ -61,8 +68,9 @@ class _BiometricLockCoordinatorState extends State<BiometricLockCoordinator>
   void initState() {
     super.initState();
     WidgetsBinding.instance.addObserver(this);
-    // Auto-prompt on first arm so the user doesn't need to tap "Unlock".
-    if (widget.enabled) {
+    // Auto-prompt on first arm only when biometrics are active.
+    // PIN-only mode starts at the overlay; user types manually.
+    if (widget.enabled && widget.biometricEnabled) {
       WidgetsBinding.instance.addPostFrameCallback((_) {
         if (mounted && !_unlocked) _authenticate();
       });
@@ -147,6 +155,18 @@ class _BiometricLockCoordinatorState extends State<BiometricLockCoordinator>
     super.dispose();
   }
 
+  void _submitPin(String entered) {
+    if (entered == widget.pin) {
+      setState(() {
+        _unlocked = true;
+        _promptedOnce = true;
+        _error = null;
+      });
+    } else {
+      setState(() => _error = 'Incorrect PIN. Please try again.');
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     final requiresLock = widget.enabled && !_unlocked;
@@ -154,12 +174,17 @@ class _BiometricLockCoordinatorState extends State<BiometricLockCoordinator>
       // Content is unlocked; keep lifecycle observers active for re-lock.
       return widget.child;
     }
+    final usePinOnly = !widget.biometricEnabled && (widget.pin?.isNotEmpty ?? false);
     return BiometricLockOverlay(
       errorMessage: _error,
-      onRetry: () {
-        setState(() => _error = null);
-        _authenticate();
-      },
+      usePinOnly: usePinOnly,
+      onRetry: usePinOnly
+          ? null
+          : () {
+              setState(() => _error = null);
+              _authenticate();
+            },
+      onPinSubmit: usePinOnly ? _submitPin : null,
       onReset: widget.onReset,
     );
   }
@@ -171,12 +196,16 @@ class BiometricLockOverlay extends StatefulWidget {
   const BiometricLockOverlay({
     super.key,
     required this.errorMessage,
-    required this.onRetry,
+    this.usePinOnly = false,
+    this.onRetry,
+    this.onPinSubmit,
     this.onReset,
   });
 
   final String? errorMessage;
-  final VoidCallback onRetry;
+  final bool usePinOnly;
+  final VoidCallback? onRetry;
+  final void Function(String pin)? onPinSubmit;
   final VoidCallback? onReset;
 
   @override
@@ -185,6 +214,14 @@ class BiometricLockOverlay extends StatefulWidget {
 
 class _BiometricLockOverlayState extends State<BiometricLockOverlay> {
   bool _showResetConfirm = false;
+  final _pinController = TextEditingController();
+  bool _pinObscured = true;
+
+  @override
+  void dispose() {
+    _pinController.dispose();
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -259,59 +296,128 @@ class _BiometricLockOverlayState extends State<BiometricLockOverlay> {
       color: scheme.background,
       alignment: Alignment.center,
       child: Padding(
-        padding: const EdgeInsets.all(32),
+        padding: const EdgeInsets.all(24),
         child: Container(
           decoration: BoxDecoration(
             color: scheme.surface,
             borderRadius: BorderRadius.circular(AppDesignTokens.radius.sm),
             border: Border.all(color: scheme.outlineVariant),
           ),
-          padding: const EdgeInsets.all(28),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Icon(Icons.fingerprint_outlined,
-                  size: 52, color: err != null ? scheme.error : scheme.primary),
-              const SizedBox(height: 16),
-              Text(
-                err != null ? 'Unlock failed' : 'Unlock LifeOS',
-                style: Theme.of(context)
-                    .textTheme
-                    .titleMedium
-                    ?.copyWith(color: scheme.onSurface),
-              ),
-              const SizedBox(height: 16),
-              ConstrainedBox(
-                constraints: const BoxConstraints(maxWidth: 280),
-                child: Text(
-                  err ??
-                      'Touch the fingerprint sensor or use your device PIN to continue.',
-                  textAlign: TextAlign.center,
-                  style: Theme.of(context)
-                      .textTheme
-                      .bodyMedium
-                      ?.copyWith(color: scheme.onSurfaceVariant),
-                ),
-              ),
-              const SizedBox(height: 16),
-              Row(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  OutlinedButton(
-                    onPressed: () => setState(() => _showResetConfirm = true),
-                    child: const Text('Reset App'),
-                  ),
-                  const SizedBox(width: 10),
-                  FilledButton(
-                    onPressed: widget.onRetry,
-                    child: Text(err != null ? 'Try Again' : 'Unlock'),
-                  ),
-                ],
-              ),
-            ],
-          ),
+          // Tightened from 28 → 20 so the card hugs its content (icon + title +
+          // one line + button) instead of floating in a large surface.
+          padding: const EdgeInsets.all(20),
+          child: widget.usePinOnly ? _pinBody(scheme, err) : _biometricBody(scheme, err),
         ),
       ),
     );
   }
+
+  Widget _biometricBody(ColorScheme scheme, String? err) => Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(Icons.fingerprint_outlined,
+              size: 52, color: err != null ? scheme.error : scheme.primary),
+          const SizedBox(height: 16),
+          Text(
+            err != null ? 'Unlock failed' : 'Unlock LifeOS',
+            style: Theme.of(context)
+                .textTheme
+                .titleMedium
+                ?.copyWith(color: scheme.onSurface),
+          ),
+          const SizedBox(height: 16),
+          ConstrainedBox(
+            constraints: const BoxConstraints(maxWidth: 280),
+            child: Text(
+              err ??
+                  'Touch the fingerprint sensor or use your device PIN to continue.',
+              textAlign: TextAlign.center,
+              style: Theme.of(context)
+                  .textTheme
+                  .bodyMedium
+                  ?.copyWith(color: scheme.onSurfaceVariant),
+            ),
+          ),
+          const SizedBox(height: 16),
+          Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              OutlinedButton(
+                onPressed: () => setState(() => _showResetConfirm = true),
+                child: const Text('Reset App'),
+              ),
+              const SizedBox(width: 10),
+              FilledButton(
+                onPressed: widget.onRetry,
+                child: Text(err != null ? 'Try Again' : 'Unlock'),
+              ),
+            ],
+          ),
+        ],
+      );
+
+  Widget _pinBody(ColorScheme scheme, String? err) => Column(
+        mainAxisSize: MainAxisSize.min,
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          Icon(Icons.lock_outline, size: 52,
+              color: err != null ? scheme.error : scheme.primary),
+          const SizedBox(height: 16),
+          Text('Enter PIN',
+              textAlign: TextAlign.center,
+              style: Theme.of(context)
+                  .textTheme
+                  .titleMedium
+                  ?.copyWith(color: scheme.onSurface)),
+          if (err != null) ...[
+            const SizedBox(height: 8),
+            Text(err,
+                textAlign: TextAlign.center,
+                style: Theme.of(context)
+                    .textTheme
+                    .bodySmall
+                    ?.copyWith(color: scheme.error)),
+          ],
+          const SizedBox(height: 16),
+          TextField(
+            controller: _pinController,
+            obscureText: _pinObscured,
+            keyboardType: TextInputType.number,
+            textAlign: TextAlign.center,
+            maxLength: 8,
+            autofocus: true,
+            decoration: InputDecoration(
+              counterText: '',
+              hintText: '••••',
+              suffixIcon: IconButton(
+                icon: Icon(_pinObscured
+                    ? Icons.visibility_outlined
+                    : Icons.visibility_off_outlined),
+                onPressed: () =>
+                    setState(() => _pinObscured = !_pinObscured),
+              ),
+              border: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(8)),
+            ),
+            onSubmitted: (v) {
+              widget.onPinSubmit?.call(v);
+              _pinController.clear();
+            },
+          ),
+          const SizedBox(height: 12),
+          FilledButton(
+            onPressed: () {
+              widget.onPinSubmit?.call(_pinController.text);
+              _pinController.clear();
+            },
+            child: const Text('Unlock with PIN'),
+          ),
+          const SizedBox(height: 8),
+          TextButton(
+            onPressed: () => setState(() => _showResetConfirm = true),
+            child: Text('Reset App',
+                style: TextStyle(color: scheme.error)),
+          ),
+        ],
+      );
 }

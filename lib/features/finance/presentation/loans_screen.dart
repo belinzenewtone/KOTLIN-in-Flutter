@@ -386,7 +386,7 @@ class _LoansContent extends StatelessWidget {
           // Empty state
           // ----------------------------------------------------------------
           if (!hasAny) ...[
-            const SizedBox(height: 48),
+            const SizedBox(height: 20),
             _EmptyState(),
           ],
 
@@ -626,10 +626,10 @@ class _EmptyState extends StatelessWidget {
       children: [
         Icon(
           Icons.account_balance_wallet_outlined,
-          size: 64,
+          size: 48,
           color: theme.colorScheme.onSurfaceVariant.withOpacity(0.5),
         ),
-        const SizedBox(height: 16),
+        const SizedBox(height: 12),
         Text(
           'No Fuliza activity',
           style: theme.textTheme.titleMedium?.copyWith(
