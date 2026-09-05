@@ -123,19 +123,19 @@ void main() {
       expect(tx.fulizaAvailableLimitKes, 1500.0);
     });
 
-    test('fuliza charge notice parses as FULIZA_CHARGE transaction', () {
-      // Parity note: isFulizaServiceNotice() deliberately excludes messages
-      // carrying "Total Fuliza M-PESA outstanding amount is" so they flow into
-      // the fuliza_charge detection rule (identical to Kotlin).
+    test('fuliza charge notice returns MpesaFulizaNotice with correct fields', () {
+      // Stage 0b fix: isFulizaServiceNotice() returns false for this template,
+      // so we guard on _fulizaOutstandingRe directly (Kotlin parity).
       const sms =
           'CV67BN34MK Confirmed. Fuliza M-PESA amount is Ksh30.00. '
           'Access Fee charged Ksh0.30. Total Fuliza M-PESA outstanding amount '
           'is Ksh508.16 due on 5/7/25. New M-PESA balance is Ksh970.00.';
       final r = mpesaParserParse(sms, 'MPESA', now);
-      expect(r, isA<MpesaSuccess>());
-      final tx = (r as MpesaSuccess).transaction;
-      expect(tx.category, TxCategory.fulizaCharge);
-      expect(tx.fulizaOutstandingKes, 508.16);
+      expect(r, isA<MpesaFulizaNotice>());
+      final notice = (r as MpesaFulizaNotice).notice;
+      expect(notice.outstandingKes, 508.16);
+      expect(notice.amountUsedKes, 30.0);
+      expect(notice.accessFeeKes, 0.30);
     });
 
     test('fuliza service notice without outstanding total is dropped', () {

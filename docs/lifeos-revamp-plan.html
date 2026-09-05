@@ -1,0 +1,832 @@
+﻿<!doctype html><html><head><meta charset=utf8><meta name=viewport content="width=device-width,initial-scale=1"><style>:root{color-scheme:light}body{margin:0;padding:0;font:14px -apple-system,BlinkMacSystemFont,sans-serif;background:#faf9f5;color:#141413}img{max-width:100%}</style></head><body>
+<title>LifeOS Revamp Plan</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@600;700;800&family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;500&display=swap">
+<style>
+:root {
+  --bg:        #F2F2F7;
+  --surface:   #FFFFFF;
+  --surface-2: #F6F6FC;
+  --border:    #DCDCEE;
+  --text:      #0D0D18;
+  --text-2:    #44445A;
+  --muted:     #6B6B85;
+  --faint:     #EDEDF7;
+  --primary:   #6366F1;
+  --violet:    #8B5CF6;
+  --teal:      #14B8A6;
+  --income:    #22C55E;
+  --expense:   #F43F5E;
+  --warn:      #F59E0B;
+  --f-display: 'Plus Jakarta Sans', system-ui, sans-serif;
+  --f-body:    'Inter', system-ui, sans-serif;
+  --f-mono:    'JetBrains Mono', monospace;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg:        #09090D;
+    --surface:   #111118;
+    --surface-2: #17171F;
+    --border:    #252530;
+    --text:      #E8E8F2;
+    --text-2:    #A0A0B8;
+    --muted:     #6B6B85;
+    --faint:     #1C1C28;
+  }
+}
+:root[data-theme="dark"] {
+  --bg:        #09090D;
+  --surface:   #111118;
+  --surface-2: #17171F;
+  --border:    #252530;
+  --text:      #E8E8F2;
+  --text-2:    #A0A0B8;
+  --muted:     #6B6B85;
+  --faint:     #1C1C28;
+}
+
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+body {
+  font-family: var(--f-body);
+  background: var(--bg);
+  color: var(--text);
+  -webkit-font-smoothing: antialiased;
+  line-height: 1.5;
+  padding: 48px 0 80px;
+}
+
+.page { max-width: 860px; margin: 0 auto; padding: 0 32px; }
+
+/* Header */
+.doc-header { margin-bottom: 48px; }
+.doc-title {
+  font-family: var(--f-display);
+  font-size: 32px;
+  font-weight: 800;
+  letter-spacing: -.025em;
+  color: var(--text);
+  margin-bottom: 8px;
+}
+.doc-meta {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  flex-wrap: wrap;
+}
+.doc-meta-item {
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--muted);
+  display: flex;
+  align-items: center;
+  gap: 5px;
+}
+.doc-meta-dot {
+  width: 5px; height: 5px;
+  border-radius: 50%;
+}
+
+/* Summary row */
+.summary-row {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 12px;
+  margin-bottom: 48px;
+}
+.summary-card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 14px 16px;
+}
+.summary-card-num {
+  font-family: var(--f-mono);
+  font-size: 26px;
+  font-weight: 500;
+  color: var(--text);
+  font-variant-numeric: tabular-nums;
+  line-height: 1;
+  margin-bottom: 5px;
+}
+.summary-card-lbl {
+  font-size: 11px;
+  font-weight: 500;
+  color: var(--muted);
+  text-transform: uppercase;
+  letter-spacing: .06em;
+}
+
+/* Section heading */
+.section-heading {
+  font-family: var(--f-display);
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: .09em;
+  text-transform: uppercase;
+  color: var(--muted);
+  margin-bottom: 16px;
+  padding-bottom: 8px;
+  border-bottom: 1px solid var(--border);
+}
+
+/* Phase card */
+.phase-list { display: flex; flex-direction: column; gap: 12px; margin-bottom: 48px; }
+
+.phase-card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  overflow: hidden;
+}
+.phase-header {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 16px 20px;
+  border-bottom: 1px solid var(--border);
+}
+.phase-num {
+  font-family: var(--f-mono);
+  font-size: 11px;
+  font-weight: 500;
+  color: var(--muted);
+  width: 24px;
+  flex-shrink: 0;
+}
+.phase-title {
+  font-family: var(--f-display);
+  font-size: 15px;
+  font-weight: 700;
+  color: var(--text);
+  letter-spacing: -.01em;
+  flex: 1;
+}
+.phase-scope {
+  font-size: 11px;
+  font-weight: 500;
+  color: var(--muted);
+  background: var(--faint);
+  border-radius: 20px;
+  padding: 3px 10px;
+  white-space: nowrap;
+}
+.phase-risk {
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: .04em;
+  padding: 3px 9px;
+  border-radius: 20px;
+  white-space: nowrap;
+}
+.risk-zero  { background: rgba(34,197,94,.1);  color: #16A34A; }
+.risk-low   { background: rgba(245,158,11,.1); color: #D97706; }
+.risk-none  { background: rgba(99,102,241,.1); color: var(--primary); }
+
+.phase-body { padding: 16px 20px; display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
+@media (max-width: 600px) { .phase-body { grid-template-columns: 1fr; } }
+
+.phase-col-title {
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: .07em;
+  text-transform: uppercase;
+  color: var(--muted);
+  margin-bottom: 10px;
+}
+
+/* File list */
+.file-list { display: flex; flex-direction: column; gap: 5px; }
+.file-entry {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+}
+.file-path {
+  font-family: var(--f-mono);
+  font-size: 10.5px;
+  color: var(--primary);
+  line-height: 1.4;
+  word-break: break-all;
+}
+.file-desc {
+  font-size: 11px;
+  color: var(--muted);
+  line-height: 1.4;
+  margin-top: 1px;
+}
+
+/* Change list */
+.change-list { display: flex; flex-direction: column; gap: 5px; }
+.change-item {
+  font-size: 12px;
+  color: var(--text-2);
+  line-height: 1.45;
+  padding-left: 12px;
+  position: relative;
+}
+.change-item::before {
+  content: '';
+  position: absolute;
+  left: 0;
+  top: 8px;
+  width: 5px;
+  height: 1.5px;
+  background: var(--border);
+  border-radius: 1px;
+}
+
+/* Gate box */
+.gate-box {
+  margin: 0 20px 16px;
+  background: var(--faint);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 10px 14px;
+  display: flex;
+  gap: 10px;
+  align-items: flex-start;
+}
+.gate-icon {
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  margin-top: 1px;
+}
+.gate-text { font-size: 11.5px; color: var(--text-2); line-height: 1.5; }
+.gate-text strong { font-weight: 600; color: var(--text); }
+
+/* Invariants table */
+.invariants {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  overflow: hidden;
+  margin-bottom: 48px;
+}
+.inv-row {
+  display: grid;
+  grid-template-columns: 1fr 2fr;
+  gap: 0;
+  border-bottom: 1px solid var(--border);
+}
+.inv-row:last-child { border-bottom: none; }
+.inv-cell {
+  padding: 11px 16px;
+  font-size: 12px;
+  line-height: 1.45;
+}
+.inv-cell:first-child {
+  font-family: var(--f-mono);
+  font-size: 10.5px;
+  color: var(--primary);
+  border-right: 1px solid var(--border);
+  background: var(--surface-2);
+}
+.inv-cell:last-child { color: var(--text-2); }
+
+/* Done phases (foundation) */
+.phase-card.done { opacity: .7; }
+.phase-card.done .phase-title { text-decoration: line-through; text-decoration-color: var(--border); }
+.done-badge {
+  font-size: 10px;
+  font-weight: 600;
+  color: var(--income);
+  background: rgba(34,197,94,.1);
+  border-radius: 20px;
+  padding: 3px 9px;
+}
+
+/* Screen list chips */
+.screen-chips { display: flex; flex-wrap: wrap; gap: 5px; margin-bottom: 48px; }
+.chip {
+  font-size: 11px;
+  font-weight: 500;
+  padding: 4px 10px;
+  border-radius: 20px;
+  border: 1px solid var(--border);
+  color: var(--text-2);
+  background: var(--surface);
+}
+.chip.phase1 { border-color: rgba(99,102,241,.3); color: var(--primary); background: rgba(99,102,241,.06); }
+.chip.phase2 { border-color: rgba(139,92,246,.3); color: var(--violet); background: rgba(139,92,246,.06); }
+.chip.phase3 { border-color: rgba(20,184,166,.3); color: var(--teal); background: rgba(20,184,166,.06); }
+.chip.done   { border-color: rgba(34,197,94,.3); color: #16A34A; background: rgba(34,197,94,.06); }
+
+.chip-legend { display: flex; gap: 16px; flex-wrap: wrap; margin-bottom: 10px; }
+.chip-legend-item { display: flex; align-items: center; gap: 5px; font-size: 11px; color: var(--muted); }
+.chip-legend-dot { width: 8px; height: 8px; border-radius: 50%; }
+
+/* Responsive */
+@media (max-width: 540px) {
+  body { padding: 24px 0 60px; }
+  .page { padding: 0 16px; }
+  .summary-row { grid-template-columns: 1fr 1fr; }
+}
+</style>
+
+<div class="page">
+
+  <!-- ── HEADER ── -->
+  <div class="doc-header">
+    <div class="doc-title">LifeOS Revamp — Implementation Plan</div>
+    <div class="doc-meta">
+      <div class="doc-meta-item">
+        <div class="doc-meta-dot" style="background:#6366F1"></div>
+        Flutter · Android arm64
+      </div>
+      <div class="doc-meta-item">
+        <div class="doc-meta-dot" style="background:#22C55E"></div>
+        9 phases · zero feature loss
+      </div>
+      <div class="doc-meta-item">
+        <div class="doc-meta-dot" style="background:#F59E0B"></div>
+        Aug 26 2026
+      </div>
+    </div>
+  </div>
+
+  <!-- ── SUMMARY ── -->
+  <div class="summary-row">
+    <div class="summary-card">
+      <div class="summary-card-num">9</div>
+      <div class="summary-card-lbl">Phases</div>
+    </div>
+    <div class="summary-card">
+      <div class="summary-card-num">29</div>
+      <div class="summary-card-lbl">Files touched</div>
+    </div>
+    <div class="summary-card">
+      <div class="summary-card-num">0</div>
+      <div class="summary-card-lbl">Features removed</div>
+    </div>
+    <div class="summary-card">
+      <div class="summary-card-num">18</div>
+      <div class="summary-card-lbl">Tests must pass</div>
+    </div>
+  </div>
+
+  <!-- ── SCREEN COVERAGE MAP ── -->
+  <div class="section-heading">Screen coverage — all 25+ screens get the new language</div>
+  <div class="chip-legend">
+    <div class="chip-legend-item"><div class="chip-legend-dot" style="background:#22C55E"></div>Already done</div>
+    <div class="chip-legend-item"><div class="chip-legend-dot" style="background:#6366F1"></div>Phase 1–2 (theme cascade, free)</div>
+    <div class="chip-legend-item"><div class="chip-legend-dot" style="background:#8B5CF6"></div>Phase 3–7 (layout changes)</div>
+    <div class="chip-legend-item"><div class="chip-legend-dot" style="background:#14B8A6"></div>Phase 8 (light pass)</div>
+  </div>
+  <div class="screen-chips">
+    <div class="chip done">PRODUCT.md</div>
+    <div class="chip done">HTML mockup</div>
+    <div class="chip done">.impeccable/config</div>
+    <div class="chip phase1">SplashScreen</div>
+    <div class="chip phase1">AuthScreen</div>
+    <div class="chip phase1">OnboardingScreen</div>
+    <div class="chip phase1">InsightsScreen</div>
+    <div class="chip phase1">SearchScreen</div>
+    <div class="chip phase1">ReviewScreen</div>
+    <div class="chip phase1">ExportScreen</div>
+    <div class="chip phase1">TasksScreen</div>
+    <div class="chip phase1">ScreenLockPage</div>
+    <div class="chip phase1">NotificationsPage</div>
+    <div class="chip phase1">SmsImportHealthPage</div>
+    <div class="chip phase1">ReviewQueuePage</div>
+    <div class="chip phase1">QuarantinePage</div>
+    <div class="chip phase1">PaybillRegistryPage</div>
+    <div class="chip phase1">CategorizePage</div>
+    <div class="chip phase1">FeeAnalyticsPage</div>
+    <div class="chip phase1">LearningPage</div>
+    <div class="chip phase1">ChangelogPage</div>
+    <div class="chip phase2">HomeScreen</div>
+    <div class="chip phase2">FinanceScreen</div>
+    <div class="chip phase2">PlannerScreen</div>
+    <div class="chip phase2">AssistantScreen</div>
+    <div class="chip phase2">ProfileScreen</div>
+    <div class="chip phase3">CalendarScreen</div>
+    <div class="chip phase3">CalendarAddScreen</div>
+    <div class="chip phase3">SettingsScreen</div>
+    <div class="chip phase3">BudgetScreen</div>
+    <div class="chip phase3">IncomeScreen</div>
+    <div class="chip phase3">RecurringScreen</div>
+    <div class="chip phase3">BillsScreen</div>
+    <div class="chip phase3">GoalsScreen</div>
+  </div>
+
+  <!-- ── PHASES ── -->
+  <div class="section-heading">Phases</div>
+  <div class="phase-list">
+
+    <!-- PHASE 0 — DONE -->
+    <div class="phase-card done">
+      <div class="phase-header">
+        <span class="phase-num">0</span>
+        <span class="phase-title">Foundation</span>
+        <span class="done-badge">Done ✓</span>
+      </div>
+      <div class="phase-body">
+        <div>
+          <div class="phase-col-title">Completed</div>
+          <div class="change-list">
+            <div class="change-item">HTML design direction mockup — 5 screens, approved</div>
+            <div class="change-item">PRODUCT.md — product truth captured</div>
+            <div class="change-item">.impeccable/config.json — build path: code</div>
+            <div class="change-item">Droo Finance audit — design tokens extracted</div>
+          </div>
+        </div>
+        <div>
+          <div class="phase-col-title">Reference</div>
+          <div class="file-list">
+            <div class="file-entry"><div><div class="file-path">PRODUCT.md</div><div class="file-desc">Durable product context</div></div></div>
+            <div class="file-entry"><div><div class="file-path">.impeccable/config.json</div><div class="file-desc">impeccable build config</div></div></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- PHASE 1 — THEME TOKENS -->
+    <div class="phase-card">
+      <div class="phase-header">
+        <span class="phase-num">1</span>
+        <span class="phase-title">Color &amp; Typography Tokens</span>
+        <span class="phase-scope">Cascades to all 29 files</span>
+        <span class="phase-risk risk-zero">Zero risk</span>
+      </div>
+      <div class="phase-body">
+        <div>
+          <div class="phase-col-title">Files</div>
+          <div class="file-list">
+            <div class="file-entry"><div><div class="file-path">lib/ui/theme/theme.dart</div><div class="file-desc">LifeOsColors, AppThemeMode, buildLifeOsApp()</div></div></div>
+            <div class="file-entry"><div><div class="file-path">lib/core/designsystem/tokens.dart</div><div class="file-desc">AppSpacing, AppDesignTokens</div></div></div>
+          </div>
+        </div>
+        <div>
+          <div class="phase-col-title">Changes</div>
+          <div class="change-list">
+            <div class="change-item">LifeOsColors: new indigo primary #6366F1, violet #8B5CF6, teal #14B8A6</div>
+            <div class="change-item">Background #08080C, surface #0F0F18, surface-raised #14141E</div>
+            <div class="change-item">Income #22C55E, expense #F43F5E, warning #F59E0B (semantic, unchanged use)</div>
+            <div class="change-item">Display face → Plus Jakarta Sans 800; body → Inter; mono → JetBrains Mono</div>
+            <div class="change-item">Card radius 6dp → 12dp in AppDesignTokens</div>
+            <div class="change-item">AppSpacing unchanged — bottomSafeWithFloatingNav stays 220dp</div>
+          </div>
+        </div>
+      </div>
+      <div class="gate-box">
+        <div class="gate-icon" style="background:rgba(34,197,94,.15)">
+          <svg width="10" height="10" viewBox="0 0 10 10" fill="none" stroke="#16A34A" stroke-width="1.5" stroke-linecap="round"><path d="M2 5L4 7L8 3"/></svg>
+        </div>
+        <div class="gate-text"><strong>Gate:</strong> <code style="font-family:var(--f-mono);font-size:11px">flutter analyze lib</code> → 0 errors · <code style="font-family:var(--f-mono);font-size:11px">flutter test</code> → 18/18 · hot-reload on device, every screen shows new colors</div>
+      </div>
+    </div>
+
+    <!-- PHASE 2 — DESIGN SYSTEM -->
+    <div class="phase-card">
+      <div class="phase-header">
+        <span class="phase-num">2</span>
+        <span class="phase-title">Design System Components</span>
+        <span class="phase-scope">lib/core/designsystem/</span>
+        <span class="phase-risk risk-zero">Zero risk</span>
+      </div>
+      <div class="phase-body">
+        <div>
+          <div class="phase-col-title">Files</div>
+          <div class="file-list">
+            <div class="file-entry"><div><div class="file-path">app_card.dart</div><div class="file-desc">Surface, radius, padding</div></div></div>
+            <div class="file-entry"><div><div class="file-path">glass_card.dart</div><div class="file-desc">Aurora hero backing card</div></div></div>
+            <div class="file-entry"><div><div class="file-path">floating_pill_nav_bar.dart</div><div class="file-desc">Pill dimensions, icon stroke weight</div></div></div>
+            <div class="file-entry"><div><div class="file-path">page_scaffold.dart</div><div class="file-desc">PageScaffold, CompactHeader, EmptyState</div></div></div>
+            <div class="file-entry"><div><div class="file-path">controls.dart</div><div class="file-desc">SearchField, SegmentedControl, LifeOsSwitch</div></div></div>
+            <div class="file-entry"><div><div class="file-path">metric_card.dart</div><div class="file-desc">MetricCard, BudgetProgressIndicator</div></div></div>
+            <div class="file-entry"><div><div class="file-path">banners.dart</div><div class="file-desc">TopBanner success/error float</div></div></div>
+            <div class="file-entry"><div><div class="file-path">task_row.dart</div><div class="file-desc">Priority stripe, completion state</div></div></div>
+          </div>
+        </div>
+        <div>
+          <div class="phase-col-title">Changes</div>
+          <div class="change-list">
+            <div class="change-item">AppCard: new surface color, 12dp radius, refined padding scale</div>
+            <div class="change-item">GlassCard: stronger backdrop blur, indigo-tinted border</div>
+            <div class="change-item">LifeOsBottomBar: refined frosted glass, 1.6px icon stroke weight</div>
+            <div class="change-item">PageScaffold: Plus Jakarta Sans 800 title, refined header spacing</div>
+            <div class="change-item">EmptyState: new illustration treatment, better copy hierarchy</div>
+            <div class="change-item">SearchField: new surface + border treatment</div>
+            <div class="change-item">LifeOsSwitch: indigo track, refined thumb</div>
+            <div class="change-item">TopBanner: new success/error color tokens</div>
+          </div>
+        </div>
+      </div>
+      <div class="gate-box">
+        <div class="gate-icon" style="background:rgba(34,197,94,.15)">
+          <svg width="10" height="10" viewBox="0 0 10 10" fill="none" stroke="#16A34A" stroke-width="1.5" stroke-linecap="round"><path d="M2 5L4 7L8 3"/></svg>
+        </div>
+        <div class="gate-text"><strong>Gate:</strong> analyze → 0 errors · tests 18/18 · smoke-test all 25+ screens on device — every screen must be readable, no overflow, pill nav present and tappable on every tab</div>
+      </div>
+    </div>
+
+    <!-- PHASE 3 — HOME -->
+    <div class="phase-card">
+      <div class="phase-header">
+        <span class="phase-num">3</span>
+        <span class="phase-title">Home Screen</span>
+        <span class="phase-scope">Layout change</span>
+        <span class="phase-risk risk-low">Low risk</span>
+      </div>
+      <div class="phase-body">
+        <div>
+          <div class="phase-col-title">Files</div>
+          <div class="file-list">
+            <div class="file-entry"><div><div class="file-path">lib/features/home/presentation/home_screen.dart</div><div class="file-desc">Main layout — aurora hero, metrics, insights, chart</div></div></div>
+          </div>
+        </div>
+        <div>
+          <div class="phase-col-title">Changes</div>
+          <div class="change-list">
+            <div class="change-item">Aurora hero: indigo + violet radial pair, animated breath (12s alternate), fade-to-bg at bottom</div>
+            <div class="change-item">Greeting: Plus Jakarta Sans 800, "Good [time], [firstName] 👋🏽" — copy preserved</div>
+            <div class="change-item">Date block: frosted pill top-right — same widget, new style</div>
+            <div class="change-item">Metric strip: 3-cell frosted row (Income / Spend / Net MTD) inside hero</div>
+            <div class="change-item">Quick stats row: Savings card + Fuliza card with SVG trend icon</div>
+            <div class="change-item">Daily insights card: AI star icon + date + copy — same data source</div>
+            <div class="change-item">Cash flow mini-chart: bar pairs + month labels + D/M/6M/1Y range — same data</div>
+            <div class="change-item">220dp bottom padding for pill nav preserved</div>
+          </div>
+        </div>
+      </div>
+      <div class="gate-box">
+        <div class="gate-icon" style="background:rgba(34,197,94,.15)">
+          <svg width="10" height="10" viewBox="0 0 10 10" fill="none" stroke="#16A34A" stroke-width="1.5" stroke-linecap="round"><path d="M2 5L4 7L8 3"/></svg>
+        </div>
+        <div class="gate-text"><strong>Gate:</strong> Aurora animates · metric row shows real MTD figures from DB · insights card loads · chart renders real transaction data · no content hidden under pill nav</div>
+      </div>
+    </div>
+
+    <!-- PHASE 4 — FINANCE -->
+    <div class="phase-card">
+      <div class="phase-header">
+        <span class="phase-num">4</span>
+        <span class="phase-title">Finance Screen</span>
+        <span class="phase-scope">Layout change</span>
+        <span class="phase-risk risk-low">Low risk</span>
+      </div>
+      <div class="phase-body">
+        <div>
+          <div class="phase-col-title">Files</div>
+          <div class="file-list">
+            <div class="file-entry"><div><div class="file-path">lib/features/finance/presentation/finance_screen.dart</div><div class="file-desc">Main screen — hero card, filters, list</div></div></div>
+            <div class="file-entry"><div><div class="file-path">lib/features/finance/presentation/finance_widgets.dart</div><div class="file-desc">Transaction row widget</div></div></div>
+          </div>
+        </div>
+        <div>
+          <div class="phase-col-title">Changes</div>
+          <div class="change-list">
+            <div class="change-item">Account hero card: gradient background, balance in JetBrains Mono, income/expense/net pills</div>
+            <div class="change-item">Filter tabs: pill style (All/Income/Expense/Transfer) — same filter logic, new visuals</div>
+            <div class="change-item">Transaction rows: date-section headers, SVG category icons replacing emoji, tighter spacing</div>
+            <div class="change-item">Amount sign coloring: +income green / −expense rose with tabular-nums</div>
+            <div class="change-item">Empty state: new EmptyState widget treatment</div>
+            <div class="change-item">All dialogs (add, edit, detail, delete, CSV/SMS import) untouched — logic intact</div>
+          </div>
+        </div>
+      </div>
+      <div class="gate-box">
+        <div class="gate-icon" style="background:rgba(34,197,94,.15)">
+          <svg width="10" height="10" viewBox="0 0 10 10" fill="none" stroke="#16A34A" stroke-width="1.5" stroke-linecap="round"><path d="M2 5L4 7L8 3"/></svg>
+        </div>
+        <div class="gate-text"><strong>Gate:</strong> All 4 filters return correct transactions · tap row → detail dialog opens · add transaction → saves and appears · SMS import sheet works · account balance sums correctly</div>
+      </div>
+    </div>
+
+    <!-- PHASE 5 — PLANNER -->
+    <div class="phase-card">
+      <div class="phase-header">
+        <span class="phase-num">5</span>
+        <span class="phase-title">Planner Screens</span>
+        <span class="phase-scope">Layout change</span>
+        <span class="phase-risk risk-low">Low risk</span>
+      </div>
+      <div class="phase-body">
+        <div>
+          <div class="phase-col-title">Files</div>
+          <div class="file-list">
+            <div class="file-entry"><div><div class="file-path">lib/features/planner/presentation/planner_screens.dart</div><div class="file-desc">Hub + BudgetScreen + IncomeScreen</div></div></div>
+            <div class="file-entry"><div><div class="file-path">lib/features/planner/presentation/planner_screens2.dart</div><div class="file-desc">RecurringScreen + BillsScreen</div></div></div>
+            <div class="file-entry"><div><div class="file-path">lib/features/planner/presentation/goals_screen.dart</div><div class="file-desc">GoalsScreen</div></div></div>
+          </div>
+        </div>
+        <div>
+          <div class="phase-col-title">Changes</div>
+          <div class="change-list">
+            <div class="change-item">Planner hub: tab strip (Budgets / Income / Goals / Bills) replacing card grid navigation</div>
+            <div class="change-item">Budget items: color dot + name + progress bar, severity green/amber/red — same data</div>
+            <div class="change-item">Goals: indigo fill + glow, progress %, current vs target amounts in JetBrains Mono</div>
+            <div class="change-item">Income screen: refined card layout, amount in mono</div>
+            <div class="change-item">Recurring/Bills: light layout pass only — same list logic</div>
+            <div class="change-item">No changes to add/edit/delete dialogs in any planner screen</div>
+          </div>
+        </div>
+      </div>
+      <div class="gate-box">
+        <div class="gate-icon" style="background:rgba(34,197,94,.15)">
+          <svg width="10" height="10" viewBox="0 0 10 10" fill="none" stroke="#16A34A" stroke-width="1.5" stroke-linecap="round"><path d="M2 5L4 7L8 3"/></svg>
+        </div>
+        <div class="gate-text"><strong>Gate:</strong> All 4 hub tabs navigate correctly · budget progress reflects real DB data · goal % matches saved amount · add budget/goal/income dialogs work · recurring rules still fire</div>
+      </div>
+    </div>
+
+    <!-- PHASE 6 — ASSISTANT -->
+    <div class="phase-card">
+      <div class="phase-header">
+        <span class="phase-num">6</span>
+        <span class="phase-title">Assistant Screen</span>
+        <span class="phase-scope">Layout change</span>
+        <span class="phase-risk risk-low">Low risk</span>
+      </div>
+      <div class="phase-body">
+        <div>
+          <div class="phase-col-title">Files</div>
+          <div class="file-list">
+            <div class="file-entry"><div><div class="file-path">lib/features/assistant/presentation/assistant_screen.dart</div><div class="file-desc">Full screen chat layout</div></div></div>
+          </div>
+        </div>
+        <div>
+          <div class="phase-col-title">Changes</div>
+          <div class="change-list">
+            <div class="change-item">Full chat layout: AI left / user right bubbles with distinct border-radius corners</div>
+            <div class="change-item">AI avatar: indigo→violet gradient circle with star icon</div>
+            <div class="change-item">Inline stat chips in AI responses (income, spent, saved) — data from existing engine</div>
+            <div class="change-item">Input bar pinned above pill nav — keyboard-aware, never obscured</div>
+            <div class="change-item">Offline/online status dot — green when engine responds, shows ASSISTANT_PROXY_URL state</div>
+            <div class="change-item">Offline deterministic engine logic completely untouched</div>
+          </div>
+        </div>
+      </div>
+      <div class="gate-box">
+        <div class="gate-icon" style="background:rgba(34,197,94,.15)">
+          <svg width="10" height="10" viewBox="0 0 10 10" fill="none" stroke="#16A34A" stroke-width="1.5" stroke-linecap="round"><path d="M2 5L4 7L8 3"/></svg>
+        </div>
+        <div class="gate-text"><strong>Gate:</strong> Offline engine responds to questions · stat chips show real DB data · keyboard raises input bar (not hides it) · send button works · scroll to latest message</div>
+      </div>
+    </div>
+
+    <!-- PHASE 7 — PROFILE -->
+    <div class="phase-card">
+      <div class="phase-header">
+        <span class="phase-num">7</span>
+        <span class="phase-title">Profile Screen</span>
+        <span class="phase-scope">Layout change</span>
+        <span class="phase-risk risk-low">Low risk</span>
+      </div>
+      <div class="phase-body">
+        <div>
+          <div class="phase-col-title">Files</div>
+          <div class="file-list">
+            <div class="file-entry"><div><div class="file-path">lib/features/profile/presentation/profile_screen.dart</div><div class="file-desc">Hero, stats, tool hub grid</div></div></div>
+            <div class="file-entry"><div><div class="file-path">lib/features/profile/presentation/profile_sub_screens.dart</div><div class="file-desc">Light pass on all sub-screens</div></div></div>
+          </div>
+        </div>
+        <div>
+          <div class="phase-col-title">Changes</div>
+          <div class="change-list">
+            <div class="change-item">Avatar: indigo→violet gradient with initials, subtle box shadow</div>
+            <div class="change-item">Stats row: accounts / transactions / categories counts from real DB</div>
+            <div class="change-item">Tool hub grid: 4×2 grid, all 8 icons replaced with drawn SVG (same tap targets)</div>
+            <div class="change-item">Theme toggle (Light/Dark/System) visual refinement — logic unchanged</div>
+            <div class="change-item">Upgrade badge (Free) styled to match mockup</div>
+            <div class="change-item">All tool hub navigation destinations unchanged</div>
+          </div>
+        </div>
+      </div>
+      <div class="gate-box">
+        <div class="gate-icon" style="background:rgba(34,197,94,.15)">
+          <svg width="10" height="10" viewBox="0 0 10 10" fill="none" stroke="#16A34A" stroke-width="1.5" stroke-linecap="round"><path d="M2 5L4 7L8 3"/></svg>
+        </div>
+        <div class="gate-text"><strong>Gate:</strong> All 8 tool hub items navigate correctly · theme toggle changes theme with 400ms animation · biometric toggle still works · stats count real DB rows</div>
+      </div>
+    </div>
+
+    <!-- PHASE 8 — SECONDARY SCREENS -->
+    <div class="phase-card">
+      <div class="phase-header">
+        <span class="phase-num">8</span>
+        <span class="phase-title">Secondary Screens — Light Pass</span>
+        <span class="phase-scope">Calendar · Settings · Onboarding · Auth</span>
+        <span class="phase-risk risk-low">Low risk</span>
+      </div>
+      <div class="phase-body">
+        <div>
+          <div class="phase-col-title">Files</div>
+          <div class="file-list">
+            <div class="file-entry"><div><div class="file-path">lib/features/calendar/presentation/calendar_screen.dart</div><div class="file-desc">3 tabs, event chips</div></div></div>
+            <div class="file-entry"><div><div class="file-path">lib/features/calendar/presentation/events_screen.dart</div><div class="file-desc">Event detail layout</div></div></div>
+            <div class="file-entry"><div><div class="file-path">lib/features/settings/presentation/settings_screen.dart</div><div class="file-desc">Theme, biometric, notifications</div></div></div>
+            <div class="file-entry"><div><div class="file-path">lib/features/auth/presentation/onboarding_screen.dart</div><div class="file-desc">5-step onboarding flow</div></div></div>
+            <div class="file-entry"><div><div class="file-path">lib/features/auth/presentation/auth_screen.dart</div><div class="file-desc">Login card</div></div></div>
+          </div>
+        </div>
+        <div>
+          <div class="phase-col-title">Changes</div>
+          <div class="change-list">
+            <div class="change-item">Calendar: 3-tab treatment (Day/Week/Month), CalendarEventChip colors from token</div>
+            <div class="change-item">CalendarAdd: full-screen push unchanged — this is the only exception per PARITY rules</div>
+            <div class="change-item">Settings: refined section grouping, LifeOsSwitch for biometric/notifications</div>
+            <div class="change-item">Onboarding: 5 steps with indigo progress dots, Plus Jakarta Sans headings</div>
+            <div class="change-item">Auth: login card on dark surface, consistent with new theme</div>
+            <div class="change-item">All 15 stub screens in misc_screens.dart: EmptyState treatment only — stubs stay stubs</div>
+          </div>
+        </div>
+      </div>
+      <div class="gate-box">
+        <div class="gate-icon" style="background:rgba(34,197,94,.15)">
+          <svg width="10" height="10" viewBox="0 0 10 10" fill="none" stroke="#16A34A" stroke-width="1.5" stroke-linecap="round"><path d="M2 5L4 7L8 3"/></svg>
+        </div>
+        <div class="gate-text"><strong>Gate:</strong> Calendar event CRUD works · onboarding completes and routes to home · auth login/logout cycle works · settings toggles persist across app restarts</div>
+      </div>
+    </div>
+
+    <!-- PHASE 9 — DEVICE QA -->
+    <div class="phase-card">
+      <div class="phase-header">
+        <span class="phase-num">9</span>
+        <span class="phase-title">Device QA &amp; Release Build</span>
+        <span class="phase-scope">CPH2813 · 3B6615002KJ00000</span>
+        <span class="phase-risk risk-none">Final gate</span>
+      </div>
+      <div class="phase-body">
+        <div>
+          <div class="phase-col-title">Build commands</div>
+          <div class="file-list">
+            <div class="file-entry"><div><div class="file-path">flutter analyze lib</div><div class="file-desc">Must be 0 errors</div></div></div>
+            <div class="file-entry"><div><div class="file-path">flutter test</div><div class="file-desc">Must be 18/18</div></div></div>
+            <div class="file-entry"><div><div class="file-path">flutter build apk --release --target-platform android-arm64</div><div class="file-desc">Release APK</div></div></div>
+            <div class="file-entry"><div><div class="file-path">flutter install --device-id 3B6615002KJ00000</div><div class="file-desc">Install to CPH2813</div></div></div>
+          </div>
+        </div>
+        <div>
+          <div class="phase-col-title">Test matrix</div>
+          <div class="change-list">
+            <div class="change-item">Aurora animation plays on Home — not frozen, not janky</div>
+            <div class="change-item">Light / Dark / System theme toggle → 400ms animated lerp across whole app</div>
+            <div class="change-item">SMS import → real M-Pesa inbox parsed, transactions appear in Finance</div>
+            <div class="change-item">Add transaction → saves, appears in list, updates Finance hero balance</div>
+            <div class="change-item">Budget progress bars reflect real spend vs. limits</div>
+            <div class="change-item">Goal % matches saved amount in DB</div>
+            <div class="change-item">AI assistant responds offline with real DB context</div>
+            <div class="change-item">Biometric lock triggers on session expiry, allows in on success</div>
+            <div class="change-item">All 5 pill nav tabs navigate, no screen hidden under nav</div>
+            <div class="change-item">Back gesture works on every push route — no navigation traps</div>
+            <div class="change-item">Font scale 1.3× → no label overflow or truncation on critical screens</div>
+            <div class="change-item">KSh amounts truncated (not rounded) in every location</div>
+          </div>
+        </div>
+      </div>
+      <div class="gate-box">
+        <div class="gate-icon" style="background:rgba(99,102,241,.15)">
+          <svg width="10" height="10" viewBox="0 0 10 10" fill="none" stroke="#6366F1" stroke-width="1.5" stroke-linecap="round"><path d="M2 5L4 7L8 3"/></svg>
+        </div>
+        <div class="gate-text"><strong>Final gate:</strong> All 12 test-matrix items pass on physical device · release APK installs and runs cleanly · git commit with PARITY_AUDIT.md updated for any intentional deviations</div>
+      </div>
+    </div>
+
+  </div><!-- /phase-list -->
+
+  <!-- ── INVARIANTS ── -->
+  <div class="section-heading">Rules that hold through every phase</div>
+  <div class="invariants">
+    <div class="inv-row">
+      <div class="inv-cell">flutter analyze lib</div>
+      <div class="inv-cell">Must stay at 0 errors after every phase. Never commit a phase with analyze errors.</div>
+    </div>
+    <div class="inv-row">
+      <div class="inv-cell">flutter test</div>
+      <div class="inv-cell">18/18 must pass. The 17 SMS parser parity tests + 1 pipeline stress test must never regress — none of those tests touch UI code.</div>
+    </div>
+    <div class="inv-row">
+      <div class="inv-cell">bottomSafeWithFloatingNav</div>
+      <div class="inv-cell">220dp bottom padding on every screen. If any screen's content hides under the pill nav on device, it must be fixed before that phase is closed.</div>
+    </div>
+    <div class="inv-row">
+      <div class="inv-cell">AlertDialog parity</div>
+      <div class="inv-cell">Dialogs that are AlertDialog in the Kotlin reference stay AlertDialog. CalendarAdd is the only full-screen push exception per PARITY_AUDIT.md.</div>
+    </div>
+    <div class="inv-row">
+      <div class="inv-cell">KSh truncation</div>
+      <div class="inv-cell">formatCurrency() output is always truncated to integer, never rounded. JetBrains Mono with tabular-nums everywhere amounts appear.</div>
+    </div>
+    <div class="inv-row">
+      <div class="inv-cell">database.g.dart</div>
+      <div class="inv-cell">Never edited manually. If any schema hint is needed, run dart run build_runner build --delete-conflicting-outputs.</div>
+    </div>
+    <div class="inv-row">
+      <div class="inv-cell">Stubs stay stubs</div>
+      <div class="inv-cell">ReviewQueue, Quarantine, PaybillRegistry, Categorize, FeeAnalytics, Learning, Export file-write, ScreenLockSettings, NotificationSettings, SmsImportHealth — no logic is added to these during the revamp. Visual treatment only.</div>
+    </div>
+    <div class="inv-row">
+      <div class="inv-cell">One phase at a time</div>
+      <div class="inv-cell">Each phase is approved (analyzed, tested, device-verified) before the next starts. No parallel edits across phases.</div>
+    </div>
+  </div>
+
+</div>
+
+</body></html>
