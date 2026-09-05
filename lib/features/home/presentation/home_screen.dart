@@ -59,7 +59,10 @@ class HomeUiState {
   }
 }
 
-final homeUiStreamProvider = StreamProvider.autoDispose<HomeUiState>(
+// Not autoDispose — the 7-stream combineLatest must not restart on every tab
+// switch.  Kept alive for the session; data stays fresh via Drift's reactive
+// table-update notifications.
+final homeUiStreamProvider = StreamProvider<HomeUiState>(
     (ref) => watchHomeUiState(ref));
 
 class HomeScreen extends ConsumerWidget {

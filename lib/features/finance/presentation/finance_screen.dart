@@ -14,6 +14,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
+import 'package:drift/drift.dart' show TableUpdateQuery;
+
 import '../../../core/designsystem/banners.dart';
 import '../../../core/notifications/notification_service.dart';
 import '../../../core/designsystem/page_scaffold.dart';
@@ -84,6 +86,9 @@ class _FinanceScreenState extends ConsumerState<FinanceScreen> {
     });
   }
 
+  StreamSubscription<void>? _txWatch;
+  Timer? _watchDebounce;
+
   @override
   void initState() {
     super.initState();
@@ -96,6 +101,17 @@ class _FinanceScreenState extends ConsumerState<FinanceScreen> {
       final userId = await ref.read(userIdProvider.future);
       _repo = FinanceRepository(db, userId);
       await _reload();
+      // React to any DB write (import, manual add, categorise) without a
+      // full-screen rebuild — 350 ms debounce matches Finance reactive parity.
+      _txWatch = db
+          .tableUpdates(TableUpdateQuery.onTable(db.transactions))
+          .listen((_) {
+        _watchDebounce?.cancel();
+        _watchDebounce =
+            Timer(const Duration(milliseconds: 350), () {
+          if (mounted) _reload();
+        });
+      });
     } catch (e) {
       if (mounted) setState(() => _error = '$e');
     }
@@ -116,8 +132,8 @@ class _FinanceScreenState extends ConsumerState<FinanceScreen> {
         _loading = false;
         _error = null;
       });
-      // finance?transactionId= deep-link: auto-open the category picker
-      // (FinanceScreen.kt LaunchedEffect parity).
+      // finance?transactionId= deep-link: auto-open the detail dialog so the
+      // user lands on the specific transaction they tapped in Search.
       final deepLinkId = widget.initialTransactionId;
       if (deepLinkId != null && !_pickerAutoOpened) {
         FinanceTransaction? tx;
@@ -129,7 +145,10 @@ class _FinanceScreenState extends ConsumerState<FinanceScreen> {
         }
         if (tx != null) {
           _pickerAutoOpened = true;
-          setState(() => _categoryPickerTarget = tx);
+          final target = tx;
+          WidgetsBinding.instance.addPostFrameCallback((_) {
+            if (mounted) _openDetailDirect(target);
+          });
         }
       }
       _maybeShowFulizaDialog();
@@ -141,6 +160,45 @@ class _FinanceScreenState extends ConsumerState<FinanceScreen> {
       });
     }
   }
+
+  /// Opens the transaction detail dialog directly (used by deep-link and list tap).
+  Future<void> _openDetailDirect(FinanceTransaction tx) async {
+    if (_dialogBusy) return;
+    _dialogBusy = true;
+    await showDialog<void>(
+      context: context,
+      builder: (dialogCtx) => TransactionDetailDialog(
+        transaction: tx,
+        onDismiss: () => Navigator.of(dialogCtx).pop(),
+        onShare: () {
+          Navigator.of(dialogCtx).pop();
+          _shareTransaction(tx);
+        },
+        onEdit: () {
+          _dialogBusy = false;
+          Navigator.of(dialogCtx).pop();
+          setState(() => _editTarget = tx);
+        },
+        onDelete: () {
+          _dialogBusy = false;
+          Navigator.of(dialogCtx).pop();
+          setState(() => _deleteTarget = tx);
+        },
+      ),
+    );
+    _dialogBusy = false;
+  }
+
+  /// Share a transaction as plain text via share_plus.
+  void _shareTransaction(FinanceTransaction tx) {
+    final code = (tx.mpesaCode?.isNotEmpty ?? false) ? '\n📟 ${tx.mpesaCode}' : '';
+    final dateStr = AppDateUtils.formatRelativeTime(tx.date);
+    final text =
+        '${AppDateUtils.formatCurrency(tx.amount)} — ${tx.merchant}$code\n'
+        '📅 $dateStr · ${tx.category} · via M-Pesa';
+    SharePlus.instance.share(ShareParams(text: text));
+  }
+
 
   /// Kotlin maybeShowFulizaLimitDialog parity: prompt once when Fuliza activity
   /// exists and no limit has been stored yet.
@@ -205,6 +263,8 @@ class _FinanceScreenState extends ConsumerState<FinanceScreen> {
   @override
   void dispose() {
     _debounce?.cancel();
+    _watchDebounce?.cancel();
+    _txWatch?.cancel();
     super.dispose();
   }
 
@@ -214,6 +274,7 @@ class _FinanceScreenState extends ConsumerState<FinanceScreen> {
     // avoiding a postFrameCallback registration on every build.
     if (!_dialogBusy &&
         (_detailTarget != null ||
+            _editTarget != null ||   // missing — edit pencil was silently swallowed
             _deleteTarget != null ||
             _showAddDialog ||
             _categoryPickerTarget != null ||
@@ -274,7 +335,7 @@ class _FinanceScreenState extends ConsumerState<FinanceScreen> {
                   onDelete: (tx) => setState(() => _deleteTarget = tx),
                   onMerchantClick: (m) =>
                       context.push('/${AppRoute.merchantDetail}/${Uri.encodeComponent(m)}'),
-                  onTransactionClick: (tx) => setState(() => _detailTarget = tx),
+                  onTransactionClick: (tx) => _openDetailDirect(tx),
                 ),
               ],
             ),
@@ -551,16 +612,10 @@ class _FinanceScreenState extends ConsumerState<FinanceScreen> {
             Navigator.of(context, rootNavigator: true).pop();
             if (mounted) setState(() => _editTarget = null);
           },
-          onSave: (amount, merchant, category, notes, fee) async {
+          onSave: (category) async {
+            // Only category is editable; preserve all other auto-filled fields.
             Navigator.of(context, rootNavigator: true).pop();
-            await _repo?.updateTransaction(
-              id: tx.id,
-              amount: amount,
-              merchant: merchant,
-              category: category,
-              notes: notes,
-              fee: fee,
-            );
+            await _repo?.recategorize(tx, category);
             if (mounted) setState(() => _editTarget = null);
             _reload();
           },
@@ -952,4 +1007,15 @@ class _SmsSheetHostState extends State<_SmsSheetHost> {
       ],
     );
   }
+}
+
+/// Formats raw DB category enum strings for display.
+/// "FOOD_AND_DINING" → "Food And Dining", "food" → "Food".
+String displayCategory(String raw) {
+  return raw
+      .toLowerCase()
+      .replaceAll('_', ' ')
+      .split(' ')
+      .map((w) => w.isEmpty ? w : '${w[0].toUpperCase()}${w.substring(1)}')
+      .join(' ');
 }
