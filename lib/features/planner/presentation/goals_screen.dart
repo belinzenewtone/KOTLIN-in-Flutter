@@ -75,7 +75,7 @@ class _GoalsScreenState extends ConsumerState<GoalsScreen> {
                   textCapitalization: TextCapitalization.sentences,
                   decoration: InputDecoration(
                     labelText: 'Title',
-                    border: const OutlineInputBorder(),
+                    border: const OutlineInputBorder(borderRadius: BorderRadius.all(Radius.circular(12))),
                     errorText: titleError,
                   ),
                   onChanged: (_) {
@@ -92,7 +92,7 @@ class _GoalsScreenState extends ConsumerState<GoalsScreen> {
                   maxLines: 3,
                   decoration: const InputDecoration(
                     labelText: 'Description',
-                    border: OutlineInputBorder(),
+                    border: OutlineInputBorder(borderRadius: BorderRadius.all(Radius.circular(12))),
                   ),
                 ),
                 const SizedBox(height: 12),
@@ -105,7 +105,7 @@ class _GoalsScreenState extends ConsumerState<GoalsScreen> {
                         keyboardType: const TextInputType.numberWithOptions(decimal: true),
                         decoration: const InputDecoration(
                           labelText: 'Target',
-                          border: OutlineInputBorder(),
+                          border: OutlineInputBorder(borderRadius: BorderRadius.all(Radius.circular(12))),
                         ),
                       ),
                     ),
@@ -116,7 +116,7 @@ class _GoalsScreenState extends ConsumerState<GoalsScreen> {
                         controller: unitC,
                         decoration: const InputDecoration(
                           labelText: 'Unit',
-                          border: OutlineInputBorder(),
+                          border: OutlineInputBorder(borderRadius: BorderRadius.all(Radius.circular(12))),
                         ),
                       ),
                     ),
@@ -127,7 +127,7 @@ class _GoalsScreenState extends ConsumerState<GoalsScreen> {
                   value: selectedCategory,
                   decoration: const InputDecoration(
                     labelText: 'Category',
-                    border: OutlineInputBorder(),
+                    border: OutlineInputBorder(borderRadius: BorderRadius.all(Radius.circular(12))),
                   ),
                   items: _kGoalCategories
                       .map((c) => DropdownMenuItem(value: c, child: Text(c)))
@@ -143,7 +143,7 @@ class _GoalsScreenState extends ConsumerState<GoalsScreen> {
                   decoration: const InputDecoration(
                     labelText: 'Deadline',
                     hintText: 'dd/MM/yyyy — optional',
-                    border: OutlineInputBorder(),
+                    border: OutlineInputBorder(borderRadius: BorderRadius.all(Radius.circular(12))),
                   ),
                 ),
               ],
@@ -217,7 +217,7 @@ class _GoalsScreenState extends ConsumerState<GoalsScreen> {
                   controller: titleC,
                   textCapitalization: TextCapitalization.sentences,
                   decoration: const InputDecoration(
-                    labelText: 'Title', border: OutlineInputBorder()),
+                    labelText: 'Title', border: OutlineInputBorder(borderRadius: BorderRadius.all(Radius.circular(12)))),
                 ),
                 const SizedBox(height: 12),
                 TextField(
@@ -226,7 +226,7 @@ class _GoalsScreenState extends ConsumerState<GoalsScreen> {
                   textCapitalization: TextCapitalization.sentences,
                   decoration: const InputDecoration(
                     labelText: 'Description (optional)',
-                    border: OutlineInputBorder()),
+                    border: OutlineInputBorder(borderRadius: BorderRadius.all(Radius.circular(12)))),
                 ),
                 const SizedBox(height: 12),
                 Row(children: [
@@ -237,7 +237,7 @@ class _GoalsScreenState extends ConsumerState<GoalsScreen> {
                           const TextInputType.numberWithOptions(decimal: true),
                       decoration: const InputDecoration(
                         labelText: 'Target',
-                        border: OutlineInputBorder()),
+                        border: OutlineInputBorder(borderRadius: BorderRadius.all(Radius.circular(12)))),
                     ),
                   ),
                   const SizedBox(width: 8),
@@ -247,7 +247,7 @@ class _GoalsScreenState extends ConsumerState<GoalsScreen> {
                       controller: unitC,
                       decoration: const InputDecoration(
                         labelText: 'Unit',
-                        border: OutlineInputBorder()),
+                        border: OutlineInputBorder(borderRadius: BorderRadius.all(Radius.circular(12)))),
                     ),
                   ),
                 ]),
@@ -255,7 +255,7 @@ class _GoalsScreenState extends ConsumerState<GoalsScreen> {
                 DropdownButtonFormField<String>(
                   value: selectedCategory,
                   decoration: const InputDecoration(
-                    labelText: 'Category', border: OutlineInputBorder()),
+                    labelText: 'Category', border: OutlineInputBorder(borderRadius: BorderRadius.all(Radius.circular(12)))),
                   items: _kGoalCategories
                       .map((c) => DropdownMenuItem(
                           value: c, child: Text(_goalTitleCase(c))))
@@ -270,7 +270,7 @@ class _GoalsScreenState extends ConsumerState<GoalsScreen> {
                   keyboardType: TextInputType.datetime,
                   decoration: const InputDecoration(
                     labelText: 'Deadline (dd/mm/yyyy, optional)',
-                    border: OutlineInputBorder()),
+                    border: OutlineInputBorder(borderRadius: BorderRadius.all(Radius.circular(12)))),
                 ),
               ],
             ),
@@ -329,7 +329,7 @@ class _GoalsScreenState extends ConsumerState<GoalsScreen> {
           keyboardType: const TextInputType.numberWithOptions(decimal: true),
           decoration: InputDecoration(
             labelText: 'New value (${g.unit})',
-            border: const OutlineInputBorder(),
+            border: const OutlineInputBorder(borderRadius: BorderRadius.all(Radius.circular(12))),
           ),
         ),
         actions: [

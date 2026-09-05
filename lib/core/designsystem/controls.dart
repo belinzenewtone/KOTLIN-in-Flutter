@@ -38,14 +38,16 @@ class SegmentedControl extends StatelessWidget {
           for (var i = 0; i < items.length; i++) ...[
             if (i > 0) const SizedBox(width: 4),
             Expanded(
+              // Inner segment nests concentrically inside the 12dp track
+              // (4dp padding): 12 - 4 = 8dp.
               child: Material(
                 color: selectedIndex == i
                     ? scheme.primaryContainer.withValues(alpha: 0.92)
                     : Colors.transparent,
-                borderRadius: BorderRadius.circular(AppDesignTokens.radius.sm),
+                borderRadius: BorderRadius.circular(8),
                 child: InkWell(
                   onTap: () => onSelected(i),
-                  borderRadius: BorderRadius.circular(AppDesignTokens.radius.sm),
+                  borderRadius: BorderRadius.circular(8),
                   child: Padding(
                     padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 8),
                     child: Text(

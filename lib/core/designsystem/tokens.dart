@@ -192,7 +192,10 @@ abstract final class AppDesignTokens {
 
   // MetricCardDefaults
   static const double metricCardWidth = 160;
-  static const double metricCardCornerRadius = 20;
+  // Aligned to the unified 12dp language (was 20; currently unused since
+  // MetricCard renders via AppCard, but kept consistent to avoid a latent
+  // 20dp outlier if ever wired up).
+  static const double metricCardCornerRadius = 12;
   static const EdgeInsets metricCardContentPadding =
       EdgeInsets.symmetric(horizontal: 16, vertical: 14);
 

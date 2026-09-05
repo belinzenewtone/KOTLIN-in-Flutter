@@ -69,7 +69,7 @@ class _IncomeScreenState extends ConsumerState<IncomeScreen> {
                   textCapitalization: TextCapitalization.words,
                   decoration: InputDecoration(
                     labelText: 'Source',
-                    border: const OutlineInputBorder(),
+                    border: const OutlineInputBorder(borderRadius: BorderRadius.all(Radius.circular(12))),
                     errorText: sourceError,
                   ),
                   onChanged: (_) {
@@ -85,7 +85,7 @@ class _IncomeScreenState extends ConsumerState<IncomeScreen> {
                   decoration: const InputDecoration(
                     labelText: 'Amount',
                     prefixText: 'KSh ',
-                    border: OutlineInputBorder(),
+                    border: OutlineInputBorder(borderRadius: BorderRadius.all(Radius.circular(12))),
                   ),
                 ),
                 const SizedBox(height: 12),
@@ -118,7 +118,7 @@ class _IncomeScreenState extends ConsumerState<IncomeScreen> {
                   textCapitalization: TextCapitalization.sentences,
                   decoration: const InputDecoration(
                     labelText: 'Note (optional)',
-                    border: OutlineInputBorder(),
+                    border: OutlineInputBorder(borderRadius: BorderRadius.all(Radius.circular(12))),
                   ),
                 ),
                 const SizedBox(height: 12),
@@ -141,7 +141,7 @@ class _IncomeScreenState extends ConsumerState<IncomeScreen> {
                     value: frequency,
                     decoration: const InputDecoration(
                       labelText: 'Frequency',
-                      border: OutlineInputBorder(),
+                      border: OutlineInputBorder(borderRadius: BorderRadius.all(Radius.circular(12))),
                     ),
                     items: _kFrequencies
                         .map((f) => DropdownMenuItem(value: f, child: Text(f)))
@@ -214,7 +214,7 @@ class _IncomeScreenState extends ConsumerState<IncomeScreen> {
                   textCapitalization: TextCapitalization.words,
                   decoration: const InputDecoration(
                     labelText: 'Source',
-                    border: OutlineInputBorder(),
+                    border: OutlineInputBorder(borderRadius: BorderRadius.all(Radius.circular(12))),
                   ),
                 ),
                 const SizedBox(height: 12),
@@ -224,7 +224,7 @@ class _IncomeScreenState extends ConsumerState<IncomeScreen> {
                   decoration: const InputDecoration(
                     labelText: 'Amount',
                     prefixText: 'KSh ',
-                    border: OutlineInputBorder(),
+                    border: OutlineInputBorder(borderRadius: BorderRadius.all(Radius.circular(12))),
                   ),
                 ),
                 const SizedBox(height: 12),
@@ -248,7 +248,7 @@ class _IncomeScreenState extends ConsumerState<IncomeScreen> {
                   textCapitalization: TextCapitalization.sentences,
                   decoration: const InputDecoration(
                     labelText: 'Note (optional)',
-                    border: OutlineInputBorder(),
+                    border: OutlineInputBorder(borderRadius: BorderRadius.all(Radius.circular(12))),
                   ),
                 ),
                 const SizedBox(height: 12),
@@ -265,7 +265,7 @@ class _IncomeScreenState extends ConsumerState<IncomeScreen> {
                   DropdownButtonFormField<String>(
                     value: frequency,
                     decoration: const InputDecoration(
-                      labelText: 'Frequency', border: OutlineInputBorder()),
+                      labelText: 'Frequency', border: OutlineInputBorder(borderRadius: BorderRadius.all(Radius.circular(12)))),
                     items: _kFrequencies
                         .map((f) => DropdownMenuItem(value: f, child: Text(f)))
                         .toList(),
@@ -527,7 +527,7 @@ class _RecurringScreenState extends ConsumerState<RecurringScreen> {
                   textCapitalization: TextCapitalization.sentences,
                   decoration: InputDecoration(
                     labelText: 'Title',
-                    border: const OutlineInputBorder(),
+                    border: const OutlineInputBorder(borderRadius: BorderRadius.all(Radius.circular(12))),
                     errorText: titleError,
                   ),
                   onChanged: (_) {
@@ -541,7 +541,7 @@ class _RecurringScreenState extends ConsumerState<RecurringScreen> {
                   value: selectedType,
                   decoration: const InputDecoration(
                     labelText: 'Type',
-                    border: OutlineInputBorder(),
+                    border: OutlineInputBorder(borderRadius: BorderRadius.all(Radius.circular(12))),
                   ),
                   items: _kRecurringTypes
                       .map((t) => DropdownMenuItem(value: t, child: Text(t)))
@@ -555,7 +555,7 @@ class _RecurringScreenState extends ConsumerState<RecurringScreen> {
                   value: selectedCadence,
                   decoration: const InputDecoration(
                     labelText: 'Cadence',
-                    border: OutlineInputBorder(),
+                    border: OutlineInputBorder(borderRadius: BorderRadius.all(Radius.circular(12))),
                   ),
                   items: _kRecurringCadences
                       .map((c) => DropdownMenuItem(value: c, child: Text(c)))
@@ -569,7 +569,7 @@ class _RecurringScreenState extends ConsumerState<RecurringScreen> {
                   value: selectedCategory,
                   decoration: const InputDecoration(
                     labelText: 'Category',
-                    border: OutlineInputBorder(),
+                    border: OutlineInputBorder(borderRadius: BorderRadius.all(Radius.circular(12))),
                   ),
                   items: _kRecurringCategories
                       .map((c) => DropdownMenuItem(
@@ -586,7 +586,7 @@ class _RecurringScreenState extends ConsumerState<RecurringScreen> {
                   decoration: const InputDecoration(
                     labelText: 'Amount (optional)',
                     prefixText: 'KSh ',
-                    border: OutlineInputBorder(),
+                    border: OutlineInputBorder(borderRadius: BorderRadius.all(Radius.circular(12))),
                   ),
                 ),
                 const SizedBox(height: 12),
@@ -673,13 +673,13 @@ class _RecurringScreenState extends ConsumerState<RecurringScreen> {
                   controller: titleC,
                   textCapitalization: TextCapitalization.sentences,
                   decoration: const InputDecoration(
-                    labelText: 'Title', border: OutlineInputBorder()),
+                    labelText: 'Title', border: OutlineInputBorder(borderRadius: BorderRadius.all(Radius.circular(12)))),
                 ),
                 const SizedBox(height: 12),
                 DropdownButtonFormField<String>(
                   value: selectedType,
                   decoration: const InputDecoration(
-                      labelText: 'Type', border: OutlineInputBorder()),
+                      labelText: 'Type', border: OutlineInputBorder(borderRadius: BorderRadius.all(Radius.circular(12)))),
                   items: _kRecurringTypes
                       .map((t) => DropdownMenuItem(value: t, child: Text(t)))
                       .toList(),
@@ -691,7 +691,7 @@ class _RecurringScreenState extends ConsumerState<RecurringScreen> {
                 DropdownButtonFormField<String>(
                   value: selectedCadence,
                   decoration: const InputDecoration(
-                      labelText: 'Cadence', border: OutlineInputBorder()),
+                      labelText: 'Cadence', border: OutlineInputBorder(borderRadius: BorderRadius.all(Radius.circular(12)))),
                   items: _kRecurringCadences
                       .map((c) => DropdownMenuItem(value: c, child: Text(c)))
                       .toList(),
@@ -703,7 +703,7 @@ class _RecurringScreenState extends ConsumerState<RecurringScreen> {
                 DropdownButtonFormField<String>(
                   value: selectedCategory,
                   decoration: const InputDecoration(
-                      labelText: 'Category', border: OutlineInputBorder()),
+                      labelText: 'Category', border: OutlineInputBorder(borderRadius: BorderRadius.all(Radius.circular(12)))),
                   items: _kRecurringCategories
                       .map((c) => DropdownMenuItem(
                           value: c, child: Text(_titleCaseRec(c))))
@@ -720,7 +720,7 @@ class _RecurringScreenState extends ConsumerState<RecurringScreen> {
                   decoration: const InputDecoration(
                     labelText: 'Amount (optional)',
                     prefixText: 'KSh ',
-                    border: OutlineInputBorder(),
+                    border: OutlineInputBorder(borderRadius: BorderRadius.all(Radius.circular(12))),
                   ),
                 ),
                 const SizedBox(height: 12),
@@ -964,7 +964,7 @@ class _BillsScreenState extends ConsumerState<BillsScreen> {
                   textCapitalization: TextCapitalization.words,
                   decoration: InputDecoration(
                     labelText: 'Title',
-                    border: const OutlineInputBorder(),
+                    border: const OutlineInputBorder(borderRadius: BorderRadius.all(Radius.circular(12))),
                     errorText: titleError,
                   ),
                   onChanged: (_) {
@@ -981,7 +981,7 @@ class _BillsScreenState extends ConsumerState<BillsScreen> {
                   decoration: const InputDecoration(
                     labelText: 'Amount',
                     prefixText: 'KSh ',
-                    border: OutlineInputBorder(),
+                    border: OutlineInputBorder(borderRadius: BorderRadius.all(Radius.circular(12))),
                   ),
                 ),
                 const SizedBox(height: 12),
@@ -989,7 +989,7 @@ class _BillsScreenState extends ConsumerState<BillsScreen> {
                   value: selectedCycle,
                   decoration: const InputDecoration(
                     labelText: 'Cycle',
-                    border: OutlineInputBorder(),
+                    border: OutlineInputBorder(borderRadius: BorderRadius.all(Radius.circular(12))),
                   ),
                   items: _kBillCycles
                       .map((c) => DropdownMenuItem(value: c, child: Text(c)))
@@ -1026,7 +1026,7 @@ class _BillsScreenState extends ConsumerState<BillsScreen> {
                   maxLines: 3,
                   decoration: const InputDecoration(
                     labelText: 'Notes (optional)',
-                    border: OutlineInputBorder(),
+                    border: OutlineInputBorder(borderRadius: BorderRadius.all(Radius.circular(12))),
                   ),
                 ),
               ],
@@ -1095,7 +1095,7 @@ class _BillsScreenState extends ConsumerState<BillsScreen> {
                   textCapitalization: TextCapitalization.words,
                   decoration: InputDecoration(
                     labelText: 'Title',
-                    border: const OutlineInputBorder(),
+                    border: const OutlineInputBorder(borderRadius: BorderRadius.all(Radius.circular(12))),
                     errorText: titleError,
                   ),
                   onChanged: (_) {
@@ -1111,7 +1111,7 @@ class _BillsScreenState extends ConsumerState<BillsScreen> {
                   decoration: const InputDecoration(
                     labelText: 'Amount',
                     prefixText: 'KSh ',
-                    border: OutlineInputBorder(),
+                    border: OutlineInputBorder(borderRadius: BorderRadius.all(Radius.circular(12))),
                   ),
                 ),
                 const SizedBox(height: 12),
@@ -1119,7 +1119,7 @@ class _BillsScreenState extends ConsumerState<BillsScreen> {
                   value: selectedCycle,
                   decoration: const InputDecoration(
                     labelText: 'Cycle',
-                    border: OutlineInputBorder(),
+                    border: OutlineInputBorder(borderRadius: BorderRadius.all(Radius.circular(12))),
                   ),
                   items: _kBillCycles
                       .map((c) => DropdownMenuItem(value: c, child: Text(c)))
@@ -1158,7 +1158,7 @@ class _BillsScreenState extends ConsumerState<BillsScreen> {
                   maxLines: 3,
                   decoration: const InputDecoration(
                     labelText: 'Notes (optional)',
-                    border: OutlineInputBorder(),
+                    border: OutlineInputBorder(borderRadius: BorderRadius.all(Radius.circular(12))),
                   ),
                 ),
               ],

@@ -368,7 +368,7 @@ class _SearchScreenState extends ConsumerState<SearchScreen> {
               height: 40,
               decoration: BoxDecoration(
                 color: scheme.primaryContainer,
-                borderRadius: BorderRadius.circular(10),
+                borderRadius: BorderRadius.circular(12),
               ),
               alignment: Alignment.center,
               child: Icon(icon, size: 22, color: scheme.primary),
@@ -2064,7 +2064,7 @@ class _ScreenLockSettingsState extends ConsumerState<ScreenLockSettingsPage> {
                         duration: const Duration(milliseconds: 160),
                         decoration: BoxDecoration(
                           color: _tab == i ? scheme.primaryContainer.withValues(alpha: 0.92) : Colors.transparent,
-                          borderRadius: BorderRadius.circular(4),
+                          borderRadius: BorderRadius.circular(8),
                         ),
                         padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 8),
                         child: Row(
@@ -2465,7 +2465,7 @@ class _SmsImportHealthPageState extends ConsumerState<SmsImportHealthPage> {
                       height: 40,
                       decoration: BoxDecoration(
                         color: scheme.surfaceContainerHighest,
-                        borderRadius: BorderRadius.circular(10),
+                        borderRadius: BorderRadius.circular(12),
                       ),
                       alignment: Alignment.center,
                       child: Icon(Icons.cell_tower_outlined,
@@ -2492,7 +2492,7 @@ class _SmsImportHealthPageState extends ConsumerState<SmsImportHealthPage> {
                           horizontal: 8, vertical: 4),
                       decoration: BoxDecoration(
                         color: scheme.errorContainer,
-                        borderRadius: BorderRadius.circular(20),
+                        borderRadius: BorderRadius.circular(12),
                       ),
                       child: Text('Inactive',
                           style: tt.labelSmall?.copyWith(
@@ -2795,7 +2795,7 @@ class _SmsImportHealthPageState extends ConsumerState<SmsImportHealthPage> {
       margin: const EdgeInsets.symmetric(vertical: 3),
       decoration: BoxDecoration(
         color: bgColor,
-        borderRadius: BorderRadius.circular(8),
+        borderRadius: BorderRadius.circular(12),
       ),
       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
       child: Row(
@@ -2827,7 +2827,7 @@ class _SmsImportHealthPageState extends ConsumerState<SmsImportHealthPage> {
                 padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
                 decoration: BoxDecoration(
                   color: color.withValues(alpha: 0.14),
-                  borderRadius: BorderRadius.circular(20),
+                  borderRadius: BorderRadius.circular(12),
                 ),
                 child: Text(badgeLabel,
                     style: tt.labelSmall?.copyWith(color: color, fontWeight: FontWeight.w600)),
@@ -3013,7 +3013,7 @@ class _ReviewQueueState extends ConsumerState<ReviewQueuePage> {
                         const SizedBox(height: 6),
                         Container(
                           padding: const EdgeInsets.all(8),
-                          decoration: BoxDecoration(color: scheme.surfaceContainerHighest, borderRadius: BorderRadius.circular(4)),
+                          decoration: BoxDecoration(color: scheme.surfaceContainerHighest, borderRadius: BorderRadius.circular(8)),
                           child: Text(
                             (row['raw_message'] as String? ?? '').length > 100 ? '${(row['raw_message'] as String).substring(0, 100)}…' : (row['raw_message'] as String? ?? ''),
                             style: Theme.of(context).textTheme.bodySmall?.copyWith(fontFamily: 'monospace'),
@@ -3135,7 +3135,7 @@ class _QuarantineState extends ConsumerState<QuarantinePage> {
                         const SizedBox(height: 6),
                         Container(
                           padding: const EdgeInsets.all(8),
-                          decoration: BoxDecoration(color: scheme.surfaceContainerHighest, borderRadius: BorderRadius.circular(4)),
+                          decoration: BoxDecoration(color: scheme.surfaceContainerHighest, borderRadius: BorderRadius.circular(8)),
                           child: Text(
                             (row['raw_message'] as String? ?? '').length > 140 ? '${(row['raw_message'] as String).substring(0, 140)}…' : (row['raw_message'] as String? ?? ''),
                             style: const TextStyle(fontFamily: 'monospace', fontSize: 11),
@@ -3369,7 +3369,7 @@ class _BillerCard extends StatelessWidget {
                 padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
                 decoration: BoxDecoration(
                   color: avatarColor.withValues(alpha: 0.12),
-                  borderRadius: BorderRadius.circular(20),
+                  borderRadius: BorderRadius.circular(12),
                 ),
                 child: Text('$usage×',
                     style: TextStyle(
@@ -3558,7 +3558,7 @@ class _CategorizeState extends ConsumerState<CategorizePage> {
                             padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 3),
                             decoration: BoxDecoration(
                               color: const Color(0xFF34D399).withValues(alpha: 0.15),
-                              borderRadius: BorderRadius.circular(20),
+                              borderRadius: BorderRadius.circular(12),
                             ),
                             child: Text('$done done',
                                 style: Theme.of(context).textTheme.labelSmall?.copyWith(
@@ -3586,7 +3586,7 @@ class _CategorizeState extends ConsumerState<CategorizePage> {
                   padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
                   decoration: BoxDecoration(
                     color: const Color(0xFF34D399).withValues(alpha: 0.12),
-                    borderRadius: BorderRadius.circular(8),
+                    borderRadius: BorderRadius.circular(12),
                     border: Border.all(color: const Color(0xFF34D399).withValues(alpha: 0.3)),
                   ),
                   child: Row(children: [
@@ -3710,7 +3710,7 @@ class _MerchantCard extends StatelessWidget {
                 padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
                 decoration: BoxDecoration(
                   color: avatarColor.withValues(alpha: 0.12),
-                  borderRadius: BorderRadius.circular(20),
+                  borderRadius: BorderRadius.circular(12),
                 ),
                 child: Text(
                   formatCurrency(group.total),
@@ -3766,12 +3766,12 @@ class _CategoryChip extends StatelessWidget {
   Widget build(BuildContext context) {
     return InkWell(
       onTap: onTap,
-      borderRadius: BorderRadius.circular(20),
+      borderRadius: BorderRadius.circular(12),
       child: Container(
         padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
         decoration: BoxDecoration(
           color: color.withValues(alpha: 0.12),
-          borderRadius: BorderRadius.circular(20),
+          borderRadius: BorderRadius.circular(12),
           border: Border.all(color: color.withValues(alpha: 0.3)),
         ),
         child: Row(
@@ -4161,7 +4161,7 @@ class _ReleaseCard extends StatelessWidget {
                     padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
                     decoration: BoxDecoration(
                       color: accent,
-                      borderRadius: BorderRadius.circular(20),
+                      borderRadius: BorderRadius.circular(12),
                     ),
                     child: Text(release.version,
                         style: const TextStyle(
@@ -4197,7 +4197,7 @@ class _ReleaseCard extends StatelessWidget {
                             width: 32, height: 32,
                             decoration: BoxDecoration(
                               color: accent.withValues(alpha: 0.12),
-                              borderRadius: BorderRadius.circular(8),
+                              borderRadius: BorderRadius.circular(12),
                             ),
                             alignment: Alignment.center,
                             child: Icon(icon, size: 16, color: accent),

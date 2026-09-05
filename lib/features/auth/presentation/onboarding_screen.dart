@@ -371,7 +371,7 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
               height: 88,
               decoration: BoxDecoration(
                 color: scheme.surfaceContainerLow,
-                borderRadius: BorderRadius.circular(22),
+                borderRadius: BorderRadius.circular(12),
                 border: Border.all(
                     color: scheme.outlineVariant.withValues(alpha: 0.65)),
               ),
@@ -428,7 +428,7 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
             height: 36,
             decoration: BoxDecoration(
               color: scheme.primary.withValues(alpha: 0.1),
-              borderRadius: BorderRadius.circular(8),
+              borderRadius: BorderRadius.circular(12),
             ),
             alignment: Alignment.center,
             child: Icon(icon, size: 18, color: scheme.primary),

@@ -287,6 +287,50 @@ ThemeData _themeData(Brightness brightness) {
     splashFactory: InkRipple.splashFactory,
     fontFamily: 'Roboto',
     extensions: <ThemeExtension<dynamic>>{colors},
+    // ── Unified 12dp shape language ──────────────────────────────────────
+    // Every button / dialog / sheet / card / input WITHOUT an explicit shape
+    // inherits 12dp corners here, so nothing falls back to Material's own
+    // defaults (a stadium pill for buttons, 28dp for dialogs). That default
+    // fallback was the source of the "one button rounded, the other boxy"
+    // inconsistency — a shaped button sat next to a shape-less stadium sibling.
+    filledButtonTheme: FilledButtonThemeData(
+      style: FilledButton.styleFrom(
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+      ),
+    ),
+    elevatedButtonTheme: ElevatedButtonThemeData(
+      style: ElevatedButton.styleFrom(
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+      ),
+    ),
+    outlinedButtonTheme: OutlinedButtonThemeData(
+      style: OutlinedButton.styleFrom(
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+      ),
+    ),
+    textButtonTheme: TextButtonThemeData(
+      style: TextButton.styleFrom(
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+      ),
+    ),
+    dialogTheme: DialogThemeData(
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+    ),
+    bottomSheetTheme: const BottomSheetThemeData(
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(12)),
+      ),
+    ),
+    cardTheme: CardThemeData(
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+    ),
+    // Default outlined field border → 12dp. Fields that pass their own border
+    // still win; this catches the ones that rely on the default.
+    inputDecorationTheme: InputDecorationTheme(
+      border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+      enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+      focusedBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+    ),
   );
 }
 

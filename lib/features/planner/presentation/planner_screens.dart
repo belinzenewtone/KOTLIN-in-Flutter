@@ -260,7 +260,7 @@ class _BudgetScreenState extends ConsumerState<BudgetScreen> {
                     value: selCategory,
                     decoration: const InputDecoration(
                       labelText: 'Category',
-                      border: OutlineInputBorder(),
+                      border: OutlineInputBorder(borderRadius: BorderRadius.all(Radius.circular(12))),
                     ),
                     isExpanded: true,
                     items: _kBudgetCategories
@@ -303,7 +303,7 @@ class _BudgetScreenState extends ConsumerState<BudgetScreen> {
                                       ? Theme.of(ctx).colorScheme.primary
                                       : Colors.transparent,
                                   borderRadius:
-                                      BorderRadius.circular(20),
+                                      BorderRadius.circular(12),
                                   border: Border.all(
                                     color: selPeriod == p
                                         ? Theme.of(ctx)
@@ -347,7 +347,7 @@ class _BudgetScreenState extends ConsumerState<BudgetScreen> {
                     decoration: InputDecoration(
                       labelText: '$periodLabel Limit (KES)',
                       prefixText: 'KSh ',
-                      border: const OutlineInputBorder(),
+                      border: const OutlineInputBorder(borderRadius: BorderRadius.all(Radius.circular(12))),
                       errorText: limitError,
                     ),
                     onChanged: (v) {
@@ -371,7 +371,7 @@ class _BudgetScreenState extends ConsumerState<BudgetScreen> {
                       labelText: 'Alert Threshold',
                       hintText: '80',
                       suffixText: '%',
-                      border: OutlineInputBorder(),
+                      border: OutlineInputBorder(borderRadius: BorderRadius.all(Radius.circular(12))),
                       helperText:
                           'Alert when spending reaches this % of limit',
                     ),

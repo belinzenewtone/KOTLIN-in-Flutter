@@ -103,7 +103,7 @@ class _LoansScreenState extends ConsumerState<LoansScreen> {
                     decimal: true,
                   ),
                   decoration: const InputDecoration(
-                    border: OutlineInputBorder(),
+                    border: OutlineInputBorder(borderRadius: BorderRadius.all(Radius.circular(12))),
                     labelText: 'Amount (KSh)',
                   ),
                   validator: (v) {

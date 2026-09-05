@@ -397,7 +397,7 @@ class _BiometricLockOverlayState extends State<BiometricLockOverlay> {
                     setState(() => _pinObscured = !_pinObscured),
               ),
               border: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(8)),
+                  borderRadius: BorderRadius.circular(12)),
             ),
             onSubmitted: (v) {
               widget.onPinSubmit?.call(v);

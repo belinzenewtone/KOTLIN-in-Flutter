@@ -337,7 +337,8 @@ class _CalendarScreenState extends ConsumerState<CalendarScreen> {
                     color: _tab.index == i
                         ? Theme.of(context).colorScheme.primary
                         : Colors.transparent,
-                    borderRadius: BorderRadius.circular(4),
+                    // Concentric with the 12dp outer track (4dp padding): 12-4=8.
+                    borderRadius: BorderRadius.circular(8),
                   ),
                   padding: const EdgeInsets.symmetric(vertical: 10),
                   alignment: Alignment.center,
@@ -556,7 +557,9 @@ class _CalendarScreenState extends ConsumerState<CalendarScreen> {
                             child: Container(
                               padding: const EdgeInsets.all(2),
                               decoration: BoxDecoration(
-                                shape: BoxShape.circle,
+                                // 12dp rounded square to match the app-wide
+                                // radius language (was a full circle).
+                                borderRadius: BorderRadius.circular(12),
                                 color: isSelected || isToday
                                     ? scheme.primary
                                     : Colors.transparent,

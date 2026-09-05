@@ -187,7 +187,8 @@ class GradientBoxBorder extends BoxBorder {
   @override
   void paintInterior(Canvas canvas, Rect rect, Paint paint, {TextDirection? textDirection}) {}
 
-  ShapeBorder get shape => const RoundedRectangleBorder();
+  ShapeBorder get shape => const RoundedRectangleBorder(
+      borderRadius: BorderRadius.all(Radius.circular(12)));
 
   @override
   GradientBoxBorder scale(double t) =>

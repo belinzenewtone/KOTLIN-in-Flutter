@@ -390,7 +390,7 @@ class _InsightsScreenState extends ConsumerState<InsightsScreen> {
         padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 6),
         decoration: BoxDecoration(
           color: selected ? scheme.primary : scheme.surfaceVariant,
-          borderRadius: BorderRadius.circular(20),
+          borderRadius: BorderRadius.circular(12),
         ),
         child: Text(
           label,
@@ -771,7 +771,7 @@ class _InsightsScreenState extends ConsumerState<InsightsScreen> {
               height: 28,
               decoration: BoxDecoration(
                 color: color.withValues(alpha: 0.12),
-                borderRadius: BorderRadius.circular(8),
+                borderRadius: BorderRadius.circular(12),
               ),
               alignment: Alignment.center,
               child:
@@ -836,7 +836,7 @@ class _InsightsScreenState extends ConsumerState<InsightsScreen> {
                     height: 36,
                     decoration: BoxDecoration(
                       color: dCol.withValues(alpha: 0.15),
-                      borderRadius: BorderRadius.circular(10),
+                      borderRadius: BorderRadius.circular(12),
                     ),
                     alignment: Alignment.center,
                     child: Icon(rowIcon, size: 16, color: dCol),
@@ -860,7 +860,7 @@ class _InsightsScreenState extends ConsumerState<InsightsScreen> {
                                     horizontal: 6, vertical: 2),
                                 decoration: BoxDecoration(
                                   color: dCol.withValues(alpha: 0.12),
-                                  borderRadius: BorderRadius.circular(20),
+                                  borderRadius: BorderRadius.circular(12),
                                 ),
                                 child: Text(
                                   '${m.delta! > 0 ? '+' : ''}${m.delta!.toStringAsFixed(1)}%',
@@ -989,7 +989,7 @@ class _InsightsScreenState extends ConsumerState<InsightsScreen> {
                 height: 28,
                 decoration: BoxDecoration(
                   color: const Color(0xFFF59E0B).withValues(alpha: 0.12),
-                  borderRadius: BorderRadius.circular(8),
+                  borderRadius: BorderRadius.circular(12),
                 ),
                 alignment: Alignment.center,
                 child: Icon(Icons.account_balance_wallet_outlined,
@@ -1087,7 +1087,7 @@ class _InsightsScreenState extends ConsumerState<InsightsScreen> {
                 height: 28,
                 decoration: BoxDecoration(
                   color: const Color(0xFF8B5CF6).withValues(alpha: 0.12),
-                  borderRadius: BorderRadius.circular(8),
+                  borderRadius: BorderRadius.circular(12),
                 ),
                 alignment: Alignment.center,
                 child: Icon(Icons.lightbulb_outline,
