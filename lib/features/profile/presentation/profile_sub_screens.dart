@@ -217,7 +217,7 @@ class _ProfileDetailsCard extends StatelessWidget {
             width: double.infinity,
             child: OutlinedButton(
               style: OutlinedButton.styleFrom(
-                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(6)),
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
                 padding: const EdgeInsets.symmetric(vertical: 12),
               ),
               onPressed: onEdit,
@@ -278,7 +278,7 @@ class _ProfileEditorSection extends StatelessWidget {
     final scheme = Theme.of(context).colorScheme;
 
     OutlineInputBorder _border(Color color) => OutlineInputBorder(
-          borderRadius: BorderRadius.circular(6),
+          borderRadius: BorderRadius.circular(12),
           borderSide: BorderSide(color: color),
         );
 
@@ -340,7 +340,7 @@ class _ProfileEditorSection extends StatelessWidget {
               Expanded(
                 child: OutlinedButton(
                   style: OutlinedButton.styleFrom(
-                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(6)),
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
                     padding: const EdgeInsets.symmetric(vertical: 12),
                   ),
                   onPressed: onCancel,
@@ -351,7 +351,7 @@ class _ProfileEditorSection extends StatelessWidget {
               Expanded(
                 child: FilledButton(
                   style: FilledButton.styleFrom(
-                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(6)),
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
                     padding: const EdgeInsets.symmetric(vertical: 12),
                   ),
                   onPressed: onSave,
@@ -401,7 +401,7 @@ class ProfileSecurityScreen extends ConsumerWidget {
                       height: 36,
                       decoration: BoxDecoration(
                         color: scheme.surfaceVariant,
-                        borderRadius: BorderRadius.circular(6),
+                        borderRadius: BorderRadius.circular(12),
                       ),
                       alignment: Alignment.center,
                       child: Icon(
@@ -524,7 +524,7 @@ class _ProfilePreferencesScreenState
                         height: 36,
                         decoration: BoxDecoration(
                           color: scheme.surfaceVariant,
-                          borderRadius: BorderRadius.circular(6),
+                          borderRadius: BorderRadius.circular(12),
                         ),
                         alignment: Alignment.center,
                         child: Icon(
@@ -624,7 +624,7 @@ class _ThemeToggleButton extends StatelessWidget {
         height: 40,
         decoration: BoxDecoration(
           color: selected ? scheme.primaryContainer : Colors.transparent,
-          borderRadius: BorderRadius.circular(6),
+          borderRadius: BorderRadius.circular(12),
         ),
         alignment: Alignment.center,
         child: Tooltip(

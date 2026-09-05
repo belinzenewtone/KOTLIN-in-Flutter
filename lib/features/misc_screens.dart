@@ -163,7 +163,7 @@ class _SearchScreenState extends ConsumerState<SearchScreen> {
                             color: _filter == f
                                 ? scheme.primary
                                 : scheme.surfaceVariant,
-                            borderRadius: BorderRadius.circular(6),
+                            borderRadius: BorderRadius.circular(12),
                           ),
                           child: Text(
                             f,
@@ -359,7 +359,7 @@ class _SearchScreenState extends ConsumerState<SearchScreen> {
     return AppCard(
       contentPadding: const EdgeInsets.all(12),
       child: InkWell(
-        borderRadius: BorderRadius.circular(6),
+        borderRadius: BorderRadius.circular(12),
         onTap: onTap,
         child: Row(
           children: [
@@ -1453,7 +1453,7 @@ class _ExportScreenState extends ConsumerState<ExportScreen> {
                                 ? scheme.primary
                                 : scheme.outline.withValues(alpha: 0.45)),
                         shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(6)),
+                            borderRadius: BorderRadius.circular(12)),
                       ),
                       onPressed: () => setState(() => _format = fmt),
                       child: Text(fmt.toLowerCase()),
@@ -1467,7 +1467,7 @@ class _ExportScreenState extends ConsumerState<ExportScreen> {
                     side: BorderSide(
                         color: scheme.outline.withValues(alpha: 0.45)),
                     shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(6)),
+                        borderRadius: BorderRadius.circular(12)),
                   ),
                   onPressed: () => setState(() => _showPdfSheet = true),
                   child: const Text('pdf'),
@@ -1529,7 +1529,7 @@ class _ExportScreenState extends ConsumerState<ExportScreen> {
               decoration: InputDecoration(
                 labelText: 'Passphrase',
                 border:
-                    OutlineInputBorder(borderRadius: BorderRadius.circular(6)),
+                    OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
               ),
             ),
           ],
@@ -1539,7 +1539,7 @@ class _ExportScreenState extends ConsumerState<ExportScreen> {
             child: FilledButton(
               style: FilledButton.styleFrom(
                   shape:
-                      RoundedRectangleBorder(borderRadius: BorderRadius.circular(6))),
+                      RoundedRectangleBorder(borderRadius: BorderRadius.circular(12))),
               onPressed: _exporting ? null : _export,
               child: _exporting
                   ? const SizedBox(
@@ -1670,7 +1670,7 @@ class _ExportScreenState extends ConsumerState<ExportScreen> {
           const SizedBox(height: 8),
           OutlinedButton.icon(
             style: OutlinedButton.styleFrom(
-                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(6))),
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12))),
             icon: const Icon(Icons.share_outlined, size: 18),
             label: const Text('Share latest export'),
             onPressed: () {
@@ -1749,13 +1749,13 @@ class _ExportDropdown extends StatelessWidget {
     return Container(
       decoration: BoxDecoration(
         color: scheme.surfaceVariant,
-        borderRadius: BorderRadius.circular(6),
+        borderRadius: BorderRadius.circular(12),
       ),
       child: DropdownButton<String>(
         value: options.firstWhere((o) => o.$1 == label).$2,
         isExpanded: true,
         underline: const SizedBox.shrink(),
-        borderRadius: BorderRadius.circular(6),
+        borderRadius: BorderRadius.circular(12),
         padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
         items: [
           for (final (display, value) in options)
@@ -1908,7 +1908,7 @@ class _StatementExportSheetState extends ConsumerState<_StatementExportSheet> {
     return Material(
       color: scheme.surface,
       shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(6)),
+        borderRadius: BorderRadius.vertical(top: Radius.circular(12)),
       ),
       child: Padding(
         padding: const EdgeInsets.fromLTRB(20, 16, 20, 20),
@@ -1938,7 +1938,7 @@ class _StatementExportSheetState extends ConsumerState<_StatementExportSheet> {
                     decoration: InputDecoration(
                       labelText: 'Month',
                       border: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(6)),
+                          borderRadius: BorderRadius.circular(12)),
                       contentPadding:
                           const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
                     ),
@@ -1958,7 +1958,7 @@ class _StatementExportSheetState extends ConsumerState<_StatementExportSheet> {
                     decoration: InputDecoration(
                       labelText: 'Year',
                       border: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(6)),
+                          borderRadius: BorderRadius.circular(12)),
                       contentPadding:
                           const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
                     ),
@@ -1979,7 +1979,7 @@ class _StatementExportSheetState extends ConsumerState<_StatementExportSheet> {
               child: FilledButton.icon(
                 style: FilledButton.styleFrom(
                     shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(6))),
+                        borderRadius: BorderRadius.circular(12))),
                 onPressed: _generating ? null : _generate,
                 icon: _generating
                     ? const SizedBox(
@@ -2052,7 +2052,7 @@ class _ScreenLockSettingsState extends ConsumerState<ScreenLockSettingsPage> {
         children: [
           // Segmented tab
           Container(
-            decoration: BoxDecoration(color: scheme.surfaceContainerHighest, borderRadius: BorderRadius.circular(6)),
+            decoration: BoxDecoration(color: scheme.surfaceContainerHighest, borderRadius: BorderRadius.circular(12)),
             padding: const EdgeInsets.all(4),
             child: Row(
               children: [
@@ -2093,7 +2093,7 @@ class _ScreenLockSettingsState extends ConsumerState<ScreenLockSettingsPage> {
                     children: [
                       Container(
                         width: 36, height: 36,
-                        decoration: BoxDecoration(color: scheme.surfaceContainerHighest, borderRadius: BorderRadius.circular(6)),
+                        decoration: BoxDecoration(color: scheme.surfaceContainerHighest, borderRadius: BorderRadius.circular(12)),
                         child: Icon(Icons.fingerprint_outlined, size: 18, color: scheme.primary),
                       ),
                       const SizedBox(width: 12),
@@ -2117,7 +2117,7 @@ class _ScreenLockSettingsState extends ConsumerState<ScreenLockSettingsPage> {
                       DropdownButton<int>(
                         value: _timeout,
                         underline: const SizedBox.shrink(),
-                        borderRadius: BorderRadius.circular(6),
+                        borderRadius: BorderRadius.circular(12),
                         items: const [
                           DropdownMenuItem(value: 1, child: Text('1 min')),
                           DropdownMenuItem(value: 5, child: Text('5 min')),
@@ -2149,7 +2149,7 @@ class _ScreenLockSettingsState extends ConsumerState<ScreenLockSettingsPage> {
                     obscureText: true,
                     maxLength: 6,
                     keyboardType: TextInputType.number,
-                    decoration: InputDecoration(labelText: 'New PIN (4–6 digits)', border: OutlineInputBorder(borderRadius: BorderRadius.circular(6)), counterText: ''),
+                    decoration: InputDecoration(labelText: 'New PIN (4–6 digits)', border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)), counterText: ''),
                   ),
                   const SizedBox(height: 12),
                   TextField(
@@ -2159,7 +2159,7 @@ class _ScreenLockSettingsState extends ConsumerState<ScreenLockSettingsPage> {
                     keyboardType: TextInputType.number,
                     decoration: InputDecoration(
                       labelText: 'Confirm PIN',
-                      border: OutlineInputBorder(borderRadius: BorderRadius.circular(6)),
+                      border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
                       counterText: '',
                       errorText: _pinError,
                     ),
@@ -2171,7 +2171,7 @@ class _ScreenLockSettingsState extends ConsumerState<ScreenLockSettingsPage> {
                       child: Text('PIN saved ✓', style: TextStyle(color: const Color(0xFF34D399), fontWeight: FontWeight.w600)),
                     ),
                   FilledButton(
-                    style: FilledButton.styleFrom(shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(6))),
+                    style: FilledButton.styleFrom(shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12))),
                     onPressed: () async {
                       if (_newPin.text.length < 4) { setState(() => _pinError = 'PIN must be 4–6 digits'); return; }
                       if (_newPin.text != _confirmPin.text) { setState(() => _pinError = 'PINs do not match'); return; }
@@ -2187,7 +2187,7 @@ class _ScreenLockSettingsState extends ConsumerState<ScreenLockSettingsPage> {
                     const SizedBox(height: 8),
                     OutlinedButton(
                       style: OutlinedButton.styleFrom(
-                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(6)),
+                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
                         foregroundColor: Theme.of(context).colorScheme.error,
                         side: BorderSide(color: Theme.of(context).colorScheme.error),
                       ),
@@ -2269,7 +2269,7 @@ class _NotifSettingsState extends ConsumerState<NotificationSettingsPage> {
     final scheme = Theme.of(context).colorScheme;
     return Row(
       children: [
-        Container(width: 36, height: 36, decoration: BoxDecoration(color: scheme.surfaceContainerHighest, borderRadius: BorderRadius.circular(6)), child: Icon(icon, size: 18, color: scheme.primary)),
+        Container(width: 36, height: 36, decoration: BoxDecoration(color: scheme.surfaceContainerHighest, borderRadius: BorderRadius.circular(12)), child: Icon(icon, size: 18, color: scheme.primary)),
         const SizedBox(width: 12),
         Expanded(child: Column(crossAxisAlignment: CrossAxisAlignment.start, mainAxisSize: MainAxisSize.min, children: [
           Text(title, style: Theme.of(context).textTheme.bodyLarge?.copyWith(fontWeight: FontWeight.w600)),
@@ -2349,7 +2349,7 @@ class _NotifSettingsState extends ConsumerState<NotificationSettingsPage> {
                       if (picked != null) { setState(() => _digestTime = picked); _savePrefs(); }
                     },
                     child: Container(
-                      decoration: BoxDecoration(color: Theme.of(context).colorScheme.surfaceContainerHighest, borderRadius: BorderRadius.circular(6)),
+                      decoration: BoxDecoration(color: Theme.of(context).colorScheme.surfaceContainerHighest, borderRadius: BorderRadius.circular(12)),
                       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
                       child: Row(
                         children: [
@@ -2640,7 +2640,7 @@ class _SmsImportHealthPageState extends ConsumerState<SmsImportHealthPage> {
                     child: OutlinedButton.icon(
                       style: OutlinedButton.styleFrom(
                           shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(6))),
+                              borderRadius: BorderRadius.circular(12))),
                       onPressed: _reconciling ? null : _reconcile,
                       icon: _reconciling
                           ? const SizedBox(
@@ -2656,7 +2656,7 @@ class _SmsImportHealthPageState extends ConsumerState<SmsImportHealthPage> {
                     child: OutlinedButton.icon(
                       style: OutlinedButton.styleFrom(
                           shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(6))),
+                              borderRadius: BorderRadius.circular(12))),
                       onPressed: _retrying ? null : _retryQueue,
                       icon: _retrying
                           ? const SizedBox(
@@ -2673,7 +2673,7 @@ class _SmsImportHealthPageState extends ConsumerState<SmsImportHealthPage> {
               OutlinedButton.icon(
                 style: OutlinedButton.styleFrom(
                     shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(6))),
+                        borderRadius: BorderRadius.circular(12))),
                 onPressed: () => context.push('/${AppRoute.reviewQueue}'),
                 icon: const Icon(Icons.list_outlined, size: 16),
                 label: const Text('View Review Queue'),
@@ -2945,7 +2945,7 @@ class _ReviewQueueState extends ConsumerState<ReviewQueuePage> {
       context: context,
       useRootNavigator: true,
       isScrollControlled: true,
-      shape: const RoundedRectangleBorder(borderRadius: BorderRadius.vertical(top: Radius.circular(6))),
+      shape: const RoundedRectangleBorder(borderRadius: BorderRadius.vertical(top: Radius.circular(12))),
       builder: (ctx) => Padding(
         padding: const EdgeInsets.only(bottom: 16),
         child: Column(
@@ -3021,7 +3021,7 @@ class _ReviewQueueState extends ConsumerState<ReviewQueuePage> {
                         ),
                         const SizedBox(height: 8),
                         OutlinedButton(
-                          style: OutlinedButton.styleFrom(shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(6))),
+                          style: OutlinedButton.styleFrom(shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12))),
                           onPressed: () => _pickCategory(context, row['id'] as int),
                           child: const Text('Assign category'),
                         ),
@@ -3105,7 +3105,7 @@ class _QuarantineState extends ConsumerState<QuarantinePage> {
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
               OutlinedButton(
-                style: OutlinedButton.styleFrom(foregroundColor: scheme.error, side: BorderSide(color: scheme.error), shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(6))),
+                style: OutlinedButton.styleFrom(foregroundColor: scheme.error, side: BorderSide(color: scheme.error), shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12))),
                 onPressed: () => _dismissAll(rows),
                 child: const Text('Dismiss All'),
               ),
@@ -3145,7 +3145,7 @@ class _QuarantineState extends ConsumerState<QuarantinePage> {
                         Text(DateFormat('dd MMM yyyy HH:mm').format(DateTime.fromMillisecondsSinceEpoch((row['quarantined_at'] as int?) ?? 0)), style: Theme.of(context).textTheme.labelSmall?.copyWith(color: scheme.onSurfaceVariant)),
                         const SizedBox(height: 8),
                         OutlinedButton(
-                          style: OutlinedButton.styleFrom(foregroundColor: scheme.error, side: BorderSide(color: scheme.error), shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(6))),
+                          style: OutlinedButton.styleFrom(foregroundColor: scheme.error, side: BorderSide(color: scheme.error), shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12))),
                           onPressed: () => _dismiss(row['id'] as int),
                           child: const Text('Dismiss'),
                         ),
@@ -3935,16 +3935,16 @@ class _LearningState extends ConsumerState<LearningPage> {
     await showDialog<void>(
       context: context,
       builder: (ctx) => StatefulBuilder(builder: (ctx, setD) => AlertDialog(
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(6)),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
         title: const Text('Log Session'),
         content: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            TextField(controller: topicC, decoration: InputDecoration(hintText: 'e.g. Kotlin Coroutines', labelText: 'Topic', errorText: topicErr, border: OutlineInputBorder(borderRadius: BorderRadius.circular(6)))),
+            TextField(controller: topicC, decoration: InputDecoration(hintText: 'e.g. Kotlin Coroutines', labelText: 'Topic', errorText: topicErr, border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)))),
             const SizedBox(height: 12),
-            TextField(controller: durationC, keyboardType: TextInputType.number, decoration: InputDecoration(labelText: 'Duration (minutes)', errorText: durErr, border: OutlineInputBorder(borderRadius: BorderRadius.circular(6)))),
+            TextField(controller: durationC, keyboardType: TextInputType.number, decoration: InputDecoration(labelText: 'Duration (minutes)', errorText: durErr, border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)))),
             const SizedBox(height: 12),
-            TextField(controller: notesC, maxLines: 3, decoration: InputDecoration(hintText: 'Notes (optional)', border: OutlineInputBorder(borderRadius: BorderRadius.circular(6)))),
+            TextField(controller: notesC, maxLines: 3, decoration: InputDecoration(hintText: 'Notes (optional)', border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)))),
           ],
         ),
         actions: [
@@ -4048,7 +4048,7 @@ class _LearningState extends ConsumerState<LearningPage> {
                   backgroundColor: scheme.primary,
                   foregroundColor: scheme.onPrimary,
                   elevation: 4,
-                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(6)),
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
                   onPressed: _showLogDialog,
                   icon: const Icon(Icons.add),
                   label: const Text('Log Session'),
@@ -4153,7 +4153,7 @@ class _ReleaseCard extends StatelessWidget {
               padding: const EdgeInsets.fromLTRB(16, 14, 16, 14),
               decoration: BoxDecoration(
                 color: accent.withValues(alpha: 0.10),
-                borderRadius: const BorderRadius.vertical(top: Radius.circular(6)),
+                borderRadius: const BorderRadius.vertical(top: Radius.circular(12)),
               ),
               child: Row(
                 children: [

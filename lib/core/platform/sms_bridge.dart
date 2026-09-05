@@ -65,6 +65,36 @@ class SmsPlatformBridge {
       // ignore
     }
   }
+
+  /// Registers a handler for native → Dart calls on the lifeos/sms channel.
+  /// Native fires "onSmsQueued" from MainActivity.onResume when the realtime
+  /// receiver buffered messages while the Flutter engine was detached.
+  static void setNativeCallHandler(Future<void> Function() onSmsQueued) {
+    _channel.setMethodCallHandler((call) async {
+      if (call.method == 'onSmsQueued') {
+        await onSmsQueued();
+      }
+      return null;
+    });
+  }
+}
+
+/// Realtime drain — ingests ONLY the receiver queue (messages buffered since
+/// the last drain), with no full-inbox re-scan. Safe to call on every resume.
+Future<int> drainRealtimeAndIngest(dynamic ref) async {
+  final queued = await SmsPlatformBridge.drainRealtimeQueue();
+  if (queued.isEmpty) return 0;
+  final db = await ref.read(lifeOsDatabaseProvider.future);
+  final userId = await ref.read(userIdProvider.future);
+  final holder = LifeOsDbHolder(database: db, userId: userId);
+  await holder.seedAuditCounter();
+  final pipeline = DefaultMpesaIngestionPipeline(holder: holder);
+  try {
+    final result = await pipeline.ingestBatch(Stream<RawSms>.fromIterable(queued));
+    return result.imported;
+  } finally {
+    await pipeline.dispose();
+  }
 }
 
 /// Runs the full historical import: inbox → parser pool → batched writes.

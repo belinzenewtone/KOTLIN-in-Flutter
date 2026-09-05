@@ -570,7 +570,7 @@ class _FinanceScreenState extends ConsumerState<FinanceScreen> {
         isScrollControlled: true,
         backgroundColor: Theme.of(context).colorScheme.surface,
         shape: const RoundedRectangleBorder(
-          borderRadius: BorderRadius.vertical(top: Radius.circular(6)),
+          borderRadius: BorderRadius.vertical(top: Radius.circular(12)),
         ),
         builder: (_) => AddTransactionBottomSheet(
           onDismiss: () {
@@ -604,7 +604,7 @@ class _FinanceScreenState extends ConsumerState<FinanceScreen> {
         isScrollControlled: true,
         backgroundColor: Theme.of(context).colorScheme.surface,
         shape: const RoundedRectangleBorder(
-          borderRadius: BorderRadius.vertical(top: Radius.circular(6)),
+          borderRadius: BorderRadius.vertical(top: Radius.circular(12)),
         ),
         builder: (_) => EditTransactionBottomSheet(
           transaction: tx,
@@ -632,7 +632,7 @@ class _FinanceScreenState extends ConsumerState<FinanceScreen> {
         useRootNavigator: true,
         backgroundColor: Theme.of(context).colorScheme.surface,
         shape: const RoundedRectangleBorder(
-          borderRadius: BorderRadius.vertical(top: Radius.circular(6)),
+          borderRadius: BorderRadius.vertical(top: Radius.circular(12)),
         ),
         builder: (_) => CategoryPickerBottomSheet(
           currentCategory: tx.category,
@@ -661,7 +661,7 @@ class _FinanceScreenState extends ConsumerState<FinanceScreen> {
         isScrollControlled: true,
         backgroundColor: Theme.of(context).colorScheme.surface,
         shape: const RoundedRectangleBorder(
-          borderRadius: BorderRadius.vertical(top: Radius.circular(6)),
+          borderRadius: BorderRadius.vertical(top: Radius.circular(12)),
         ),
         builder: (_) => _SmsSheetHost(
           key: _smsSheetStateKey,
@@ -703,7 +703,7 @@ class _FinanceScreenState extends ConsumerState<FinanceScreen> {
         isScrollControlled: true,
         backgroundColor: Theme.of(context).colorScheme.surface,
         shape: const RoundedRectangleBorder(
-          borderRadius: BorderRadius.vertical(top: Radius.circular(6)),
+          borderRadius: BorderRadius.vertical(top: Radius.circular(12)),
         ),
         builder: (_) => CsvImportBottomSheet(
           onDismiss: () {
@@ -907,11 +907,11 @@ class _SmsSheetHostState extends State<_SmsSheetHost> {
             padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 5),
             child: InkWell(
               onTap: () => _startDetect(days),
-              borderRadius: BorderRadius.circular(6),
+              borderRadius: BorderRadius.circular(12),
               child: Ink(
                 decoration: BoxDecoration(
                   color: scheme.surfaceContainerHigh,
-                  borderRadius: BorderRadius.circular(6),
+                  borderRadius: BorderRadius.circular(12),
                 ),
                 padding:
                     const EdgeInsets.symmetric(horizontal: 18, vertical: 14),
@@ -996,7 +996,7 @@ class _SmsSheetHostState extends State<_SmsSheetHost> {
                   },
                   style: FilledButton.styleFrom(
                     shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(6)),
+                        borderRadius: BorderRadius.circular(12)),
                   ),
                   child: const Text('Import All'),
                 ),

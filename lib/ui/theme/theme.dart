@@ -211,7 +211,7 @@ const TextTheme kLifeOsTypography = TextTheme(
 );
 
 // ─── 6dp shapes to match RFINAL roundness ───────────────────────────────
-BorderRadius kRadius6 = BorderRadius.circular(6);
+BorderRadius kRadius6 = BorderRadius.circular(12);
 
 MaterialApp buildLifeOsApp({
   required AppThemeMode themeMode,

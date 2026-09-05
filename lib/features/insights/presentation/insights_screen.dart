@@ -110,7 +110,7 @@ class _InsightsScreenState extends ConsumerState<InsightsScreen> {
                             color: _tab == i
                                 ? scheme.primary
                                 : scheme.surfaceVariant,
-                            borderRadius: BorderRadius.circular(6),
+                            borderRadius: BorderRadius.circular(12),
                           ),
                           alignment: Alignment.center,
                           child: Text(
@@ -215,7 +215,7 @@ class _InsightsScreenState extends ConsumerState<InsightsScreen> {
                 padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                 decoration: BoxDecoration(
                   color: curColor.withValues(alpha: 0.10),
-                  borderRadius: BorderRadius.circular(6),
+                  borderRadius: BorderRadius.circular(12),
                 ),
                 child: Row(
                   mainAxisSize: MainAxisSize.min,
@@ -553,7 +553,7 @@ class _InsightsScreenState extends ConsumerState<InsightsScreen> {
                 children: [
                   for (final m in d.monthBars)
                     InkWell(
-                      borderRadius: BorderRadius.circular(6),
+                      borderRadius: BorderRadius.circular(12),
                       onTap: () => context.push(
                           '/${AppRoute.monthlyWrapped}/${m.year}/${m.month}'),
                       child: Padding(
@@ -573,7 +573,7 @@ class _InsightsScreenState extends ConsumerState<InsightsScreen> {
                                 color: m.txCount > 0
                                     ? (m.expense <= d.avgExpense ? good : bad)
                                     : scheme.outlineVariant,
-                                borderRadius: BorderRadius.circular(6),
+                                borderRadius: BorderRadius.circular(12),
                               ),
                             ),
                             const SizedBox(height: 4),
@@ -761,7 +761,7 @@ class _InsightsScreenState extends ConsumerState<InsightsScreen> {
     final scheme = Theme.of(context).colorScheme;
     return InkWell(
       onTap: onClick,
-      borderRadius: BorderRadius.circular(6),
+      borderRadius: BorderRadius.circular(12),
       child: Padding(
         padding: const EdgeInsets.symmetric(vertical: 8),
         child: Row(
@@ -828,7 +828,7 @@ class _InsightsScreenState extends ConsumerState<InsightsScreen> {
                   _expandedMonths.add(key);
                 }
               }),
-              borderRadius: BorderRadius.circular(6),
+              borderRadius: BorderRadius.circular(12),
               child: Row(
                 children: [
                   Container(

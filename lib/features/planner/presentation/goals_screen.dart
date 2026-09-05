@@ -63,7 +63,7 @@ class _GoalsScreenState extends ConsumerState<GoalsScreen> {
       builder: (ctx) => StatefulBuilder(
         builder: (ctx, setDialogState) => AlertDialog(
           backgroundColor: Theme.of(ctx).colorScheme.surfaceContainerHighest,
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(6)),
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
           title: const Text('Add Goal'),
           content: SingleChildScrollView(
             child: Column(
@@ -161,6 +161,11 @@ class _GoalsScreenState extends ConsumerState<GoalsScreen> {
                   return;
                 }
                 final target = double.tryParse(targetC.text.trim()) ?? 0;
+                if (target <= 0) {
+                  ScaffoldMessenger.of(ctx).showSnackBar(const SnackBar(
+                      content: Text('Enter a target greater than 0')));
+                  return;
+                }
                 final deadline = deadlineC.text.trim().isEmpty
                     ? null
                     : AppDateUtils.parseDdMmYyyy(deadlineC.text.trim());
@@ -201,7 +206,7 @@ class _GoalsScreenState extends ConsumerState<GoalsScreen> {
       builder: (ctx) => StatefulBuilder(
         builder: (ctx, setDialogState) => AlertDialog(
           backgroundColor: Theme.of(ctx).colorScheme.surfaceContainerHighest,
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(6)),
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
           title: const Text('Edit Goal'),
           content: SingleChildScrollView(
             child: Column(
@@ -316,7 +321,7 @@ class _GoalsScreenState extends ConsumerState<GoalsScreen> {
       context: context,
       builder: (ctx) => AlertDialog(
         backgroundColor: Theme.of(ctx).colorScheme.surfaceContainerHighest,
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(6)),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
         title: Text('Update Progress — ${g.title}'),
         content: TextField(
           controller: progressC,
@@ -401,7 +406,7 @@ class _GoalsScreenState extends ConsumerState<GoalsScreen> {
             heroTag: 'goals_fab',
             onPressed: _showAddGoalDialog,
             elevation: 4,
-            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(6)),
+            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
             backgroundColor: Theme.of(context).colorScheme.primary,
             foregroundColor: Theme.of(context).colorScheme.onPrimary,
             icon: const Icon(Icons.add),
@@ -508,7 +513,7 @@ class _GoalCard extends StatelessWidget {
           const SizedBox(height: 10),
           // Progress bar — height 6, rounded corners 6
           ClipRRect(
-            borderRadius: BorderRadius.circular(6),
+            borderRadius: BorderRadius.circular(12),
             child: LinearProgressIndicator(
               value: ratio,
               minHeight: 6,
@@ -572,7 +577,7 @@ class _GoalChip extends StatelessWidget {
     return Container(
       decoration: BoxDecoration(
         color: color,
-        borderRadius: BorderRadius.circular(6),
+        borderRadius: BorderRadius.circular(12),
       ),
       padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
       child: Text(

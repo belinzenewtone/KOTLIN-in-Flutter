@@ -343,7 +343,7 @@ class HomeMenuCard extends StatelessWidget {
 
     return Material(
       color: bg,
-      borderRadius: BorderRadius.circular(6),
+      borderRadius: BorderRadius.circular(12),
       clipBehavior: Clip.antiAlias,
       child: Column(
         children: [
@@ -438,7 +438,7 @@ class WeeklyResetCard extends StatelessWidget {
 
     return Container(
       decoration: BoxDecoration(
-        borderRadius: BorderRadius.circular(6),
+        borderRadius: BorderRadius.circular(12),
         color: scheme.primaryContainer.withValues(alpha: 0.45),
       ),
       padding: const EdgeInsets.all(16),
@@ -465,7 +465,7 @@ class WeeklyResetCard extends StatelessWidget {
             style: OutlinedButton.styleFrom(
               foregroundColor: scheme.primary,
               shape:
-                  RoundedRectangleBorder(borderRadius: BorderRadius.circular(6)),
+                  RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
             ),
           ),
         ],

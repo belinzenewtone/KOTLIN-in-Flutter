@@ -190,7 +190,7 @@ class _AddTransactionSheetState extends State<AddTransactionBottomSheet> {
                 isExpanded: true,
                 decoration: InputDecoration(
                   labelText: 'Category',
-                  border: OutlineInputBorder(borderRadius: BorderRadius.circular(6)),
+                  border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
                 ),
                 items: [
                   for (final c in kFinanceCategories)
@@ -213,7 +213,7 @@ class _AddTransactionSheetState extends State<AddTransactionBottomSheet> {
                 maxLines: 3,
                 decoration: InputDecoration(
                   labelText: 'Notes (optional)',
-                  border: OutlineInputBorder(borderRadius: BorderRadius.circular(16)),
+                  border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
                 ),
               ),
             ),
@@ -255,7 +255,7 @@ class _AddTransactionSheetState extends State<AddTransactionBottomSheet> {
                     },
                     style: FilledButton.styleFrom(
                       shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(6)),
+                          borderRadius: BorderRadius.circular(12)),
                     ),
                     child: const Text('Add'),
                   ),
@@ -280,13 +280,13 @@ class _AddTransactionSheetState extends State<AddTransactionBottomSheet> {
         isDense: true,
         filled: true,
         fillColor: scheme.surface,
-        border: OutlineInputBorder(borderRadius: BorderRadius.circular(6)),
+        border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
         enabledBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(6),
+          borderRadius: BorderRadius.circular(12),
           borderSide: BorderSide(color: scheme.outlineVariant),
         ),
         focusedBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(6),
+          borderRadius: BorderRadius.circular(12),
           borderSide: BorderSide(color: scheme.primary),
         ),
       ),
@@ -388,13 +388,13 @@ class _EditTransactionSheetState extends State<EditTransactionBottomSheet> {
                 isExpanded: true,
                 decoration: InputDecoration(
                   labelText: 'Category',
-                  border: OutlineInputBorder(borderRadius: BorderRadius.circular(6)),
+                  border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
                   enabledBorder: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(6),
+                    borderRadius: BorderRadius.circular(12),
                     borderSide: BorderSide(color: scheme.outlineVariant),
                   ),
                   focusedBorder: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(6),
+                    borderRadius: BorderRadius.circular(12),
                     borderSide: BorderSide(color: scheme.primary),
                   ),
                 ),
@@ -421,7 +421,7 @@ class _EditTransactionSheetState extends State<EditTransactionBottomSheet> {
                     onPressed: () => widget.onSave(_category),
                     style: FilledButton.styleFrom(
                       shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(6)),
+                          borderRadius: BorderRadius.circular(12)),
                     ),
                     child: const Text('Save'),
                   ),
@@ -639,11 +639,11 @@ class _SmsImportBottomSheetState extends State<SmsImportBottomSheet> {
                 });
                 widget.onDetect(days);
               },
-              borderRadius: BorderRadius.circular(6),
+              borderRadius: BorderRadius.circular(12),
               child: Ink(
                 decoration: BoxDecoration(
                   color: scheme.surfaceContainerHigh,
-                  borderRadius: BorderRadius.circular(6),
+                  borderRadius: BorderRadius.circular(12),
                 ),
                 padding:
                     const EdgeInsets.symmetric(horizontal: 18, vertical: 14),
@@ -728,7 +728,7 @@ class _SmsImportBottomSheetState extends State<SmsImportBottomSheet> {
                   },
                   style: FilledButton.styleFrom(
                     shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(6)),
+                        borderRadius: BorderRadius.circular(12)),
                   ),
                   child: const Text('Import All'),
                 ),
@@ -781,7 +781,7 @@ class _FulizaLimitDialogState extends State<FulizaLimitDialog> {
   Widget build(BuildContext context) {
     final scheme = Theme.of(context).colorScheme;
     return AlertDialog(
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(6)),
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
       title: Text('Set Fuliza Limit', style: TextStyle(color: scheme.onSurface)),
       content: Column(
         mainAxisSize: MainAxisSize.min,
@@ -801,7 +801,7 @@ class _FulizaLimitDialogState extends State<FulizaLimitDialog> {
             inputFormatters: [FilteringTextInputFormatter.digitsOnly],
             decoration: InputDecoration(
               labelText: 'Fuliza limit (KES)',
-              border: OutlineInputBorder(borderRadius: BorderRadius.circular(6)),
+              border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
             ),
           ),
         ],
@@ -817,7 +817,7 @@ class _FulizaLimitDialogState extends State<FulizaLimitDialog> {
             if (limit != null && limit >= 0) widget.onSave(limit);
           },
           style: FilledButton.styleFrom(
-            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(6)),
+            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
           ),
           child: const Text('Save'),
         ),
@@ -950,7 +950,7 @@ class _CsvImportBottomSheetState extends State<CsvImportBottomSheet> {
             onPressed: _picking ? null : _pick,
             style: FilledButton.styleFrom(
                 shape:
-                    RoundedRectangleBorder(borderRadius: BorderRadius.circular(6))),
+                    RoundedRectangleBorder(borderRadius: BorderRadius.circular(12))),
             child: _picking
                 ? const SizedBox(
                     width: 20,
@@ -995,7 +995,7 @@ class _CsvImportBottomSheetState extends State<CsvImportBottomSheet> {
             constraints: const BoxConstraints(maxHeight: 280),
             decoration: BoxDecoration(
               color: scheme.surfaceContainerLow,
-              borderRadius: BorderRadius.circular(6),
+              borderRadius: BorderRadius.circular(12),
             ),
             child: ListView.separated(
               shrinkWrap: true,
@@ -1069,7 +1069,7 @@ class _CsvImportBottomSheetState extends State<CsvImportBottomSheet> {
               onPressed: rows.isEmpty ? null : _confirm,
               style: FilledButton.styleFrom(
                   shape:
-                      RoundedRectangleBorder(borderRadius: BorderRadius.circular(6))),
+                      RoundedRectangleBorder(borderRadius: BorderRadius.circular(12))),
               child: Text(
                   'Import ${rows.length} transaction${rows.length == 1 ? '' : 's'}'),
             ),
@@ -1081,7 +1081,7 @@ class _CsvImportBottomSheetState extends State<CsvImportBottomSheet> {
               onPressed: widget.onDismiss,
               style: OutlinedButton.styleFrom(
                   shape:
-                      RoundedRectangleBorder(borderRadius: BorderRadius.circular(6))),
+                      RoundedRectangleBorder(borderRadius: BorderRadius.circular(12))),
               child: const Text('Cancel'),
             ),
           ),
@@ -1115,7 +1115,7 @@ class _CsvImportBottomSheetState extends State<CsvImportBottomSheet> {
             onPressed: widget.onDismiss,
             style: FilledButton.styleFrom(
                 shape:
-                    RoundedRectangleBorder(borderRadius: BorderRadius.circular(6))),
+                    RoundedRectangleBorder(borderRadius: BorderRadius.circular(12))),
             child: const Text('Done'),
           ),
         ),
@@ -1160,7 +1160,7 @@ class DeleteTransactionDialog extends StatelessWidget {
             backgroundColor: scheme.error,
             foregroundColor: scheme.onError,
             shape:
-                RoundedRectangleBorder(borderRadius: BorderRadius.circular(6)),
+                RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
           ),
           child: const Text('Delete'),
         ),

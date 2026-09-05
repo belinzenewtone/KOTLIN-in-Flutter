@@ -214,7 +214,7 @@ class HeroSurface extends StatelessWidget {
     final c = colors ?? LifeOsColors.light;
     final shape = BorderRadius.vertical(
       top: Radius.zero,
-      bottom: Radius.circular(6),
+      bottom: Radius.circular(12),
     );
 
     return DecoratedBox(
@@ -299,7 +299,7 @@ class HeroStatChip extends StatelessWidget {
     return Container(
       decoration: BoxDecoration(
         color: c.surfaceContainerLow,
-        borderRadius: BorderRadius.circular(6),
+        borderRadius: BorderRadius.circular(12),
         border: Border.all(color: c.outlineVariant),
       ),
       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),

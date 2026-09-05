@@ -402,7 +402,7 @@ class _DeleteTaskDialog extends StatelessWidget {
   Widget build(BuildContext context) {
     final scheme = Theme.of(context).colorScheme;
     return AlertDialog(
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(6)),
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
       title: const Text('Delete task?'),
       content: Text('Remove "${task.title}"? This cannot be undone.'),
       actions: [
@@ -412,7 +412,7 @@ class _DeleteTaskDialog extends StatelessWidget {
           style: FilledButton.styleFrom(
             backgroundColor: scheme.error,
             foregroundColor: scheme.onError,
-            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(6)),
+            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
           ),
           child: const Text('Delete'),
         ),
@@ -457,7 +457,7 @@ class _SwipeableTaskRow extends StatelessWidget {
         padding: const EdgeInsets.only(left: 20),
         decoration: BoxDecoration(
           color: scheme.primaryContainer,
-          borderRadius: BorderRadius.circular(6),
+          borderRadius: BorderRadius.circular(12),
         ),
         child:
             Icon(Icons.check_circle_outline, color: scheme.onSurface),
@@ -467,7 +467,7 @@ class _SwipeableTaskRow extends StatelessWidget {
         padding: const EdgeInsets.only(right: 20),
         decoration: BoxDecoration(
           color: scheme.errorContainer,
-          borderRadius: BorderRadius.circular(6),
+          borderRadius: BorderRadius.circular(12),
         ),
         child:
             Icon(Icons.delete_outline, color: scheme.onSurface),

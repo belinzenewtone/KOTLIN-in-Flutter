@@ -150,7 +150,10 @@ abstract final class AppDesignTokens {
 
   static const spacing = AppSpacingScale(xs: 4, sm: 8, md: 12, lg: 16, xl: 24);
 
-  static const radius = AppRadiusScale(sm: 6, pill: 28);
+  // Unified card/dialog/surface radius. Bumped 6 → 12 for a consistent, modern
+  // rounded language across the whole app (was a mix of 6/8/12/16 that felt
+  // boxy in some places and rounded in others).
+  static const radius = AppRadiusScale(sm: 12, pill: 28);
 
   static const double floatingNavBarHeight = 58;
   static const double floatingNavBarBottomOffset = 4;

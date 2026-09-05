@@ -181,7 +181,7 @@ class _EventsScreenState extends ConsumerState<EventsScreen> {
               foregroundColor: scheme.onPrimary,
               elevation: 6,
               shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(6)),
+                  borderRadius: BorderRadius.circular(12)),
               icon: const Icon(Icons.add),
               label: const Text('Add event'),
             ),
@@ -298,7 +298,7 @@ class _SwipeableEventCard extends StatelessWidget {
         padding: const EdgeInsets.only(left: 20),
         decoration: BoxDecoration(
           color: const Color(0xFF34D399).withValues(alpha: 0.3),
-          borderRadius: BorderRadius.circular(6),
+          borderRadius: BorderRadius.circular(12),
         ),
         child:
             Icon(Icons.check_circle_outline, size: 22, color: scheme.onSurface),
@@ -308,7 +308,7 @@ class _SwipeableEventCard extends StatelessWidget {
         padding: const EdgeInsets.only(right: 20),
         decoration: BoxDecoration(
           color: const Color(0xFFF87171).withValues(alpha: 0.3),
-          borderRadius: BorderRadius.circular(6),
+          borderRadius: BorderRadius.circular(12),
         ),
         child:
             Icon(Icons.delete_outline, size: 22, color: scheme.onSurface),
@@ -408,7 +408,7 @@ class _EventBadge extends StatelessWidget {
       padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
       decoration: BoxDecoration(
         color: color.withValues(alpha: 0.18),
-        borderRadius: BorderRadius.circular(6),
+        borderRadius: BorderRadius.circular(12),
       ),
       child: Text(text,
           maxLines: 1,
@@ -436,7 +436,7 @@ class _DeleteEventDialog extends StatelessWidget {
   Widget build(BuildContext context) {
     final scheme = Theme.of(context).colorScheme;
     return AlertDialog(
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(6)),
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
       title: const Text('Delete event?'),
       content: Text('Remove "${event.title}"? This cannot be undone.'),
       actions: [
@@ -446,7 +446,7 @@ class _DeleteEventDialog extends StatelessWidget {
           style: FilledButton.styleFrom(
             backgroundColor: scheme.error,
             foregroundColor: scheme.onError,
-            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(6)),
+            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
           ),
           child: const Text('Delete'),
         ),

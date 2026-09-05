@@ -131,7 +131,7 @@ class PlannerScreen extends StatelessWidget {
                 contentPadding: const EdgeInsets.all(16),
                 child: InkWell(
                   onTap: () => context.push('/$route'),
-                  borderRadius: BorderRadius.circular(6),
+                  borderRadius: BorderRadius.circular(12),
                   child: Row(
                     children: [
                       Icon(icon, size: 22, color: scheme.primary),
@@ -248,7 +248,7 @@ class _BudgetScreenState extends ConsumerState<BudgetScreen> {
             backgroundColor:
                 Theme.of(ctx).colorScheme.surfaceContainerHighest,
             shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(6)),
+                borderRadius: BorderRadius.circular(12)),
             title: Text(editing != null ? 'Edit Budget' : 'Set Budget'),
             content: SingleChildScrollView(
               child: Column(
@@ -432,7 +432,7 @@ class _BudgetScreenState extends ConsumerState<BudgetScreen> {
                 },
                 style: FilledButton.styleFrom(
                   shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(6)),
+                      borderRadius: BorderRadius.circular(12)),
                 ),
                 child:
                     Text(editing != null ? 'Update' : 'Set Budget'),
@@ -789,7 +789,7 @@ class _BudgetItemCard extends StatelessWidget {
                     style: TextButton.styleFrom(
                       padding: const EdgeInsets.symmetric(vertical: 4),
                       shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(6)),
+                          borderRadius: BorderRadius.circular(12)),
                     ),
                   ),
                 ),
@@ -803,7 +803,7 @@ class _BudgetItemCard extends StatelessWidget {
                     style: TextButton.styleFrom(
                       padding: const EdgeInsets.symmetric(vertical: 4),
                       shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(6)),
+                          borderRadius: BorderRadius.circular(12)),
                     ),
                   ),
                 ),

@@ -12,6 +12,7 @@ import '../../../core/designsystem/tokens.dart';
 import '../../../core/utils/date_utils.dart';
 import '../../../ui/theme/theme.dart';
 import '../domain/finance_models.dart';
+import 'finance_screen.dart' show displayCategory;
 
 // ── FinanceSpendingHeroCard ──────────────────────────────────────────────────
 
@@ -160,10 +161,10 @@ class UncategorizedBanner extends StatelessWidget {
     final scheme = Theme.of(context).colorScheme;
     return Material(
       color: scheme.tertiaryContainer.withValues(alpha: 0.45),
-      borderRadius: BorderRadius.circular(6),
+      borderRadius: BorderRadius.circular(12),
       child: InkWell(
         onTap: onTap,
-        borderRadius: BorderRadius.circular(6),
+        borderRadius: BorderRadius.circular(12),
         child: Padding(
           padding: const EdgeInsets.all(14),
           child: Row(
@@ -423,7 +424,7 @@ class FinanceTransactionRowWidget extends StatelessWidget {
                             ?.copyWith(color: scheme.primary)),
                   ),
                   const SizedBox(height: 4),
-                  Text('${tx.category} · $timeStr',
+                  Text('${displayCategory(tx.category)} · $timeStr',
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
                       style: Theme.of(context)

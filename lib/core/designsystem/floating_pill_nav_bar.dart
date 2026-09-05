@@ -24,7 +24,7 @@ class LifeOsBottomBar extends StatelessWidget {
   Widget build(BuildContext context) {
     final c = Theme.of(context).extension<LifeOsColors>() ?? LifeOsColors.light;
     final scheme = Theme.of(context).colorScheme;
-    final navBarShape = BorderRadius.circular(6);
+    final navBarShape = BorderRadius.circular(12);
 
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 16),
@@ -180,7 +180,7 @@ class GradientBoxBorder extends BoxBorder {
       ..style = PaintingStyle.stroke
       ..strokeWidth = width
       ..shader = gradient.createShader(rect);
-    final rrect = (borderRadius ?? BorderRadius.circular(6)).toRRect(rect);
+    final rrect = (borderRadius ?? BorderRadius.circular(12)).toRRect(rect);
     canvas.drawRRect(rrect, paint);
   }
 

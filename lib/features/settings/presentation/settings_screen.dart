@@ -65,8 +65,9 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
   }
 
   Future<void> _persistTheme(AppThemeMode mode) async {
-    final prefs = await SharedPreferences.getInstance();
-    await prefs.setString('theme_mode', mode.name.toUpperCase());
+    // Update the reactive session so the segmented control highlights immediately,
+    // and also update themeController so the app-wide theme switches without restart.
+    await ref.read(sessionProvider.notifier).setThemeMode(mode);
     themeController.value = mode;
   }
 
@@ -84,7 +85,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
     final confirmed = await showDialog<bool>(
       context: context,
       builder: (ctx) => AlertDialog(
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(6)),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
         title: const Text('Clear all local data?'),
         content: const Text(
             'This will remove all app data stored on this device. This cannot be undone.'),
@@ -98,7 +99,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
               backgroundColor: Theme.of(context).colorScheme.error,
               foregroundColor: Theme.of(context).colorScheme.onError,
               shape:
-                  RoundedRectangleBorder(borderRadius: BorderRadius.circular(6)),
+                  RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
             ),
             child: const Text('Clear'),
           ),
@@ -155,7 +156,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                             }
                                 ? scheme.primary
                                 : Colors.transparent,
-                            borderRadius: BorderRadius.circular(6),
+                            borderRadius: BorderRadius.circular(12),
                           ),
                           alignment: Alignment.center,
                           child: Text(
@@ -361,7 +362,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
       context: context,
       builder: (ctx) => StatefulBuilder(
         builder: (ctx, setStateDlg) => AlertDialog(
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(6)),
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
           title: const Text('Fuliza Credit Limit'),
           content: Column(
             mainAxisSize: MainAxisSize.min,
@@ -382,7 +383,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                   labelText: 'Credit limit (KSh)',
                   errorText: errorText,
                   border:
-                      OutlineInputBorder(borderRadius: BorderRadius.circular(6)),
+                      OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
                 ),
                 onChanged: (_) {
                   if (errorText != null) setStateDlg(() => errorText = null);
@@ -410,7 +411,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
               },
               style: FilledButton.styleFrom(
                 shape:
-                    RoundedRectangleBorder(borderRadius: BorderRadius.circular(6)),
+                    RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
               ),
               child: const Text('Save'),
             ),

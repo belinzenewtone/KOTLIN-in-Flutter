@@ -673,7 +673,7 @@ class _WrappedBody extends StatelessWidget {
             DecoratedBox(
               decoration: BoxDecoration(
                 color: scheme.surfaceContainerLowest,
-                borderRadius: BorderRadius.circular(6),
+                borderRadius: BorderRadius.circular(12),
                 border: Border.all(
                     color: scheme.error.withValues(alpha: 0.65)),
               ),
@@ -712,7 +712,7 @@ class _WrappedBody extends StatelessWidget {
             DecoratedBox(
               decoration: BoxDecoration(
                 color: scheme.surfaceContainerLowest,
-                borderRadius: BorderRadius.circular(6),
+                borderRadius: BorderRadius.circular(12),
                 border: Border.all(color: scheme.error, width: 3),
               ),
               child: Padding(
@@ -941,7 +941,7 @@ class _VerdictCard extends StatelessWidget {
     return DecoratedBox(
       decoration: BoxDecoration(
         color: scheme.surfaceContainerLowest,
-        borderRadius: BorderRadius.circular(6),
+        borderRadius: BorderRadius.circular(12),
         border: Border.all(color: verdictColor, width: 3),
       ),
       child: Padding(

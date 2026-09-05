@@ -458,7 +458,11 @@ MpesaParseResult mpesaParserParse(String sms, String? sender, int smsTimestampMs
     }
 
     // Stage 0b — Fuliza charge notices carry the authoritative balance.
-    if (isFulizaServiceNotice(normalized)) {
+    // isFulizaServiceNotice() explicitly returns false for the "total fuliza
+    // outstanding" template, so we must check the regex FIRST, then fall
+    // through to the general service-notice drop. Kotlin parity.
+    if (_fulizaOutstandingRe.hasMatch(normalized) &&
+        normalized.toLowerCase().contains('total fuliza')) {
       final outstanding = _toDouble(_fulizaOutstandingRe.firstMatch(normalized)?.group(1));
       if (outstanding != null) {
         final accessFee = _toDouble(_accessFeeRe.firstMatch(normalized)?.group(1)) ?? 0.0;
@@ -475,6 +479,8 @@ MpesaParseResult mpesaParserParse(String sms, String? sender, int smsTimestampMs
           rawSms: sms,
         ));
       }
+    }
+    if (isFulizaServiceNotice(normalized)) {
       return MpesaError(SmsParseError(reason: 'fuliza_service_notice', rawSms: sms));
     }
 

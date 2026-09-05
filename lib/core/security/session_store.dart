@@ -15,6 +15,7 @@ class AppSessionState {
     required this.biometricEnabled,
     required this.userId,
     this.themeMode,
+    this.screenPin,
   });
 
   final bool isLoggedIn;
@@ -23,6 +24,11 @@ class AppSessionState {
   final String userId;
   final AppThemeMode? themeMode;
 
+  /// Configured app-lock PIN (4–6 digits), or null when none is set.
+  final String? screenPin;
+
+  bool get hasScreenPin => screenPin != null && screenPin!.isNotEmpty;
+
   AppSessionState copyWith({
     bool? isLoggedIn,
     bool? onboardingCompleted,
@@ -30,14 +36,16 @@ class AppSessionState {
     String? userId,
     AppThemeMode? themeMode,
     bool clearThemeMode = false,
+    String? screenPin,
+    bool clearScreenPin = false,
   }) =>
       AppSessionState(
         isLoggedIn: isLoggedIn ?? this.isLoggedIn,
         onboardingCompleted: onboardingCompleted ?? this.onboardingCompleted,
         biometricEnabled: biometricEnabled ?? this.biometricEnabled,
         userId: userId ?? this.userId,
-        themeMode:
-            clearThemeMode ? null : (themeMode ?? this.themeMode),
+        themeMode: clearThemeMode ? null : (themeMode ?? this.themeMode),
+        screenPin: clearScreenPin ? null : (screenPin ?? this.screenPin),
       );
 
   static const initial = AppSessionState(
@@ -58,6 +66,7 @@ class SessionStore {
   static const _kBiometrics = 'biometric_enabled';
   static const _kUserId = 'auth_user_id';
   static const _kThemeMode = 'theme_mode';
+  static const _kScreenPin = 'screen_pin';
 
   AppSessionState load() => AppSessionState(
         isLoggedIn: _prefs.getBool(_kLoggedIn) ?? false,
@@ -70,6 +79,7 @@ class SessionStore {
           'SYSTEM' => AppThemeMode.system,
           _ => null,
         },
+        screenPin: _prefs.getString(_kScreenPin),
       );
 
   Future<void> setLoggedIn(bool v, {String? userId}) async {
@@ -84,6 +94,14 @@ class SessionStore {
 
   Future<void> setThemeMode(AppThemeMode mode) =>
       _prefs.setString(_kThemeMode, mode.name.toUpperCase());
+
+  Future<void> setScreenPin(String? pin) async {
+    if (pin == null || pin.isEmpty) {
+      await _prefs.remove(_kScreenPin);
+    } else {
+      await _prefs.setString(_kScreenPin, pin);
+    }
+  }
 }
 
 final sharedPrefsProvider = FutureProvider<SharedPreferences>(
@@ -128,6 +146,26 @@ class SessionNotifier extends Notifier<AppSessionState> {
     final store = ref.read(sessionStoreProvider).value;
     if (store == null) return;
     await store.setBiometricEnabled(v);
+    state = store.load();
+    _notifySessionChanged();
+  }
+
+  /// Persists the theme AND updates the reactive snapshot so the Settings
+  /// segmented control highlights immediately without requiring a relaunch.
+  Future<void> setThemeMode(AppThemeMode mode) async {
+    final store = ref.read(sessionStoreProvider).value;
+    if (store == null) return;
+    await store.setThemeMode(mode);
+    state = store.load();
+    _notifySessionChanged();
+  }
+
+  /// Sets or clears the app-lock PIN and refreshes the snapshot so the lock
+  /// engages immediately (MainShell watches sessionProvider).
+  Future<void> setScreenPin(String? pin) async {
+    final store = ref.read(sessionStoreProvider).value;
+    if (store == null) return;
+    await store.setScreenPin(pin);
     state = store.load();
     _notifySessionChanged();
   }

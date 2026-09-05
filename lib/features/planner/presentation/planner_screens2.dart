@@ -57,7 +57,7 @@ class _IncomeScreenState extends ConsumerState<IncomeScreen> {
       builder: (ctx) => StatefulBuilder(
         builder: (ctx, setDialogState) => AlertDialog(
           backgroundColor: Theme.of(ctx).colorScheme.surfaceContainerHighest,
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(6)),
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
           title: const Text('Add Income'),
           content: SingleChildScrollView(
             child: Column(
@@ -202,7 +202,7 @@ class _IncomeScreenState extends ConsumerState<IncomeScreen> {
       builder: (ctx) => StatefulBuilder(
         builder: (ctx, setDialogState) => AlertDialog(
           backgroundColor: Theme.of(ctx).colorScheme.surfaceContainerHighest,
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(6)),
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
           title: const Text('Edit Income'),
           content: SingleChildScrollView(
             child: Column(
@@ -515,7 +515,7 @@ class _RecurringScreenState extends ConsumerState<RecurringScreen> {
       builder: (ctx) => StatefulBuilder(
         builder: (ctx, setDialogState) => AlertDialog(
           backgroundColor: Theme.of(ctx).colorScheme.surfaceContainerHighest,
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(6)),
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
           title: const Text('Add Recurring Rule'),
           content: SingleChildScrollView(
             child: Column(
@@ -662,7 +662,7 @@ class _RecurringScreenState extends ConsumerState<RecurringScreen> {
       builder: (ctx) => StatefulBuilder(
         builder: (ctx, setDialogState) => AlertDialog(
           backgroundColor: Theme.of(ctx).colorScheme.surfaceContainerHighest,
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(6)),
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
           title: const Text('Edit Recurring Rule'),
           content: SingleChildScrollView(
             child: Column(
@@ -952,7 +952,7 @@ class _BillsScreenState extends ConsumerState<BillsScreen> {
         builder: (ctx, setDialogState) => AlertDialog(
           backgroundColor: Theme.of(ctx).colorScheme.surfaceContainerHighest,
           shape:
-              RoundedRectangleBorder(borderRadius: BorderRadius.circular(6)),
+              RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
           title: const Text('Edit Bill'),
           content: SingleChildScrollView(
             child: Column(
@@ -1083,7 +1083,7 @@ class _BillsScreenState extends ConsumerState<BillsScreen> {
       builder: (ctx) => StatefulBuilder(
         builder: (ctx, setDialogState) => AlertDialog(
           backgroundColor: Theme.of(ctx).colorScheme.surfaceContainerHighest,
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(6)),
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
           title: const Text('Add Bill'),
           content: SingleChildScrollView(
             child: Column(
@@ -1280,7 +1280,7 @@ class _BillCard extends StatelessWidget {
 
     final cardBody = InkWell(
       onTap: onEdit,
-      borderRadius: BorderRadius.circular(6),
+      borderRadius: BorderRadius.circular(12),
       child: Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       mainAxisSize: MainAxisSize.min,
@@ -1374,7 +1374,7 @@ class _BillCard extends StatelessWidget {
       return Container(
         decoration: BoxDecoration(
           color: scheme.errorContainer,
-          borderRadius: BorderRadius.circular(6),
+          borderRadius: BorderRadius.circular(12),
           border: Border.all(
             color: scheme.error.withValues(alpha: 0.45),
             width: 0.85,
@@ -1412,7 +1412,7 @@ class _SmallChip extends StatelessWidget {
     return Container(
       decoration: BoxDecoration(
         color: backgroundColor ?? Colors.transparent,
-        borderRadius: BorderRadius.circular(6),
+        borderRadius: BorderRadius.circular(12),
         border: Border.all(
           color: borderColor ?? scheme.outlineVariant,
         ),

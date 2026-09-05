@@ -539,7 +539,7 @@ class _FormPage extends StatelessWidget {
                     child: Container(
                       decoration: BoxDecoration(
                         color: t == tab ? scheme.primary : scheme.surfaceVariant,
-                        borderRadius: BorderRadius.circular(6),
+                        borderRadius: BorderRadius.circular(12),
                       ),
                       padding: const EdgeInsets.symmetric(
                           horizontal: 16, vertical: 8),
@@ -864,7 +864,7 @@ class _EventFormContent extends StatelessWidget {
                       color: t == s._eventType
                           ? scheme.primary
                           : scheme.surfaceVariant,
-                      borderRadius: BorderRadius.circular(6),
+                      borderRadius: BorderRadius.circular(12),
                     ),
                     padding:
                         const EdgeInsets.symmetric(horizontal: 12, vertical: 7),
@@ -1245,7 +1245,7 @@ class _CustomReminderDialogState extends State<_CustomReminderDialog> {
   @override
   Widget build(BuildContext context) {
     return AlertDialog(
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(6)),
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
       title: Text('Custom reminder',
           style: Theme.of(context).textTheme.titleMedium),
       content: Row(
@@ -1283,7 +1283,7 @@ class _CustomReminderDialogState extends State<_CustomReminderDialog> {
         FilledButton(
           onPressed: () => widget.onConfirm(_customMinutes(_currentValue, _unit)),
           style: FilledButton.styleFrom(
-            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(6)),
+            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
           ),
           child: const Text('OK'),
         ),
@@ -1453,7 +1453,7 @@ class _GuestsSectionState extends State<_GuestsSection> {
                   prefixIcon: Icon(Icons.people_outlined,
                       size: 20, color: scheme.onSurfaceVariant),
                   border: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(6)),
+                      borderRadius: BorderRadius.circular(12)),
                 ),
               ),
             ),
@@ -1464,7 +1464,7 @@ class _GuestsSectionState extends State<_GuestsSection> {
                 backgroundColor: scheme.primary,
                 foregroundColor: scheme.onPrimary,
                 shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(6)),
+                    borderRadius: BorderRadius.circular(12)),
               ),
               icon: const Icon(Icons.add, size: 20),
               tooltip: 'Add guest',
@@ -1484,7 +1484,7 @@ class _GuestsSectionState extends State<_GuestsSection> {
                         left: 12, right: 4, top: 6, bottom: 6),
                     decoration: BoxDecoration(
                       color: scheme.primary.withValues(alpha: 0.12),
-                      borderRadius: BorderRadius.circular(6),
+                      borderRadius: BorderRadius.circular(12),
                     ),
                     child: Row(
                       mainAxisSize: MainAxisSize.min,
@@ -1569,7 +1569,7 @@ class _TimezonePickerPageState extends State<_TimezonePickerPage> {
               hintText: 'Search time zones',
               prefixIcon: const Icon(Icons.search, size: 20),
               border: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(6)),
+                  borderRadius: BorderRadius.circular(12)),
             ),
           ),
         ),
@@ -1717,13 +1717,13 @@ class _FormTextFieldState extends State<_FormTextField> {
         labelText: widget.label,
         filled: true,
         fillColor: scheme.surface,
-        border: OutlineInputBorder(borderRadius: BorderRadius.circular(6)),
+        border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
         enabledBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(6),
+          borderRadius: BorderRadius.circular(12),
           borderSide: BorderSide(color: scheme.outlineVariant),
         ),
         focusedBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(6),
+          borderRadius: BorderRadius.circular(12),
           borderSide: BorderSide(color: scheme.primary),
         ),
       ),
@@ -1766,7 +1766,7 @@ class _FormPickerRow extends StatelessWidget {
     final scheme = Theme.of(context).colorScheme;
     return InkWell(
       onTap: onClick,
-      borderRadius: BorderRadius.circular(6),
+      borderRadius: BorderRadius.circular(12),
       child: Padding(
         padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
         child: Row(
@@ -1975,7 +1975,7 @@ class _PriorityButton extends StatelessWidget {
       child: Container(
         decoration: BoxDecoration(
           color: selected ? color : color.withValues(alpha: 0.15),
-          borderRadius: BorderRadius.circular(6),
+          borderRadius: BorderRadius.circular(12),
         ),
         padding: const EdgeInsets.symmetric(vertical: 10),
         alignment: Alignment.center,

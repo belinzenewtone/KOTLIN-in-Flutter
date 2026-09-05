@@ -90,20 +90,29 @@ class PlannerRepository {
   }
 
   /// Spent per category this month (BudgetProgressIndicator inputs).
-  Future<Map<String, double>> monthSpendByCategory() async {
+  Future<Map<String, double>> monthSpendByCategory() =>
+      _spendByCategoryQuery().get().then(_mapSpendRows);
+
+  /// Reactive stream — re-emits whenever the transactions table changes.
+  Stream<Map<String, double>> watchMonthSpendByCategory() =>
+      _spendByCategoryQuery().watch().map(_mapSpendRows);
+
+  Selectable<QueryRow> _spendByCategoryQuery() {
     final monthStart = DateTime(DateTime.now().year, DateTime.now().month, 1)
         .millisecondsSinceEpoch;
-    final rows = await _db.customSelect(
+    return _db.customSelect(
       'SELECT category, SUM(amount) AS total FROM transactions '
       "WHERE user_id = ? AND deleted_at IS NULL AND date >= ? AND UPPER(transaction_type) IN ('SENT','AIRTIME','PAYBILL','BUY_GOODS','WITHDRAW','PAID','WITHDRAWN') "
       'GROUP BY category',
       variables: [Variable.withString(_userId), Variable.withInt(monthStart)],
       readsFrom: {_db.transactions},
-    ).get();
-    return {
-      for (final r in rows) r.data['category'] as String: (r.data['total'] as num).toDouble(),
-    };
+    );
   }
+
+  Map<String, double> _mapSpendRows(List<QueryRow> rows) => {
+        for (final r in rows)
+          r.data['category'] as String: (r.data['total'] as num).toDouble(),
+      };
 
   // ── Income ────────────────────────────────────────────────────────────────
 

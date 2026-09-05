@@ -275,7 +275,7 @@ class _ShimmerRow extends StatelessWidget {
           Container(
             width: 40,
             height: 40,
-            decoration: BoxDecoration(borderRadius: BorderRadius.circular(6), gradient: g),
+            decoration: BoxDecoration(borderRadius: BorderRadius.circular(12), gradient: g),
           ),
           const SizedBox(width: 12),
           Expanded(

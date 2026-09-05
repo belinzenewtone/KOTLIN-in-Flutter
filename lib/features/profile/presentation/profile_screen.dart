@@ -197,7 +197,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                       child: OutlinedButton.icon(
                         style: OutlinedButton.styleFrom(
                           shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(6)),
+                              borderRadius: BorderRadius.circular(12)),
                           padding:
                               const EdgeInsets.symmetric(vertical: 12),
                         ),
@@ -212,7 +212,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                       child: OutlinedButton.icon(
                         style: OutlinedButton.styleFrom(
                           shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(6)),
+                              borderRadius: BorderRadius.circular(12)),
                           padding:
                               const EdgeInsets.symmetric(vertical: 12),
                         ),
@@ -272,7 +272,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
       useRootNavigator: true,
       useSafeArea: true,
       shape: const RoundedRectangleBorder(
-          borderRadius: BorderRadius.vertical(top: Radius.circular(16))),
+          borderRadius: BorderRadius.vertical(top: Radius.circular(12))),
       builder: (sheetCtx) => Column(
         mainAxisSize: MainAxisSize.min,
         children: [
@@ -401,14 +401,14 @@ class _ToolCard extends StatelessWidget {
     final scheme = Theme.of(context).colorScheme;
     return Material(
       color: scheme.surfaceContainerLowest,
-      borderRadius: BorderRadius.circular(6),
+      borderRadius: BorderRadius.circular(12),
       child: InkWell(
         onTap: tool.onTap,
-        borderRadius: BorderRadius.circular(6),
+        borderRadius: BorderRadius.circular(12),
         child: Container(
           padding: const EdgeInsets.all(12),
           decoration: BoxDecoration(
-            borderRadius: BorderRadius.circular(6),
+            borderRadius: BorderRadius.circular(12),
             border: Border.all(
               color: scheme.outlineVariant.withValues(alpha: 0.54),
               width: 0.85,

@@ -359,21 +359,33 @@ class _AssistantScreenState extends ConsumerState<AssistantScreen> {
       _processing = true;
     });
     _autoScroll();
-    // Capture current context snapshot for the reply closure.
-    final ctx = _liveCtx;
-    Timer(const Duration(milliseconds: 420), () {
-      if (!mounted) return;
-      setState(() {
-        _messages.add(ChatMessage(
-          id: _seq++,
-          role: 'assistant',
-          content: OfflineAssistantEngine.reply(prompt, ctx),
-          createdAt: AppDateUtils.nowMillis,
-        ));
-        _processing = false;
-      });
-      _autoScroll();
+    _sendWithFreshContext(prompt);
+  }
+
+  Future<void> _sendWithFreshContext(String prompt) async {
+    // Refresh live DB context before each reply so balances/budgets are current.
+    _LiveContext? ctx = _liveCtx;
+    try {
+      final db = await ref.read(lifeOsDatabaseProvider.future);
+      final userId = await ref.read(userIdProvider.future);
+      ctx = await _loadLiveContext(db, userId);
+      if (mounted) setState(() => _liveCtx = ctx);
+    } catch (_) {
+      // DB unavailable — use the cached snapshot.
+    }
+    if (!mounted) return;
+    await Future.delayed(const Duration(milliseconds: 420));
+    if (!mounted) return;
+    setState(() {
+      _messages.add(ChatMessage(
+        id: _seq++,
+        role: 'assistant',
+        content: OfflineAssistantEngine.reply(prompt, ctx),
+        createdAt: AppDateUtils.nowMillis,
+      ));
+      _processing = false;
     });
+    _autoScroll();
   }
 
   void _autoScroll() {
@@ -425,7 +437,7 @@ class _AssistantScreenState extends ConsumerState<AssistantScreen> {
           context: context,
           builder: (dialogCtx) => AlertDialog(
             backgroundColor: Theme.of(dialogCtx).colorScheme.surface,
-            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(6)),
+            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
             title: Text('Clear chat history?',
                 style: Theme.of(dialogCtx)
                     .textTheme
@@ -439,7 +451,7 @@ class _AssistantScreenState extends ConsumerState<AssistantScreen> {
                   child: const Text('Cancel')),
               FilledButton(
                 style: FilledButton.styleFrom(
-                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(6)),
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
                 ),
                 onPressed: () {
                   Navigator.of(dialogCtx).pop();
@@ -554,7 +566,7 @@ class ChatBubble extends StatelessWidget {
         constraints:
             BoxConstraints(maxWidth: MediaQuery.sizeOf(context).width * 0.82),
         decoration: BoxDecoration(
-          borderRadius: BorderRadius.circular(6),
+          borderRadius: BorderRadius.circular(12),
           color: isUser ? scheme.primaryContainer : scheme.surfaceContainerLowest,
           border: Border.all(color: scheme.outlineVariant.withValues(alpha: 0.5)),
         ),
@@ -651,7 +663,7 @@ class _TypingIndicatorState extends State<_TypingIndicator>
     return Container(
       decoration: BoxDecoration(
         color: scheme.surfaceContainerLowest,
-        borderRadius: BorderRadius.circular(6),
+        borderRadius: BorderRadius.circular(12),
         border: Border.all(color: scheme.outlineVariant.withValues(alpha: 0.5)),
       ),
       padding: const EdgeInsets.all(14),

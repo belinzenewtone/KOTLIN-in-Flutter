@@ -24,7 +24,7 @@ class AppCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final scheme = Theme.of(context).colorScheme;
-    final shape = BorderRadius.circular(6);
+    final shape = BorderRadius.circular(12);
 
     final Color baseColor;
     if (glass) {
