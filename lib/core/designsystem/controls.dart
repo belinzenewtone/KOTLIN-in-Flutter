@@ -69,7 +69,13 @@ class SegmentedControl extends StatelessWidget {
 }
 
 /// SearchField — outlined rounded search input with clear button.
-class SearchField extends StatelessWidget {
+///
+/// The parent owns the text value (Compose parity), but the controller is a
+/// stable field — NOT recreated on every rebuild — so the cursor no longer
+/// jumps to the end / drops a character on each keystroke. External changes to
+/// [value] (e.g. the clear button, or a programmatic reset) are synced in
+/// didUpdateWidget without disturbing the caret while the user is typing.
+class SearchField extends StatefulWidget {
   const SearchField({
     super.key,
     required this.value,
@@ -78,20 +84,46 @@ class SearchField extends StatelessWidget {
     this.autofocus = false,
   });
 
-  /// Current text; the parent owns state (Compose parity).
   final String value;
   final ValueChanged<String> onValueChange;
   final String placeholder;
   final bool autofocus;
 
   @override
+  State<SearchField> createState() => _SearchFieldState();
+}
+
+class _SearchFieldState extends State<SearchField> {
+  late final TextEditingController _controller =
+      TextEditingController(text: widget.value)
+        ..selection = TextSelection.collapsed(offset: widget.value.length);
+
+  @override
+  void didUpdateWidget(SearchField oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    // Only overwrite the field when the parent value diverges from what the
+    // controller already holds (an external reset), so typing is untouched.
+    if (widget.value != _controller.text) {
+      _controller.value = TextEditingValue(
+        text: widget.value,
+        selection: TextSelection.collapsed(offset: widget.value.length),
+      );
+    }
+  }
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
+
+  @override
   Widget build(BuildContext context) {
     final scheme = Theme.of(context).colorScheme;
     return TextField(
-      controller: TextEditingController(text: value)
-        ..selection = TextSelection.collapsed(offset: value.length),
-      onChanged: onValueChange,
-      autofocus: autofocus,
+      controller: _controller,
+      onChanged: widget.onValueChange,
+      autofocus: widget.autofocus,
       textAlignVertical: TextAlignVertical.center,
       style: TextStyle(color: scheme.onSurface, fontSize: 14),
       decoration: InputDecoration(
@@ -111,14 +143,14 @@ class SearchField extends StatelessWidget {
           borderRadius: BorderRadius.circular(AppDesignTokens.radius.sm),
           borderSide: BorderSide(color: scheme.primary),
         ),
-        hintText: placeholder,
+        hintText: widget.placeholder,
         hintStyle:
             Theme.of(context).textTheme.bodyMedium?.copyWith(color: scheme.onSurfaceVariant),
         prefixIcon: Icon(Icons.search_outlined,
             size: 22, color: scheme.onSurfaceVariant.withValues(alpha: 0.85)),
-        suffixIcon: value.isNotEmpty
+        suffixIcon: widget.value.isNotEmpty
             ? IconButton(
-                onPressed: () => onValueChange(''),
+                onPressed: () => widget.onValueChange(''),
                 icon: const Icon(Icons.close_outlined, size: 20))
             : null,
       ),
@@ -141,6 +173,8 @@ class LifeOsSwitch extends StatelessWidget {
     final inactive =
         Theme.of(context).extension<LifeOsColors>()?.onSurfaceVariant.withValues(alpha: 0.20) ??
             kTextOnSurfaceVariant.withValues(alpha: 0.20);
+    // Migrate from deprecated M2 activeTrackColor/inactiveTrackColor to M3
+    // WidgetStateProperty — fixes the "always purple" track bug on Flutter 3.29+.
     return Switch(
       value: value,
       onChanged: enabled
@@ -149,8 +183,10 @@ class LifeOsSwitch extends StatelessWidget {
               onChanged?.call(v);
             }
           : null,
-      activeTrackColor: activeColor,
-      inactiveTrackColor: inactive,
+      trackColor: WidgetStateProperty.resolveWith<Color>((states) {
+        if (states.contains(WidgetState.selected)) return activeColor;
+        return inactive;
+      }),
       trackOutlineColor: const WidgetStatePropertyAll(Colors.transparent),
       thumbColor: const WidgetStatePropertyAll(Colors.white),
     );

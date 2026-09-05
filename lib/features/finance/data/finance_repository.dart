@@ -144,20 +144,23 @@ class FinanceRepository {
       weekTotal: weekTotal,
       monthTotal: monthTotal,
       categoryBreakdown: [
+        // Nullable casts + defaults, matching the safer pattern used elsewhere
+        // (insights/misc): a stray NULL from a future migration yields a blank
+        // row instead of crashing the whole Finance summary.
         for (final r in breakdownRows)
           FinanceCategoryBreakdown(
-            category: r.data['category'] as String,
-            total: (r.data['total'] as num).toDouble(),
+            category: r.data['category'] as String? ?? '',
+            total: (r.data['total'] as num?)?.toDouble() ?? 0,
           ),
       ],
       topMerchant: merchantsRows.isEmpty
           ? null
-          : merchantsRows.first.data['merchant'] as String,
+          : merchantsRows.first.data['merchant'] as String?,
       topMerchants: [
         for (final r in merchantsRows)
           (
-            r.data['merchant'] as String,
-            (r.data['total'] as num).toDouble()
+            r.data['merchant'] as String? ?? '',
+            (r.data['total'] as num?)?.toDouble() ?? 0
           )
       ],
       uncategorizedCount: uncategorizedRow.data['c'] as int,

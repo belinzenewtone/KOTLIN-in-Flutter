@@ -59,6 +59,9 @@ class DefaultMpesaIngestionPipeline {
     _pool ??= await ParserIsolatePool.spawn();
     final outcomes =
         await _pool!.parseChunk([(rawMessage, sender ?? 'MPESA', smsTimestampMs)]);
+    // Guard against an empty result (the isolate contract is 1-out-per-1-in,
+    // but don't let a contract change crash the live SMS path with a StateError).
+    if (outcomes.isEmpty) return MpesaIngestionOutcome.parseFailed;
     // Realtime path skips dedupe hydration (single live message; the DB
     // indexes catch duplicates on insert via unique checks upstream).
     final counts =

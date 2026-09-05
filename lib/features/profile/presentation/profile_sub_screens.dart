@@ -486,17 +486,13 @@ class _ProfilePreferencesScreenState
   }
 
   Future<void> _setTheme(AppThemeMode mode) async {
-    final prefs = await SharedPreferences.getInstance();
-    await prefs.setString(
-      'theme_mode',
-      switch (mode) {
-        AppThemeMode.light => 'LIGHT',
-        AppThemeMode.dark => 'DARK',
-        AppThemeMode.system => 'SYSTEM',
-      },
-    );
+    // Route through the session notifier (same path as the Settings screen) so
+    // the reactive sessionProvider stays in sync — otherwise the Settings theme
+    // selector would show a stale choice after changing it here. The notifier
+    // persists to prefs['theme_mode']; themeController flips the live theme.
+    await ref.read(sessionProvider.notifier).setThemeMode(mode);
     themeController.value = mode;
-    setState(() => _themeMode = mode);
+    if (mounted) setState(() => _themeMode = mode);
   }
 
   @override

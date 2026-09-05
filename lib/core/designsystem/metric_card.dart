@@ -40,12 +40,24 @@ class MetricCard extends StatelessWidget {
         mainAxisSize: MainAxisSize.min,
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(title, style: Theme.of(context).textTheme.labelSmall, textAlign: TextAlign.left),
+          Text(title,
+              style: Theme.of(context).textTheme.labelSmall,
+              textAlign: TextAlign.left,
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis),
           const SizedBox(height: 4),
-          Text(
-            value ?? formatCurrency(amount ?? 0),
-            style: Theme.of(context).textTheme.headlineSmall,
-            textAlign: TextAlign.left,
+          // Shrink-to-fit so large currency values (e.g. "KSh 1,234,567") never
+          // overflow the three-across metric row (which showed yellow/black
+          // overflow stripes). scaleDown only shrinks when needed.
+          FittedBox(
+            fit: BoxFit.scaleDown,
+            alignment: Alignment.centerLeft,
+            child: Text(
+              value ?? formatCurrency(amount ?? 0),
+              style: Theme.of(context).textTheme.headlineSmall,
+              textAlign: TextAlign.left,
+              maxLines: 1,
+            ),
           ),
           if (delta != null) ...[
             const SizedBox(height: 4),

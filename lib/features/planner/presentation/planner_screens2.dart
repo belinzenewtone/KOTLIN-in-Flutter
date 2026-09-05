@@ -129,7 +129,7 @@ class _IncomeScreenState extends ConsumerState<IncomeScreen> {
                       child: Text('Recurring',
                           style: Theme.of(ctx).textTheme.bodyMedium),
                     ),
-                    Switch(
+                    LifeOsSwitch(
                       value: isRecurring,
                       onChanged: (v) => setDialogState(() => isRecurring = v),
                     ),
@@ -166,7 +166,11 @@ class _IncomeScreenState extends ConsumerState<IncomeScreen> {
                   return;
                 }
                 final amount = double.tryParse(amountC.text.trim()) ?? 0;
-                if (amount <= 0) return;
+                if (amount <= 0) {
+                  ScaffoldMessenger.of(ctx).showSnackBar(const SnackBar(
+                      content: Text('Enter a valid amount greater than 0')));
+                  return;
+                }
                 await _repo!.addIncome(
                   amount,
                   sourceC.text.trim(),
@@ -251,7 +255,7 @@ class _IncomeScreenState extends ConsumerState<IncomeScreen> {
                 Row(children: [
                   Expanded(child: Text('Recurring',
                       style: Theme.of(ctx).textTheme.bodyMedium)),
-                  Switch(
+                  LifeOsSwitch(
                     value: isRecurring,
                     onChanged: (v) => setDialogState(() => isRecurring = v),
                   ),

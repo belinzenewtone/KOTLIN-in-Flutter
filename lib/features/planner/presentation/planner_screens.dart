@@ -7,6 +7,8 @@
 /// [PlannerRepository].
 library;
 
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
@@ -14,6 +16,7 @@ import 'package:go_router/go_router.dart';
 import '../../../core/database/database.dart';
 import '../../../core/designsystem/app_card.dart';
 import '../../../core/designsystem/banners.dart';
+import '../../../core/designsystem/controls.dart';
 import '../../../core/designsystem/metric_card.dart';
 import '../../../core/designsystem/page_scaffold.dart';
 import '../../../core/designsystem/tokens.dart';
@@ -176,6 +179,7 @@ class _BudgetScreenState extends ConsumerState<BudgetScreen> {
   Map<String, double> _spend = {};
   String? _successMessage;
   String? _errorMessage;
+  StreamSubscription<Map<String, double>>? _spendSub;
 
   @override
   void initState() {
@@ -183,13 +187,19 @@ class _BudgetScreenState extends ConsumerState<BudgetScreen> {
     _load();
   }
 
+  @override
+  void dispose() {
+    _spendSub?.cancel();
+    super.dispose();
+  }
+
   Future<void> _load() async {
     final repo = await ref.read(plannerRepositoryProvider.future);
-    final spend = await repo.monthSpendByCategory();
     if (!mounted) return;
-    setState(() {
-      _repo = repo;
-      _spend = spend;
+    setState(() => _repo = repo);
+    // Subscribe to live spend so budget bars update as transactions change.
+    _spendSub = repo.watchMonthSpendByCategory().listen((spend) {
+      if (mounted) setState(() => _spend = spend);
     });
   }
 
@@ -714,14 +724,14 @@ class _BudgetItemCard extends StatelessWidget {
                         color: statusColor, fontWeight: FontWeight.w600),
                   ),
                 ),
-                // Active toggle
+                // Active toggle — use the shared LifeOsSwitch (brand track +
+                // haptics + M3 fix), not a raw Switch with deprecated
+                // activeColor (which reintroduced the purple-track bug).
                 Transform.scale(
                   scale: 0.8,
-                  child: Switch(
+                  child: LifeOsSwitch(
                     value: budget.isActive,
                     onChanged: onToggleActive,
-                    activeColor: scheme.primary,
-                    materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
                   ),
                 ),
               ],

@@ -1665,7 +1665,7 @@ class _FormSectionLabel extends StatelessWidget {
   }
 }
 
-class _FormTextField extends StatelessWidget {
+class _FormTextField extends StatefulWidget {
   const _FormTextField({
     required this.value,
     required this.onChanged,
@@ -1679,15 +1679,42 @@ class _FormTextField extends StatelessWidget {
   final int maxLines;
 
   @override
+  State<_FormTextField> createState() => _FormTextFieldState();
+}
+
+class _FormTextFieldState extends State<_FormTextField> {
+  late final TextEditingController _controller =
+      TextEditingController(text: widget.value)
+        ..selection = TextSelection.collapsed(offset: widget.value.length);
+
+  @override
+  void didUpdateWidget(_FormTextField oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    // Sync only on an external value change (e.g. programmatic reset) so the
+    // caret isn't yanked to the end on every keystroke.
+    if (widget.value != _controller.text) {
+      _controller.value = TextEditingValue(
+        text: widget.value,
+        selection: TextSelection.collapsed(offset: widget.value.length),
+      );
+    }
+  }
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
+
+  @override
   Widget build(BuildContext context) {
     final scheme = Theme.of(context).colorScheme;
     return TextField(
-      controller: TextEditingController(text: value)
-        ..selection = TextSelection.collapsed(offset: value.length),
-      onChanged: onChanged,
-      maxLines: maxLines,
+      controller: _controller,
+      onChanged: widget.onChanged,
+      maxLines: widget.maxLines,
       decoration: InputDecoration(
-        labelText: label,
+        labelText: widget.label,
         filled: true,
         fillColor: scheme.surface,
         border: OutlineInputBorder(borderRadius: BorderRadius.circular(6)),
