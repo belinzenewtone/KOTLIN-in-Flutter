@@ -144,10 +144,11 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
       await prefs.setString(_kName, name);
       await prefs.setString(_kGoal, _goal.key);
       // Derive a username from the full name if one has not been set yet.
-      // e.g. "Belinze Newtone" → "belinze.newtone"
+      // Cap at 8 chars to match the Profile Settings limit.
+      // e.g. "Belinze Newtone" → "belinze" (first word, max 8 chars)
       if ((prefs.getString('auth_username') ?? '').isEmpty && name.isNotEmpty) {
-        final parts = name.toLowerCase().split(RegExp(r'\s+'));
-        final derived = parts.length > 1 ? parts.join('.') : parts.first;
+        final first = name.toLowerCase().split(RegExp(r'\s+')).first;
+        final derived = first.length > 8 ? first.substring(0, 8) : first;
         await prefs.setString('auth_username', derived);
       }
       await ref.read(sessionProvider.notifier).completeOnboarding();
@@ -376,7 +377,8 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
               ),
               alignment: Alignment.center,
               child: Image.asset('assets/logo/logo_personalos.png',
-                  width: 58, height: 58, fit: BoxFit.contain),
+                  // 68dp matches Kotlin OnboardingScreen.kt Modifier.size(68.dp)
+                  width: 68, height: 68, fit: BoxFit.contain),
             ),
             const SizedBox(height: 20),
             Text('Welcome to PersonalOS',

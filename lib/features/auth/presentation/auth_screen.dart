@@ -25,7 +25,10 @@ class AuthController extends ChangeNotifier {
     // Pre-fill from onboarding data so the user doesn't re-type their name.
     // Onboarding step 3 saves 'user_name' before routing here.
     _fullName = _prefs.getString(_kName) ?? '';
-    _username = _prefs.getString('auth_username') ?? '';
+    // Cap at 8 chars — guards against any legacy long value stored before
+    // the limit was enforced at the save points.
+    final raw = _prefs.getString('auth_username') ?? '';
+    _username = raw.length > 8 ? raw.substring(0, 8) : raw;
   }
 
   final SharedPreferences _prefs;
@@ -62,9 +65,11 @@ class AuthController extends ChangeNotifier {
     notifyListeners();
     try {
       await _prefs.setString(_kName, _fullName.trim());
-      final uname = _username.trim().isNotEmpty
+      // Cap username at 8 chars — matches the Profile Settings limit.
+      var uname = _username.trim().isNotEmpty
           ? _username.trim()
           : _fullName.trim().split(' ').first.toLowerCase();
+      if (uname.length > 8) uname = uname.substring(0, 8);
       await _prefs.setString('auth_username', uname);
       return true;
     } finally {
@@ -88,14 +93,32 @@ class AuthScreen extends ConsumerStatefulWidget {
 
 class _AuthScreenState extends ConsumerState<AuthScreen> {
   AuthController? _controller;
+  // Stable controllers — created once when prefs load, never recreated on rebuild.
+  // Fixes the cursor-jump bug that occurred when AnimatedBuilder rebuilt the
+  // AuthTextField and a new TextEditingController was created each time.
+  TextEditingController? _nameCtrl;
+  TextEditingController? _usernameCtrl;
   final _scaffoldMessengerKey = GlobalKey<ScaffoldMessengerState>();
 
   @override
   void initState() {
     super.initState();
     SharedPreferences.getInstance().then((prefs) {
-      if (mounted) setState(() => _controller = AuthController(prefs));
+      if (!mounted) return;
+      final ctrl = AuthController(prefs);
+      setState(() {
+        _controller = ctrl;
+        _nameCtrl = TextEditingController(text: ctrl.fullName);
+        _usernameCtrl = TextEditingController(text: ctrl.username);
+      });
     });
+  }
+
+  @override
+  void dispose() {
+    _nameCtrl?.dispose();
+    _usernameCtrl?.dispose();
+    super.dispose();
   }
 
   @override
@@ -134,35 +157,37 @@ class _AuthScreenState extends ConsumerState<AuthScreen> {
     required ColorScheme scheme,
     required AuthController controller,
   }) {
-    return Container(
-      decoration: BoxDecoration(
-        gradient: LinearGradient(
-          begin: Alignment.topCenter,
-          end: Alignment.bottomCenter,
-          colors: [kPrimaryMuted.withValues(alpha: 0.3), scheme.background],
+    return Scaffold(
+      body: Container(
+        decoration: BoxDecoration(
+          gradient: LinearGradient(
+            begin: Alignment.topCenter,
+            end: Alignment.bottomCenter,
+            colors: [kPrimaryMuted.withValues(alpha: 0.3), scheme.background],
+          ),
         ),
-      ),
-      child: SafeArea(
-        child: LayoutBuilder(builder: (context, constraints) {
-          return SingleChildScrollView(
-            child: ConstrainedBox(
-              constraints: BoxConstraints(minHeight: constraints.maxHeight),
-              child: Padding(
-                padding: const EdgeInsets.symmetric(
-                    horizontal: AppSpacing.lg, vertical: AppSpacing.lg),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.center,
-                  children: [
-                    const SizedBox(height: AppSpacing.md),
-                    _authBrandingHeader(context),
-                    const SizedBox(height: AppSpacing.md),
-                    _signUpCard(context, controller),
-                  ],
+        child: SafeArea(
+          child: LayoutBuilder(builder: (context, constraints) {
+            return SingleChildScrollView(
+              child: ConstrainedBox(
+                constraints: BoxConstraints(minHeight: constraints.maxHeight),
+                child: Padding(
+                  padding: const EdgeInsets.symmetric(
+                      horizontal: AppSpacing.lg, vertical: AppSpacing.lg),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.center,
+                    children: [
+                      const SizedBox(height: AppSpacing.md),
+                      _authBrandingHeader(context),
+                      const SizedBox(height: AppSpacing.md),
+                      _signUpCard(context, controller),
+                    ],
+                  ),
                 ),
               ),
-            ),
-          );
-        }),
+            );
+          }),
+        ),
       ),
     );
   }
@@ -202,7 +227,10 @@ class _AuthScreenState extends ConsumerState<AuthScreen> {
       child: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
+          // Pass the stable controllers so AuthTextField never recreates them
+          // on rebuild — fixes cursor-jump on every keystroke.
           AuthTextField(
+            controller: _nameCtrl,
             value: controller.fullName,
             onChanged: controller.updateFullName,
             label: 'Full Name',
@@ -211,11 +239,13 @@ class _AuthScreenState extends ConsumerState<AuthScreen> {
           ),
           const SizedBox(height: AppSpacing.md),
           AuthTextField(
+            controller: _usernameCtrl,
             value: controller.username,
             onChanged: controller.updateUsername,
             label: 'Username (optional)',
             icon: Icons.person_outline,
-            placeholder: 'Pick a username',
+            placeholder: 'Pick a username (max 8 chars)',
+            maxLength: 8,
           ),
           const SizedBox(height: AppSpacing.md),
           SizedBox(
@@ -233,7 +263,10 @@ class _AuthScreenState extends ConsumerState<AuthScreen> {
                       if (!mounted) return;
                       if (ok) {
                         await ref.read(sessionProvider.notifier).login(controller.fullName.trim());
-                        if (context.mounted) context.go('/${AppRoute.onboarding}');
+                        // Go directly to home — the router guard would redirect
+                        // /onboarding → /home anyway but this avoids the double
+                        // navigation jitter.
+                        if (context.mounted) context.go('/${AppRoute.home}');
                       } else {
                         _scaffoldMessengerKey.currentState?.showSnackBar(
                           const SnackBar(
@@ -269,25 +302,39 @@ class _AuthScreenState extends ConsumerState<AuthScreen> {
 }
 
 /// Shared auth-style text field — label above an outlined field (6dp gap).
+///
+/// Pass [controller] (a stable instance owned by the parent State) to avoid
+/// recreating the controller on every rebuild — required when this widget is
+/// inside an AnimatedBuilder.  [value] is only used as the initial text when
+/// [controller] is null (legacy fallback).
 class AuthTextField extends StatelessWidget {
   const AuthTextField({
     super.key,
+    this.controller,
     required this.value,
     required this.onChanged,
     required this.label,
     required this.icon,
     required this.placeholder,
+    this.maxLength = 64,
   });
 
+  final TextEditingController? controller;
   final String value;
   final ValueChanged<String> onChanged;
   final String label;
   final IconData icon;
   final String placeholder;
+  final int maxLength;
 
   @override
   Widget build(BuildContext context) {
     final scheme = Theme.of(context).colorScheme;
+    // Use the caller-supplied stable controller when available; otherwise
+    // fall back to a one-shot controller seeded with the current value.
+    final effectiveController = controller ??
+        (TextEditingController(text: value)
+          ..selection = TextSelection.collapsed(offset: value.length));
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       mainAxisSize: MainAxisSize.min,
@@ -299,12 +346,11 @@ class AuthTextField extends StatelessWidget {
                 ?.copyWith(color: scheme.onSurfaceVariant)),
         const SizedBox(height: 6),
         TextField(
-          controller: TextEditingController(text: value)
-            ..selection = TextSelection.collapsed(offset: value.length),
+          controller: effectiveController,
           onChanged: onChanged,
           maxLines: 1,
           textAlignVertical: TextAlignVertical.center,
-          inputFormatters: [LengthLimitingTextInputFormatter(64)],
+          inputFormatters: [LengthLimitingTextInputFormatter(maxLength)],
           style: TextStyle(color: scheme.onSurface),
           decoration: InputDecoration(
             isDense: true,
